@@ -5,16 +5,18 @@ import { CalendarNav } from "./calendar-nav";
 import { CalendarDayCell } from "./calendar-day";
 import { daysInMonth, firstDayOfMonth, formatKey } from "@/lib/utils";
 import { DEFAULT_DAILY_LIMIT } from "@/lib/constants";
-import type { CalendarDay, LocalExpense } from "@/lib/types";
+import type { CalendarDay, LocalExpense, LocalIncome, LocalBill } from "@/lib/types";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface CalendarGridProps {
   expenses: LocalExpense[];
+  incomes?: LocalIncome[];
+  bills?: LocalBill[];
   onDayClick: (date: Date) => void;
 }
 
-export function CalendarGrid({ expenses, onDayClick }: CalendarGridProps) {
+export function CalendarGrid({ expenses, incomes = [], bills = [], onDayClick }: CalendarGridProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const calendarDays = useMemo(() => {
@@ -55,6 +57,28 @@ export function CalendarGrid({ expenses, onDayClick }: CalendarGridProps) {
       const limit = DEFAULT_DAILY_LIMIT;
       const remaining = limit - spent;
 
+      // Check for income on this day
+      const dayIncomes = incomes.filter((inc) => inc.dayOfMonth === d);
+      const incomeAmount = dayIncomes.reduce((sum, inc) => sum + inc.amount, 0);
+
+      // Check for bills on this day (use dueDayOfMonth for recurring, or parse dueDate)
+      const dayBills = bills.filter((bill) => {
+        // For recurring bills, use dueDayOfMonth
+        if (bill.dueDayOfMonth) {
+          return bill.dueDayOfMonth === d;
+        }
+        // For specific date bills, parse the ISO date
+        if (bill.dueDate) {
+          const billDate = new Date(bill.dueDate);
+          return billDate.getDate() === d &&
+                 billDate.getMonth() === month &&
+                 billDate.getFullYear() === year;
+        }
+        return false;
+      });
+      const billAmount = dayBills.reduce((sum, bill) => sum + bill.amount, 0);
+      const billLabel = dayBills.length > 0 ? dayBills[0]?.label : undefined;
+
       days.push({
         day: d,
         date: dateObj,
@@ -62,11 +86,16 @@ export function CalendarGrid({ expenses, onDayClick }: CalendarGridProps) {
         limit,
         spent,
         remaining,
+        hasIncome: dayIncomes.length > 0,
+        incomeAmount: incomeAmount > 0 ? incomeAmount : undefined,
+        hasBill: dayBills.length > 0,
+        billAmount: billAmount > 0 ? billAmount : undefined,
+        billLabel,
       });
     }
 
     return days;
-  }, [currentDate, expenses]);
+  }, [currentDate, expenses, incomes, bills]);
 
   const handlePrevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
