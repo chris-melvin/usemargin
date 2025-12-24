@@ -9,6 +9,7 @@ interface CalendarDayProps {
   day: CalendarDay;
   onClick: () => void;
   compact?: boolean;
+  isSelected?: boolean;
 }
 
 // Get status color based on spending percentage
@@ -53,13 +54,13 @@ function getStatusStyle(spent: number, limit: number, isPast: boolean): {
   }
 }
 
-export function CalendarDayCell({ day, onClick, compact = false }: CalendarDayProps) {
+export function CalendarDayCell({ day, onClick, compact = false, isSelected = false }: CalendarDayProps) {
   if (day.isPadding) {
     return (
       <div
         className={cn(
-          "border-r border-b border-stone-100/50",
-          compact ? "h-14" : "min-h-[80px]"
+          "aspect-square border-r border-b border-stone-100/50",
+          compact && "aspect-auto h-14"
         )}
       />
     );
@@ -81,13 +82,16 @@ export function CalendarDayCell({ day, onClick, compact = false }: CalendarDayPr
       onClick={onClick}
       className={cn(
         "relative cursor-pointer transition-all duration-200 border-r border-b border-stone-100/50",
-        "hover:z-10 hover:shadow-md hover:scale-[1.02]",
-        compact ? "h-14 p-1.5" : "min-h-[80px] p-2",
+        "active:scale-95 sm:hover:z-10 sm:hover:shadow-md sm:hover:scale-[1.02]",
+        // Square aspect ratio on all screens
+        compact ? "h-14 p-1.5" : "aspect-square p-1.5 sm:p-2",
         // Background color based on status
         isPast && day.spent > 0 && style.bg,
-        !isPast && !isTodayCell && "bg-white hover:bg-stone-50/50",
+        !isPast && !isTodayCell && !isSelected && "bg-white sm:hover:bg-stone-50/50",
         // Today highlight - prominent ring
-        isTodayCell && "ring-2 ring-amber-400 bg-amber-50/60 z-10"
+        isTodayCell && !isSelected && "ring-2 ring-amber-400 ring-inset bg-amber-50/60 z-10",
+        // Selected state - blue ring (takes priority over today on desktop)
+        isSelected && "ring-2 ring-blue-500 ring-inset bg-blue-50/60 z-20"
       )}
     >
       {/* Day number row */}
@@ -95,7 +99,7 @@ export function CalendarDayCell({ day, onClick, compact = false }: CalendarDayPr
         <span
           className={cn(
             "font-semibold tabular-nums",
-            compact ? "text-[11px]" : "text-xs",
+            compact ? "text-[11px]" : "text-[11px] sm:text-xs",
             isTodayCell && "text-amber-600",
             !isTodayCell && isPast && style.text,
             !isTodayCell && !isPast && "text-stone-400"
@@ -104,28 +108,28 @@ export function CalendarDayCell({ day, onClick, compact = false }: CalendarDayPr
           {day.day}
         </span>
 
-        {/* Indicators */}
+        {/* Indicators - smaller on mobile */}
         <div className="flex items-center gap-0.5">
           {day.hasIncome && (
             <div
               className={cn(
                 "rounded-full bg-emerald-500 flex items-center justify-center",
-                compact ? "w-3.5 h-3.5" : "w-4 h-4"
+                compact ? "w-3.5 h-3.5" : "w-3 h-3 sm:w-4 sm:h-4"
               )}
               title={`+${formatCurrency(day.incomeAmount || 0, CURRENCY)}`}
             >
-              <Banknote className={cn("text-white", compact ? "w-2 h-2" : "w-2.5 h-2.5")} />
+              <Banknote className={cn("text-white", compact ? "w-2 h-2" : "w-1.5 h-1.5 sm:w-2.5 sm:h-2.5")} />
             </div>
           )}
           {day.hasBill && (
             <div
               className={cn(
                 "rounded-full bg-rose-500 flex items-center justify-center",
-                compact ? "w-3.5 h-3.5" : "w-4 h-4"
+                compact ? "w-3.5 h-3.5" : "w-3 h-3 sm:w-4 sm:h-4"
               )}
               title={`${day.billLabel}: ${formatCurrency(day.billAmount || 0, CURRENCY)}`}
             >
-              <CreditCard className={cn("text-white", compact ? "w-2 h-2" : "w-2.5 h-2.5")} />
+              <CreditCard className={cn("text-white", compact ? "w-2 h-2" : "w-1.5 h-1.5 sm:w-2.5 sm:h-2.5")} />
             </div>
           )}
         </div>
@@ -134,19 +138,19 @@ export function CalendarDayCell({ day, onClick, compact = false }: CalendarDayPr
       {/* Progress bar - fills from bottom */}
       <div
         className={cn(
-          "absolute bottom-0 left-0 right-0 transition-all duration-300",
+          "absolute bottom-0 left-0 right-0 transition-all duration-300 rounded-b-sm",
           style.fill,
           "opacity-40"
         )}
         style={{ height: `${Math.min(progressPercent, 100)}%` }}
       />
 
-      {/* Spent amount - only show on hover or for today/over budget */}
+      {/* Spent amount - centered, responsive text */}
       {(isPast && day.spent > 0) && (
         <div
           className={cn(
-            "absolute inset-0 flex items-center justify-center",
-            "text-xs font-mono tabular-nums font-medium",
+            "absolute inset-0 flex items-center justify-center pt-3 sm:pt-4",
+            "text-[10px] sm:text-xs font-mono tabular-nums font-medium",
             style.text,
             compact && "text-[10px]"
           )}
@@ -156,13 +160,13 @@ export function CalendarDayCell({ day, onClick, compact = false }: CalendarDayPr
         </div>
       )}
 
-      {/* Today badge */}
+      {/* Today badge - smaller on mobile */}
       {isTodayCell && (
-        <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
+        <div className="absolute bottom-0.5 sm:bottom-1 left-1/2 -translate-x-1/2">
           <span
             className={cn(
               "font-bold text-amber-600 uppercase tracking-wider",
-              compact ? "text-[7px]" : "text-[8px]"
+              compact ? "text-[7px]" : "text-[6px] sm:text-[8px]"
             )}
           >
             Today

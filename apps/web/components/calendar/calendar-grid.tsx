@@ -7,16 +7,19 @@ import { daysInMonth, firstDayOfMonth, formatKey } from "@/lib/utils";
 import { DEFAULT_DAILY_LIMIT } from "@/lib/constants";
 import type { CalendarDay, LocalExpense, LocalIncome, LocalBill } from "@/lib/types";
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// Short weekday labels for mobile
+const WEEKDAYS_SHORT = ["S", "M", "T", "W", "T", "F", "S"];
+const WEEKDAYS_FULL = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface CalendarGridProps {
   expenses: LocalExpense[];
   incomes?: LocalIncome[];
   bills?: LocalBill[];
   onDayClick: (date: Date) => void;
+  selectedDate?: Date | null;
 }
 
-export function CalendarGrid({ expenses, incomes = [], bills = [], onDayClick }: CalendarGridProps) {
+export function CalendarGrid({ expenses, incomes = [], bills = [], onDayClick, selectedDate }: CalendarGridProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const calendarDays = useMemo(() => {
@@ -106,34 +109,41 @@ export function CalendarGrid({ expenses, incomes = [], bills = [], onDayClick }:
   };
 
   return (
-    <div className="bg-white border border-stone-200 rounded-[2rem] shadow-sm overflow-hidden">
+    <div className="bg-white border border-stone-200 rounded-2xl sm:rounded-[2rem] shadow-sm overflow-hidden">
       <CalendarNav
         currentDate={currentDate}
         onPrevMonth={handlePrevMonth}
         onNextMonth={handleNextMonth}
       />
 
-      {/* Weekday headers */}
+      {/* Weekday headers - compact on mobile */}
       <div className="grid grid-cols-7 text-center border-b border-stone-50">
-        {WEEKDAYS.map((day) => (
+        {WEEKDAYS_FULL.map((day, i) => (
           <div
             key={day}
-            className="py-4 text-[10px] font-bold text-stone-300 uppercase tracking-[0.2em]"
+            className="py-2 sm:py-4 text-[10px] font-bold text-stone-300 uppercase tracking-wider sm:tracking-[0.2em]"
           >
-            {day}
+            <span className="sm:hidden">{WEEKDAYS_SHORT[i]}</span>
+            <span className="hidden sm:inline">{day}</span>
           </div>
         ))}
       </div>
 
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 auto-rows-fr">
-        {calendarDays.map((day, i) => (
-          <CalendarDayCell
-            key={day.key}
-            day={day}
-            onClick={() => !day.isPadding && onDayClick(day.date)}
-          />
-        ))}
+      {/* Calendar grid - Square aspect ratio cells */}
+      <div className="grid grid-cols-7">
+        {calendarDays.map((day) => {
+          const isSelected = selectedDate && !day.isPadding
+            ? formatKey(selectedDate) === formatKey(day.date)
+            : false;
+          return (
+            <CalendarDayCell
+              key={day.key}
+              day={day}
+              onClick={() => !day.isPadding && onDayClick(day.date)}
+              isSelected={isSelected}
+            />
+          );
+        })}
       </div>
     </div>
   );

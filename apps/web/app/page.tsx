@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import Link from "next/link";
 import {
   BarChart3,
@@ -11,9 +11,12 @@ import {
   Wallet,
   Settings,
   ChevronRight,
+  Zap,
+  X,
 } from "lucide-react";
 import { CalendarGrid } from "@/components/calendar/calendar-grid";
-import { DayTimelineModal } from "@/components/day-detail/day-timeline-modal";
+import { DayDetailPanel } from "@/components/day-detail/day-detail-panel";
+import { DayDetailSheet } from "@/components/day-detail/day-detail-sheet";
 import { SmartInputBar } from "@/components/expenses/smart-input-bar";
 import { CreateShortcutModal } from "@/components/shortcuts/create-shortcut-modal";
 import { ShortcutsSettingsPanel } from "@/components/shortcuts/shortcuts-settings-panel";
@@ -103,15 +106,16 @@ type TabType = "calendar" | "insights" | "transactions";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>("calendar");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isShortcutModalOpen, setIsShortcutModalOpen] = useState(false);
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isMobileDaySheetOpen, setIsMobileDaySheetOpen] = useState(false);
   const [flexBucket] = useState(5000);
   const [incomes] = useState(DEMO_INCOMES);
   const [bills] = useState(DEMO_BILLS);
   const [pendingShortcutData, setPendingShortcutData] = useState<UnknownShortcut | null>(null);
   const [hideSavings, setHideSavings] = useState(false);
+  const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
 
   // Demo allocation values
   const totalIncome = useMemo(() => incomes.reduce((sum, inc) => sum + inc.amount, 0), [incomes]);
@@ -155,11 +159,16 @@ export default function Home() {
 
   const handleDayClick = (date: Date) => {
     setSelectedDate(date);
-    setIsModalOpen(true);
+    // Open mobile sheet on smaller screens
+    if (window.innerWidth < 1024) {
+      setIsMobileDaySheetOpen(true);
+    }
   };
 
   const handleAddExpense = (amount: number, label: string) => {
-    addExpense(selectedDate, amount, label);
+    if (selectedDate) {
+      addExpense(selectedDate, amount, label);
+    }
   };
 
   const handleQuickAdd = (amount: number, label: string) => {
@@ -199,18 +208,38 @@ export default function Home() {
 
   return (
     <div className="h-screen bg-[#fafaf9] flex flex-col overflow-hidden">
-      {/* Top Navigation Bar */}
-      <header className="flex-shrink-0 h-12 px-4 flex items-center justify-between border-b border-stone-200/60 bg-white/80 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <h1 className="text-sm font-semibold tracking-tight text-stone-900">usemargin</h1>
-          <span className="text-stone-200">|</span>
-          <p className="text-[10px] text-stone-400 uppercase tracking-widest hidden sm:block">
-            Command Center
-          </p>
-        </div>
+      {/* Mobile-first Header - Compact on mobile, expanded on desktop */}
+      <header className="flex-shrink-0 h-14 sm:h-12 px-3 sm:px-4 flex items-center justify-between border-b border-stone-200/60 bg-white/80 backdrop-blur-sm safe-area-top">
+        {/* Today's Status - Compact pill on mobile */}
+        <button
+          onClick={() => setIsQuickActionsOpen(true)}
+          className={cn(
+            "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all",
+            "bg-gradient-to-r",
+            isOverBudget
+              ? "from-rose-50 to-rose-100/50 border border-rose-200"
+              : budgetPercent >= 80
+              ? "from-amber-50 to-amber-100/50 border border-amber-200"
+              : "from-emerald-50 to-emerald-100/50 border border-emerald-200",
+            "active:scale-95 sm:hover:shadow-md"
+          )}
+        >
+          <div
+            className={cn(
+              "w-2.5 h-2.5 rounded-full animate-pulse",
+              isOverBudget ? "bg-rose-500" : budgetPercent >= 80 ? "bg-amber-500" : "bg-emerald-500"
+            )}
+          />
+          <span className={cn("text-sm font-bold tabular-nums", statusColor)}>
+            {formatCurrency(Math.abs(todayStatus.remaining), CURRENCY)}
+          </span>
+          <span className="text-[10px] text-stone-400 uppercase hidden min-[400px]:inline">
+            {isOverBudget ? "over" : "left"}
+          </span>
+        </button>
 
-        {/* Tab Navigation */}
-        <div className="flex items-center bg-stone-100/80 rounded-lg p-0.5">
+        {/* Tab Navigation - Icons only on mobile */}
+        <div className="flex items-center bg-stone-100/80 rounded-xl p-1">
           {[
             { id: "calendar" as TabType, icon: Calendar, label: "Calendar" },
             { id: "insights" as TabType, icon: PieChart, label: "Insights" },
@@ -220,54 +249,46 @@ export default function Home() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200",
+                "flex items-center justify-center gap-1.5 p-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
                 activeTab === tab.id
                   ? "bg-white text-stone-900 shadow-sm"
                   : "text-stone-500 hover:text-stone-700"
               )}
             >
-              <tab.icon className="w-3.5 h-3.5" />
+              <tab.icon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
               <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Link
             href="/analytics"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-stone-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
+            className="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg text-stone-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
           >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Analytics</span>
+            <BarChart3 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+            <span className="hidden sm:inline sm:ml-1">Analytics</span>
           </Link>
           <button
             onClick={() => setIsSettingsPanelOpen(true)}
-            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
+            className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
           >
             <Settings className="w-4 h-4" />
           </button>
         </div>
       </header>
 
-      {/* Main Content - Two Column Layout */}
+      {/* Main Content - Full width on mobile, with optional sidebar on desktop */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - The HUD */}
-        <aside className="w-64 lg:w-72 flex-shrink-0 border-r border-stone-200/60 bg-white/50 flex flex-col overflow-y-auto">
+        {/* Desktop Sidebar - Hidden on mobile */}
+        <aside className="hidden lg:flex w-72 flex-shrink-0 border-r border-stone-200/60 bg-white/50 flex-col overflow-y-auto">
           {/* Today's Status - Circular Progress */}
           <div className="p-4 border-b border-stone-100">
             <div className="flex items-center gap-4">
-              {/* Circular Progress */}
               <div className="relative w-20 h-20 flex-shrink-0">
                 <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="34"
-                    fill="none"
-                    stroke="#e7e5e4"
-                    strokeWidth="6"
-                  />
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="#e7e5e4" strokeWidth="6" />
                   <circle
                     cx="40"
                     cy="40"
@@ -289,8 +310,6 @@ export default function Home() {
                   </span>
                 </div>
               </div>
-
-              {/* Today Info */}
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] text-stone-400 uppercase tracking-wider mb-0.5">
                   {new Date().toLocaleDateString("en-US", { weekday: "long" })}
@@ -299,12 +318,11 @@ export default function Home() {
                   {isOverBudget ? "Over Budget" : budgetPercent >= 80 ? "Almost There" : "On Track"}
                 </p>
                 <p className="text-xs text-stone-500 mt-1">
-                  Spent {formatCurrency(todayStatus.spent, CURRENCY)} of {formatCurrency(todayStatus.limit, CURRENCY)}
+                  Spent {formatCurrency(todayStatus.spent, CURRENCY)} of{" "}
+                  {formatCurrency(todayStatus.limit, CURRENCY)}
                 </p>
               </div>
             </div>
-
-            {/* Today's expenses mini list */}
             {todayExpenses.length > 0 && (
               <div className="mt-3 space-y-1">
                 {todayExpenses.slice(0, 3).map((exp, i) => (
@@ -316,15 +334,13 @@ export default function Home() {
                   </div>
                 ))}
                 {todayExpenses.length > 3 && (
-                  <p className="text-[10px] text-stone-400">
-                    +{todayExpenses.length - 3} more
-                  </p>
+                  <p className="text-[10px] text-stone-400">+{todayExpenses.length - 3} more</p>
                 )}
               </div>
             )}
           </div>
 
-          {/* Flex Bucket - Compact */}
+          {/* Flex Bucket */}
           <div className="p-4 border-b border-stone-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -342,10 +358,12 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Quick Add - Compact Pills */}
+          {/* Quick Add Grid */}
           <div className="p-4 flex-1">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium">Quick Add</p>
+              <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium">
+                Quick Add
+              </p>
               <button
                 onClick={handleOpenCreateShortcut}
                 className="p-1 rounded text-stone-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
@@ -353,7 +371,6 @@ export default function Home() {
                 <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
-
             <div className="grid grid-cols-4 gap-2">
               {QUICK_TEMPLATES.map((template) => (
                 <button
@@ -371,8 +388,6 @@ export default function Home() {
                 </button>
               ))}
             </div>
-
-            {/* Custom Shortcuts */}
             {shortcuts.length > 0 && (
               <div className="mt-4">
                 <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium mb-2">
@@ -397,22 +412,40 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* Main Viewport - Tabbed Content */}
+        {/* Main Viewport - Full width on mobile */}
         <main className="flex-1 overflow-hidden flex flex-col">
           {activeTab === "calendar" && (
-            <div className="flex-1 p-4 overflow-auto">
-              <CalendarGrid
-                expenses={expenses}
-                incomes={incomes}
-                bills={bills}
-                onDayClick={handleDayClick}
-              />
+            <div className="flex-1 flex overflow-hidden">
+              {/* Calendar area - larger portion */}
+              <div className="flex-1 lg:flex-initial lg:w-[68%] xl:w-[65%] p-2 sm:p-4 overflow-auto">
+                <CalendarGrid
+                  expenses={expenses}
+                  incomes={incomes}
+                  bills={bills}
+                  onDayClick={handleDayClick}
+                  selectedDate={selectedDate}
+                />
+              </div>
+
+              {/* Desktop: Day Detail Panel - narrower */}
+              <div className="hidden lg:flex lg:w-[32%] xl:w-[35%] border-l border-stone-200/60 bg-white/50 overflow-hidden">
+                <div className="flex-1 overflow-y-auto">
+                  <DayDetailPanel
+                    selectedDate={selectedDate}
+                    expenses={expenses}
+                    bills={bills}
+                    incomes={incomes}
+                    dailyLimit={DEFAULT_DAILY_LIMIT}
+                    onAddExpense={handleAddExpense}
+                  />
+                </div>
+              </div>
             </div>
           )}
 
           {activeTab === "insights" && (
-            <div className="flex-1 p-4 overflow-auto">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-5xl mx-auto">
+            <div className="flex-1 p-3 sm:p-4 overflow-auto">
+              <div className="grid grid-cols-1 gap-4 max-w-5xl mx-auto">
                 <WeeklyPatternCard
                   weeklyTotal={weeklyPatterns.weeklyTotal}
                   previousWeekTotal={weeklyPatterns.previousWeekTotal}
@@ -434,7 +467,7 @@ export default function Home() {
           )}
 
           {activeTab === "transactions" && (
-            <div className="flex-1 p-4 overflow-auto">
+            <div className="flex-1 p-3 sm:p-4 overflow-auto">
               <div className="max-w-2xl mx-auto">
                 <div className="bg-white rounded-2xl border border-stone-200/60 overflow-hidden">
                   <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
@@ -455,7 +488,7 @@ export default function Home() {
                         .map((expense) => (
                           <div
                             key={expense.id}
-                            className="px-4 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors"
+                            className="px-4 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors active:bg-stone-100"
                           >
                             <div>
                               <p className="text-sm font-medium text-stone-800">{expense.label}</p>
@@ -481,10 +514,168 @@ export default function Home() {
         </main>
       </div>
 
-      {/* Day Timeline Modal */}
-      <DayTimelineModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+      {/* Mobile Quick Actions Bottom Sheet */}
+      {isQuickActionsOpen && (
+        <div
+          className="fixed inset-0 z-50 lg:hidden"
+          onClick={() => setIsQuickActionsOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300 safe-area-bottom"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 rounded-full bg-stone-300" />
+            </div>
+
+            {/* Today's Status - Mobile */}
+            <div className="px-4 pb-4 border-b border-stone-100">
+              <div className="flex items-center gap-4">
+                <div className="relative w-16 h-16 flex-shrink-0">
+                  <svg className="w-16 h-16 -rotate-90" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="#e7e5e4" strokeWidth="8" />
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="34"
+                      fill="none"
+                      stroke={isOverBudget ? "#ef4444" : budgetPercent >= 80 ? "#f59e0b" : "#10b981"}
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={`${budgetPercent * 2.136} 213.6`}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className={cn("text-base font-bold tabular-nums", statusColor)}>
+                      {Math.round(budgetPercent)}%
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-stone-400 uppercase tracking-wider">
+                    {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                  </p>
+                  <p className={cn("text-xl font-bold tabular-nums", statusColor)}>
+                    {formatCurrency(Math.abs(todayStatus.remaining), CURRENCY)}{" "}
+                    <span className="text-sm font-normal text-stone-400">
+                      {isOverBudget ? "over" : "left"}
+                    </span>
+                  </p>
+                  <p className="text-xs text-stone-500 mt-0.5">
+                    Spent {formatCurrency(todayStatus.spent, CURRENCY)} of{" "}
+                    {formatCurrency(todayStatus.limit, CURRENCY)}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsQuickActionsOpen(false)}
+                  className="p-2 rounded-full bg-stone-100 text-stone-500"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Today's expenses */}
+              {todayExpenses.length > 0 && (
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                  {todayExpenses.map((exp, i) => (
+                    <div
+                      key={i}
+                      className="flex-shrink-0 px-3 py-1.5 rounded-full bg-stone-100 text-xs"
+                    >
+                      <span className="text-stone-600">{exp.label}</span>
+                      <span className="text-stone-400 ml-1">
+                        {formatCurrency(exp.amount, CURRENCY)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Flex Bucket */}
+            <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                  <Wallet className="w-5 h-5 text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-stone-400 uppercase tracking-wider">Flex Bucket</p>
+                  <p className="text-base font-semibold text-stone-800 tabular-nums">
+                    {formatCurrency(flexBucket, CURRENCY)}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-stone-300" />
+            </div>
+
+            {/* Quick Add Grid - Mobile optimized */}
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-stone-500 uppercase tracking-wider font-medium">
+                  Quick Add
+                </p>
+                <button
+                  onClick={() => {
+                    setIsQuickActionsOpen(false);
+                    handleOpenCreateShortcut();
+                  }}
+                  className="p-1.5 rounded-lg text-stone-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                {QUICK_TEMPLATES.map((template) => (
+                  <button
+                    key={template.label}
+                    onClick={() => {
+                      handleQuickAdd(template.amount, template.label);
+                      setIsQuickActionsOpen(false);
+                    }}
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-stone-50 active:bg-amber-100 active:scale-95 border border-stone-100 transition-all"
+                  >
+                    <span className="text-2xl">{template.icon}</span>
+                    <span className="text-[10px] text-stone-600 truncate w-full text-center">
+                      {template.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {shortcuts.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs text-stone-500 uppercase tracking-wider font-medium mb-3">
+                    Your Shortcuts
+                  </p>
+                  <div className="grid grid-cols-4 gap-3">
+                    {shortcuts.slice(0, 4).map((shortcut) => (
+                      <button
+                        key={shortcut.id}
+                        onClick={() => {
+                          handleQuickAdd(100, shortcut.label);
+                          setIsQuickActionsOpen(false);
+                        }}
+                        className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-amber-50 active:bg-amber-200 active:scale-95 border border-amber-100 transition-all"
+                      >
+                        <span className="text-2xl">{shortcut.icon || "📌"}</span>
+                        <span className="text-[10px] text-amber-700 truncate w-full text-center">
+                          @{shortcut.trigger}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Day Detail Sheet */}
+      <DayDetailSheet
+        isOpen={isMobileDaySheetOpen}
+        onClose={() => setIsMobileDaySheetOpen(false)}
         selectedDate={selectedDate}
         expenses={expenses}
         bills={bills}
