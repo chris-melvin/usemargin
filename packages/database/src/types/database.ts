@@ -402,3 +402,46 @@ export type ShortcutUpdate = Partial<Omit<Shortcut, "id" | "user_id">>;
 export type SavingsGoalUpdate = Partial<Omit<SavingsGoal, "id" | "user_id">>;
 export type AssetUpdate = Partial<Omit<Asset, "id" | "user_id">>;
 export type LiabilityUpdate = Partial<Omit<Liability, "id" | "user_id">>;
+
+// =============================================================================
+// ONBOARDING TYPES
+// =============================================================================
+
+export interface ProgressiveHintState {
+  shown_at: string;
+  dismissed: boolean;
+}
+
+export interface UserOnboarding {
+  id: string;
+  user_id: string;
+  has_completed_tour: boolean;
+  current_step: number;
+  tour_skipped_at: string | null;
+  tour_completed_at: string | null;
+  progressive_hints_shown: Record<string, ProgressiveHintState>;
+  features_discovered: Record<string, string>; // feature_id -> timestamp
+  expense_count: number;
+  days_active: number;
+  last_active_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type UserOnboardingInsert = {
+  user_id: string;
+  id?: string;
+  has_completed_tour?: boolean;
+  current_step?: number;
+  tour_skipped_at?: string | null;
+  tour_completed_at?: string | null;
+  progressive_hints_shown?: Record<string, ProgressiveHintState>;
+  features_discovered?: Record<string, string>;
+  expense_count?: number;
+  days_active?: number;
+  last_active_date?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type UserOnboardingUpdate = Partial<Omit<UserOnboarding, "id" | "user_id">>;

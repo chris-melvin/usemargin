@@ -68,3 +68,11 @@ export type {
   AssetUpdate,
   LiabilityUpdate,
 } from "./types/database.js";
+
+// Onboarding types
+export type {
+  ProgressiveHintState,
+  UserOnboarding,
+  UserOnboardingInsert,
+  UserOnboardingUpdate,
+} from "./types/database.js";

@@ -320,6 +320,7 @@ export function SmartInputBar({
 
       {/* Desktop Input Bar */}
       <div
+        data-onboarding-target="smart-input-bar"
         className={cn(
           "fixed bottom-0 left-0 right-0 z-50",
           "hidden sm:block",

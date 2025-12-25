@@ -15,6 +15,7 @@
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-progress": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+    "@react-spring/web": "^10.0.3",
     "@repo/database": "workspace:*",
     "@repo/ui": "workspace:*",
     "@supabase/ssr": "^0.8.0",
@@ -37,6 +38,7 @@
     "@visx/text": "^3.12.0",
     "@visx/tooltip": "^3.12.0",
     "@visx/xychart": "^3.12.0",
+    "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "d3-sankey": "^0.12.3",
@@ -53,6 +55,7 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^22.15.3",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",

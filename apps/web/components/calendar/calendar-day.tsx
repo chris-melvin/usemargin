@@ -80,6 +80,7 @@ export function CalendarDayCell({ day, onClick, compact = false, isSelected = fa
   return (
     <div
       onClick={onClick}
+      {...(isTodayCell ? { "data-onboarding-target": "calendar-today" } : {})}
       className={cn(
         "relative cursor-pointer transition-all duration-200 border-r border-b border-stone-100/50",
         "active:scale-95 sm:hover:z-10 sm:hover:shadow-md sm:hover:scale-[1.02]",

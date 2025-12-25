@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Calendar, Clock, CreditCard, Banknote, Receipt, Check, CalendarDays } from "lucide-react";
+import { Plus, Calendar, Clock, CreditCard, Banknote, Receipt, Check, CalendarDays, Trash2 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { CURRENCY } from "@/lib/constants";
 import type { LocalExpense, LocalBill, LocalIncome, TimelineEvent } from "@/lib/types";
@@ -13,6 +13,7 @@ interface DayDetailPanelProps {
   incomes: LocalIncome[];
   dailyLimit: number;
   onAddExpense: (amount: number, label: string) => void;
+  onDeleteExpense?: (expenseId: string) => void;
   onMarkBillPaid?: (billId: string) => void;
   onMarkIncomeReceived?: (incomeId: string) => void;
 }
@@ -81,6 +82,7 @@ export function DayDetailPanel({
   incomes,
   dailyLimit,
   onAddExpense,
+  onDeleteExpense,
   onMarkBillPaid,
 }: DayDetailPanelProps) {
   const [isAddingExpense, setIsAddingExpense] = useState(false);
@@ -271,7 +273,7 @@ export function DayDetailPanel({
                 <div
                   key={event.id}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl border transition-all",
+                    "flex items-center gap-3 p-3 rounded-xl border transition-all group",
                     config.bgColor,
                     config.borderColor
                   )}
@@ -316,6 +318,18 @@ export function DayDetailPanel({
                   </div>
 
                   {/* Actions */}
+                  {event.type === "expense" && onDeleteExpense && (
+                    <button
+                      onClick={() => {
+                        const expense = event.originalData as LocalExpense;
+                        onDeleteExpense(expense.id);
+                      }}
+                      className="p-1.5 text-stone-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                      title="Delete expense"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                   {event.type === "bill_due" && event.status === "pending" && onMarkBillPaid && (
                     <button
                       onClick={() => {

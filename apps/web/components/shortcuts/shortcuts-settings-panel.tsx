@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Trash2, Edit3, Plus, Zap, Search } from "lucide-react";
+import { X, Trash2, Edit3, Plus, Zap, Search, RefreshCw, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CustomShortcut } from "@/lib/types";
 
@@ -12,6 +12,7 @@ interface ShortcutsSettingsPanelProps {
   onDelete: (id: string) => void;
   onUpdate: (id: string, updates: Partial<Omit<CustomShortcut, "id" | "createdAt">>) => void;
   onCreateNew: () => void;
+  onRestartTutorial?: () => void;
 }
 
 export function ShortcutsSettingsPanel({
@@ -21,6 +22,7 @@ export function ShortcutsSettingsPanel({
   onDelete,
   onUpdate,
   onCreateNew,
+  onRestartTutorial,
 }: ShortcutsSettingsPanelProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -216,8 +218,31 @@ export function ShortcutsSettingsPanel({
           )}
         </div>
 
-        {/* Footer info */}
-        <div className="px-5 py-3 border-t border-stone-100 bg-stone-50/50">
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-stone-100 bg-stone-50/50 space-y-3">
+          {/* Restart Tutorial Button */}
+          {onRestartTutorial && (
+            <button
+              onClick={() => {
+                onRestartTutorial();
+                onClose();
+              }}
+              className={cn(
+                "w-full px-4 py-2.5 rounded-xl",
+                "flex items-center justify-center gap-2",
+                "bg-gradient-to-r from-amber-50 to-amber-100/80",
+                "border border-amber-200/60",
+                "text-amber-700 text-sm font-medium",
+                "hover:from-amber-100 hover:to-amber-200/80",
+                "transition-all duration-200"
+              )}
+            >
+              <Sparkles className="h-4 w-4" />
+              Restart Tutorial
+            </button>
+          )}
+
+          {/* Usage hint */}
           <p className="text-[10px] text-stone-400 text-center">
             Type <span className="font-mono font-medium">@shortcut amount</span> in the input bar to use
           </p>

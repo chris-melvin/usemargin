@@ -14,6 +14,7 @@ interface DayDetailSheetProps {
   incomes: LocalIncome[];
   dailyLimit: number;
   onAddExpense: (amount: number, label: string) => void;
+  onDeleteExpense?: (expenseId: string) => void;
   onMarkBillPaid?: (billId: string) => void;
 }
 
@@ -26,6 +27,7 @@ export function DayDetailSheet({
   incomes,
   dailyLimit,
   onAddExpense,
+  onDeleteExpense,
   onMarkBillPaid,
 }: DayDetailSheetProps) {
   if (!isOpen || !selectedDate) return null;
@@ -71,6 +73,7 @@ export function DayDetailSheet({
             incomes={incomes}
             dailyLimit={dailyLimit}
             onAddExpense={onAddExpense}
+            onDeleteExpense={onDeleteExpense}
             onMarkBillPaid={onMarkBillPaid}
           />
         </div>

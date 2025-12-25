@@ -32,6 +32,9 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.2)(react@19.2.0)
+      '@react-spring/web':
+        specifier: ^10.0.3
+        version: 10.0.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@repo/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -97,7 +100,10 @@ importers:
         version: 3.12.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@visx/xychart':
         specifier: ^3.12.0
-        version: 3.12.0(@react-spring/web@9.7.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 3.12.0(@react-spring/web@10.0.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      canvas-confetti:
+        specifier: ^1.9.4
+        version: 1.9.4
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -141,6 +147,9 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
+      '@types/canvas-confetti':
+        specifier: ^1.9.0
+        version: 1.9.0
       '@types/node':
         specifier: ^22.15.3
         version: 22.15.3
@@ -751,32 +760,32 @@ packages:
       '@types/react':
         optional: true
 
-  '@react-spring/animated@9.7.5':
-    resolution: {integrity: sha512-Tqrwz7pIlsSDITzxoLS3n/v/YCUHQdOIKtOJf4yL6kYVSDTSmVK1LI1Q3M/uu2Sx4X3pIWF3xLUhlsA6SPNTNg==}
+  '@react-spring/animated@10.0.3':
+    resolution: {integrity: sha512-7MrxADV3vaUADn2V9iYhaIL6iOWRx9nCJjYrsk2AHD2kwPr6fg7Pt0v+deX5RnCDmCKNnD6W5fasiyM8D+wzJQ==}
     peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@react-spring/core@9.7.5':
-    resolution: {integrity: sha512-rmEqcxRcu7dWh7MnCcMXLvrf6/SDlSokLaLTxiPlAYi11nN3B5oiCUAblO72o+9z/87j2uzxa2Inm8UbLjXA+w==}
+  '@react-spring/core@10.0.3':
+    resolution: {integrity: sha512-D4DwNO68oohDf/0HG2G0Uragzb9IA1oXblxrd6MZAcBcUQG2EHUWXewjdECMPLNmQvlYVyyBRH6gPxXM5DX7DQ==}
     peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@react-spring/rafz@9.7.5':
-    resolution: {integrity: sha512-5ZenDQMC48wjUzPAm1EtwQ5Ot3bLIAwwqP2w2owG5KoNdNHpEJV263nGhCeKKmuA3vG2zLLOdu3or6kuDjA6Aw==}
+  '@react-spring/rafz@10.0.3':
+    resolution: {integrity: sha512-Ri2/xqt8OnQ2iFKkxKMSF4Nqv0LSWnxXT4jXFzBDsHgeeH/cHxTLupAWUwmV9hAGgmEhBmh5aONtj3J6R/18wg==}
 
-  '@react-spring/shared@9.7.5':
-    resolution: {integrity: sha512-wdtoJrhUeeyD/PP/zo+np2s1Z820Ohr/BbuVYv+3dVLW7WctoiN7std8rISoYoHpUXtbkpesSKuPIw/6U1w1Pw==}
+  '@react-spring/shared@10.0.3':
+    resolution: {integrity: sha512-geCal66nrkaQzUVhPkGomylo+Jpd5VPK8tPMEDevQEfNSWAQP15swHm+MCRG4wVQrQlTi9lOzKzpRoTL3CA84Q==}
     peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@react-spring/types@9.7.5':
-    resolution: {integrity: sha512-HVj7LrZ4ReHWBimBvu2SKND3cDVUPWKLqRTmWe/fNY6o1owGOX0cAHbdPDTMelgBlVbrTKrre6lFkhqGZErK/g==}
+  '@react-spring/types@10.0.3':
+    resolution: {integrity: sha512-H5Ixkd2OuSIgHtxuHLTt7aJYfhMXKXT/rK32HPD/kSrOB6q6ooeiWAXkBy7L8F3ZxdkBb9ini9zP9UwnEFzWgQ==}
 
-  '@react-spring/web@9.7.5':
-    resolution: {integrity: sha512-lmvqGwpe+CSttsWNZVr+Dg62adtKhauGwLyGE/RRyZ8AAMLgb9x3NDMA5RMElXo+IMyTkPp7nxTB8ZQlmhb6JQ==}
+  '@react-spring/web@10.0.3':
+    resolution: {integrity: sha512-ndU+kWY81rHsT7gTFtCJ6mrVhaJ6grFmgTnENipzmKqot4HGf5smPNK+cZZJqoGeDsj9ZsiWPW4geT/NyD484A==}
     peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   '@reduxjs/toolkit@2.11.2':
     resolution: {integrity: sha512-Kd6kAHTA6/nUpp8mySPqj3en3dm0tdMIgbttnQ1xFMVpufoj+ADi8pXLBsd4xzTRHQa7t/Jv8W5UnCuW4kuWMQ==}
@@ -914,6 +923,9 @@ packages:
 
   '@tailwindcss/postcss@4.1.18':
     resolution: {integrity: sha512-Ce0GFnzAOuPyfV5SxjXGn0CubwGcuDB0zcdaPuCSzAa/2vII24JTkH+I6jcbXLb1ctjZMZZI6OjDaLPJQL1S0g==}
+
+  '@types/canvas-confetti@1.9.0':
+    resolution: {integrity: sha512-aBGj/dULrimR1XDZLtG9JwxX1b4HPRF6CX9Yfwh3NvstZEm1ZL7RBnel4keCPSqs1ANRu1u2Aoz9R+VmtjYuTg==}
 
   '@types/d3-array@3.0.3':
     resolution: {integrity: sha512-Reoy+pKnvsksN0lQUlcH6dOGjRZ/3WRwXR//m+/8lt1BXeI4xyaUZoqULNjyXXRuh0Mj4LNpkCvhUpQlY3X5xQ==}
@@ -1285,6 +1297,9 @@ packages:
 
   caniuse-lite@1.0.30001761:
     resolution: {integrity: sha512-JF9ptu1vP2coz98+5051jZ4PwQgd2ni8A+gYSN7EA7dPKIMf0pDlSUxhdmVOaV3/fYK5uWBkgSXJaRLr4+3A6g==}
+
+  canvas-confetti@1.9.4:
+    resolution: {integrity: sha512-yxQbJkAVrFXWNbTUjPqjF7G+g6pDotOUHGbkZq2NELZUMDpiJ85rIEazVb8GTaAptNW2miJAXbs1BtioA251Pw==}
 
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
@@ -2947,35 +2962,35 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.2
 
-  '@react-spring/animated@9.7.5(react@19.2.0)':
+  '@react-spring/animated@10.0.3(react@19.2.0)':
     dependencies:
-      '@react-spring/shared': 9.7.5(react@19.2.0)
-      '@react-spring/types': 9.7.5
+      '@react-spring/shared': 10.0.3(react@19.2.0)
+      '@react-spring/types': 10.0.3
       react: 19.2.0
 
-  '@react-spring/core@9.7.5(react@19.2.0)':
+  '@react-spring/core@10.0.3(react@19.2.0)':
     dependencies:
-      '@react-spring/animated': 9.7.5(react@19.2.0)
-      '@react-spring/shared': 9.7.5(react@19.2.0)
-      '@react-spring/types': 9.7.5
+      '@react-spring/animated': 10.0.3(react@19.2.0)
+      '@react-spring/shared': 10.0.3(react@19.2.0)
+      '@react-spring/types': 10.0.3
       react: 19.2.0
 
-  '@react-spring/rafz@9.7.5': {}
+  '@react-spring/rafz@10.0.3': {}
 
-  '@react-spring/shared@9.7.5(react@19.2.0)':
+  '@react-spring/shared@10.0.3(react@19.2.0)':
     dependencies:
-      '@react-spring/rafz': 9.7.5
-      '@react-spring/types': 9.7.5
+      '@react-spring/rafz': 10.0.3
+      '@react-spring/types': 10.0.3
       react: 19.2.0
 
-  '@react-spring/types@9.7.5': {}
+  '@react-spring/types@10.0.3': {}
 
-  '@react-spring/web@9.7.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@react-spring/web@10.0.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
-      '@react-spring/animated': 9.7.5(react@19.2.0)
-      '@react-spring/core': 9.7.5(react@19.2.0)
-      '@react-spring/shared': 9.7.5(react@19.2.0)
-      '@react-spring/types': 9.7.5
+      '@react-spring/animated': 10.0.3(react@19.2.0)
+      '@react-spring/core': 10.0.3(react@19.2.0)
+      '@react-spring/shared': 10.0.3(react@19.2.0)
+      '@react-spring/types': 10.0.3
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
@@ -3110,6 +3125,8 @@ snapshots:
       '@tailwindcss/oxide': 4.1.18
       postcss: 8.5.6
       tailwindcss: 4.1.18
+
+  '@types/canvas-confetti@1.9.0': {}
 
   '@types/d3-array@3.0.3': {}
 
@@ -3407,9 +3424,9 @@ snapshots:
 
   '@visx/point@3.12.0': {}
 
-  '@visx/react-spring@3.12.0(@react-spring/web@9.7.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)':
+  '@visx/react-spring@3.12.0(@react-spring/web@10.0.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)':
     dependencies:
-      '@react-spring/web': 9.7.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@react-spring/web': 10.0.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@types/react': 19.2.2
       '@visx/axis': 3.12.0(react@19.2.0)
       '@visx/grid': 3.12.0(react@19.2.0)
@@ -3508,9 +3525,9 @@ snapshots:
       prop-types: 15.8.1
       react: 19.2.0
 
-  '@visx/xychart@3.12.0(@react-spring/web@9.7.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@visx/xychart@3.12.0(@react-spring/web@10.0.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
-      '@react-spring/web': 9.7.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@react-spring/web': 10.0.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@types/lodash': 4.17.21
       '@types/react': 19.2.2
       '@visx/annotation': 3.12.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -3518,7 +3535,7 @@ snapshots:
       '@visx/event': 3.12.0
       '@visx/glyph': 3.12.0(react@19.2.0)
       '@visx/grid': 3.12.0(react@19.2.0)
-      '@visx/react-spring': 3.12.0(@react-spring/web@9.7.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
+      '@visx/react-spring': 3.12.0(@react-spring/web@10.0.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
       '@visx/responsive': 3.12.0(react@19.2.0)
       '@visx/scale': 3.12.0
       '@visx/shape': 3.12.0(react@19.2.0)
@@ -3661,6 +3678,8 @@ snapshots:
   callsites@3.1.0: {}
 
   caniuse-lite@1.0.30001761: {}
+
+  canvas-confetti@1.9.4: {}
 
   chalk@4.1.2:
     dependencies:
