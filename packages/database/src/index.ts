@@ -1,3 +1,15 @@
+// Enum types
+export type {
+  IncomeFrequency,
+  IncomeStatus,
+  BillFrequency,
+  BillStatus,
+  RecurringFrequency,
+  AssetType,
+  LiabilityType,
+  SavingsTransactionType,
+} from "./types/database.js";
+
 // Core entity types
 export type {
   Expense,
@@ -9,6 +21,18 @@ export type {
   UserSettings,
 } from "./types/database.js";
 
+// New entity types
+export type {
+  Category,
+  RecurringExpense,
+  Shortcut,
+  SavingsGoal,
+  SavingsTransaction,
+  Asset,
+  Liability,
+  NetWorthSnapshot,
+} from "./types/database.js";
+
 // Insert types (for creating records)
 export type {
   ExpenseInsert,
@@ -18,6 +42,14 @@ export type {
   IncomeInsert,
   DebtInsert,
   UserSettingsInsert,
+  CategoryInsert,
+  RecurringExpenseInsert,
+  ShortcutInsert,
+  SavingsGoalInsert,
+  SavingsTransactionInsert,
+  AssetInsert,
+  LiabilityInsert,
+  NetWorthSnapshotInsert,
 } from "./types/database.js";
 
 // Update types (for updating records)
@@ -29,4 +61,10 @@ export type {
   IncomeUpdate,
   DebtUpdate,
   UserSettingsUpdate,
+  CategoryUpdate,
+  RecurringExpenseUpdate,
+  ShortcutUpdate,
+  SavingsGoalUpdate,
+  AssetUpdate,
+  LiabilityUpdate,
 } from "./types/database.js";
