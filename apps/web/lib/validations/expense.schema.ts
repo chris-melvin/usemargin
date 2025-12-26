@@ -20,6 +20,7 @@ export const createExpenseSchema = z.object({
     .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Invalid time format (HH:MM or HH:MM:SS)")
     .optional()
     .nullable(),
+  bucket_id: z.string().uuid("Invalid bucket ID").optional().nullable(),
 });
 
 /**

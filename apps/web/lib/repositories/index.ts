@@ -11,5 +11,11 @@ export {
   dailyOverrideRepository,
 } from "./flex-bucket.repository";
 
+// Budget bucket repositories
+export {
+  budgetBucketRepository,
+  expenseBucketRuleRepository,
+} from "./budget-bucket.repository";
+
 // Base class for custom repositories
 export { BaseRepository } from "./base.repository";

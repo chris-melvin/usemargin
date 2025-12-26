@@ -67,6 +67,7 @@ export async function createExpenseFromData(data: {
   label: string;
   category?: string | null;
   notes?: string | null;
+  bucket_id?: string | null;
 }): Promise<ActionResult<Expense>> {
   const authResult = await requireAuth();
   if (!authResult.success) return authResult;
@@ -91,6 +92,7 @@ export async function createExpenseFromData(data: {
       notes: validation.data.notes ?? null,
       time_of_day: null,
       recurring_expense_id: null,
+      bucket_id: validation.data.bucket_id ?? null,
     });
 
     revalidatePath("/");

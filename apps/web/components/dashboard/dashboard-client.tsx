@@ -31,8 +31,9 @@ import { WeeklyPatternCard } from "@/components/dashboard/weekly-pattern-card";
 import { IncomeAllocationCard } from "@/components/dashboard/income-allocation-card";
 import { formatKey, formatCurrency, cn } from "@/lib/utils";
 import { DEFAULT_DAILY_LIMIT, CURRENCY } from "@/lib/constants";
-import type { Expense } from "@repo/database";
+import type { Expense, BudgetBucket } from "@repo/database";
 import type { LocalIncome, LocalBill } from "@/lib/types";
+import { useBuckets } from "@/hooks/use-buckets";
 
 // Demo data for income and bills
 const DEMO_INCOMES: LocalIncome[] = [
@@ -108,9 +109,11 @@ type TabType = "calendar" | "insights" | "transactions";
 
 interface DashboardClientProps {
   initialExpenses: Expense[];
+  dailyLimit?: number;
+  initialBuckets?: BudgetBucket[];
 }
 
-export function DashboardClient({ initialExpenses }: DashboardClientProps) {
+export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = [] }: DashboardClientProps) {
   const [activeTab, setActiveTab] = useState<TabType>("calendar");
   const [isShortcutModalOpen, setIsShortcutModalOpen] = useState(false);
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
@@ -128,7 +131,8 @@ export function DashboardClient({ initialExpenses }: DashboardClientProps) {
   // Demo allocation values
   const totalIncome = useMemo(() => incomes.reduce((sum, inc) => sum + inc.amount, 0), [incomes]);
   const totalBills = useMemo(() => bills.reduce((sum, bill) => sum + bill.amount, 0), [bills]);
-  const dailyBudgetAllocation = DEFAULT_DAILY_LIMIT * 30;
+  const actualDailyLimit = dailyLimit ?? DEFAULT_DAILY_LIMIT;
+  const dailyBudgetAllocation = actualDailyLimit * 30;
   const savingsAllocation = 5000;
 
   // Server-backed expenses with optimistic updates
@@ -152,13 +156,30 @@ export function DashboardClient({ initialExpenses }: DashboardClientProps) {
     [expenses]
   );
 
-  const { todayStatus } = useCalendar(localExpenses);
+  const { todayStatus } = useCalendar(localExpenses, { dailyLimit });
   const weeklyPatterns = useWeeklyPatterns(localExpenses);
   const { shortcuts, addShortcut, updateShortcut, deleteShortcut } = useShortcuts();
+  const { buckets, defaultBucket } = useBuckets({ initialBuckets });
+
+  // Debug: log buckets
+  if (process.env.NODE_ENV === "development") {
+    console.log("[DashboardClient] initialBuckets:", initialBuckets);
+    console.log("[DashboardClient] buckets:", buckets);
+    console.log("[DashboardClient] defaultBucket:", defaultBucket);
+  }
+
+  // Collect unique categories from existing expenses for suggestions
+  const existingCategories = useMemo(() => {
+    const cats = new Set<string>();
+    expenses.forEach((e) => {
+      if (e.category) cats.add(e.category);
+    });
+    return Array.from(cats).sort();
+  }, [expenses]);
 
   // AI Parser - Updated to use batch add with success animation
   const handleAiAddExpenses = useCallback(
-    async (parsedExpenses: Array<{ amount: number; label: string }>) => {
+    async (parsedExpenses: Array<{ amount: number; label: string; category?: string; bucketId?: string }>) => {
       await addExpenses(parsedExpenses, new Date());
 
       // Trigger success feedback
@@ -184,10 +205,12 @@ export function DashboardClient({ initialExpenses }: DashboardClientProps) {
     setIsShortcutModalOpen(true);
   }, []);
 
-  const { preview, isParsing, updatePreview, submit, clearPendingShortcut } = useAiParser({
+  const { preview, isParsing, updatePreview, updatePreviewItem, submit, clearPendingShortcut } = useAiParser({
     onSuccess: handleAiAddExpenses,
     onUnknownShortcut: handleUnknownShortcut,
     shortcuts,
+    buckets,
+    defaultBucketId: defaultBucket?.id,
   });
 
   // Today's expenses
@@ -213,6 +236,31 @@ export function DashboardClient({ initialExpenses }: DashboardClientProps) {
       setShowSuccessFlash(true);
     }
   };
+
+  // Handler for day detail smart input - adds expenses to selected date
+  const handleDayDetailSmartSubmit = useCallback(async (input: string) => {
+    if (!selectedDate || !input.trim()) return;
+
+    // Get the current preview (already parsed locally)
+    if (preview.length > 0) {
+      // Add each expense to the selected date
+      for (const exp of preview) {
+        await addExpense(selectedDate, exp.amount, exp.label);
+      }
+
+      // Trigger success feedback
+      quickWin();
+      setSuccessMessage(
+        preview.length === 1
+          ? `${preview[0]?.label || 'Expense'} added!`
+          : `${preview.length} expenses added!`
+      );
+      setShowSuccessFlash(true);
+
+      // Clear the preview
+      updatePreview("");
+    }
+  }, [selectedDate, preview, addExpense, quickWin, updatePreview]);
 
   const handleQuickAdd = async (amount: number, label: string) => {
     await addExpense(new Date(), amount, label);
@@ -488,6 +536,13 @@ export function DashboardClient({ initialExpenses }: DashboardClientProps) {
                     dailyLimit={DEFAULT_DAILY_LIMIT}
                     onAddExpense={handleAddExpense}
                     onDeleteExpense={handleDeleteExpense}
+                    preview={preview}
+                    isParsing={isParsing}
+                    onInputChange={updatePreview}
+                    onSubmit={handleDayDetailSmartSubmit}
+                    buckets={buckets}
+                    categories={existingCategories}
+                    onPreviewUpdate={updatePreviewItem}
                   />
                 </div>
               </div>
@@ -732,6 +787,13 @@ export function DashboardClient({ initialExpenses }: DashboardClientProps) {
         dailyLimit={DEFAULT_DAILY_LIMIT}
         onAddExpense={handleAddExpense}
         onDeleteExpense={handleDeleteExpense}
+        preview={preview}
+        isParsing={isParsing}
+        onInputChange={updatePreview}
+        onSubmit={handleDayDetailSmartSubmit}
+        buckets={buckets}
+        categories={existingCategories}
+        onPreviewUpdate={updatePreviewItem}
       />
 
       {/* Create Shortcut Modal */}
@@ -762,6 +824,9 @@ export function DashboardClient({ initialExpenses }: DashboardClientProps) {
         isParsing={isParsing}
         onInputChange={updatePreview}
         onSubmit={submit}
+        buckets={buckets}
+        categories={existingCategories}
+        onPreviewUpdate={updatePreviewItem}
       />
 
       {/* Success Animation */}

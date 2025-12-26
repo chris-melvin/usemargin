@@ -4,6 +4,15 @@ import { X } from "lucide-react";
 import { DayDetailPanel } from "./day-detail-panel";
 import { cn } from "@/lib/utils";
 import type { LocalExpense, LocalBill, LocalIncome } from "@/lib/types";
+import type { BudgetBucket } from "@repo/database";
+
+interface ExpensePreview {
+  amount: number;
+  label: string;
+  category?: string;
+  bucketId?: string;
+  bucketSlug?: string;
+}
 
 interface DayDetailSheetProps {
   isOpen: boolean;
@@ -16,6 +25,15 @@ interface DayDetailSheetProps {
   onAddExpense: (amount: number, label: string) => void;
   onDeleteExpense?: (expenseId: string) => void;
   onMarkBillPaid?: (billId: string) => void;
+  // Smart input props
+  preview?: ExpensePreview[];
+  isParsing?: boolean;
+  onInputChange?: (value: string) => void;
+  onSubmit?: (value: string) => void;
+  // Bucket/category props
+  buckets?: BudgetBucket[];
+  categories?: string[];
+  onPreviewUpdate?: (index: number, updates: Partial<ExpensePreview>) => void;
 }
 
 export function DayDetailSheet({
@@ -29,6 +47,13 @@ export function DayDetailSheet({
   onAddExpense,
   onDeleteExpense,
   onMarkBillPaid,
+  preview,
+  isParsing,
+  onInputChange,
+  onSubmit,
+  buckets = [],
+  categories = [],
+  onPreviewUpdate,
 }: DayDetailSheetProps) {
   if (!isOpen || !selectedDate) return null;
 
@@ -75,6 +100,13 @@ export function DayDetailSheet({
             onAddExpense={onAddExpense}
             onDeleteExpense={onDeleteExpense}
             onMarkBillPaid={onMarkBillPaid}
+            preview={preview}
+            isParsing={isParsing}
+            onInputChange={onInputChange}
+            onSubmit={onSubmit}
+            buckets={buckets}
+            categories={categories}
+            onPreviewUpdate={onPreviewUpdate}
           />
         </div>
       </div>

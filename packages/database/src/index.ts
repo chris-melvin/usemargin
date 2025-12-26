@@ -76,3 +76,14 @@ export type {
   UserOnboardingInsert,
   UserOnboardingUpdate,
 } from "./types/database.js";
+
+// Budget bucket types
+export type {
+  BucketMatchType,
+  BudgetBucket,
+  ExpenseBucketRule,
+  BudgetBucketInsert,
+  BudgetBucketUpdate,
+  ExpenseBucketRuleInsert,
+  ExpenseBucketRuleUpdate,
+} from "./types/database.js";

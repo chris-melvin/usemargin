@@ -111,6 +111,8 @@ export interface CustomShortcut {
   label: string; // e.g., "Book Purchase"
   category?: string;
   icon?: string;
+  defaultBucketId?: string;   // Default bucket for this shortcut
+  defaultBucketSlug?: string; // For display
   createdAt: string; // ISO string
 }
 

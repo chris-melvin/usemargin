@@ -74,6 +74,7 @@ export interface Expense {
   notes: string | null;
   time_of_day: string | null; // HH:MM:SS
   recurring_expense_id: string | null;
+  bucket_id: string | null; // Reference to budget bucket
   created_at: string;
   updated_at: string;
 }
@@ -153,6 +154,10 @@ export interface UserSettings {
   timezone: string;
   week_starts_on: number; // 0-6 (Sunday-Saturday)
   show_savings_in_allocation: boolean;
+  budget_setup_completed: boolean;
+  total_monthly_income: number | null;
+  total_fixed_expenses: number | null;
+  calculated_daily_limit: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -276,8 +281,9 @@ export interface NetWorthSnapshot {
 // INSERT TYPES (for creating new records)
 // =============================================================================
 
-export type ExpenseInsert = Omit<Expense, "id" | "created_at" | "updated_at"> & {
+export type ExpenseInsert = Omit<Expense, "id" | "created_at" | "updated_at" | "bucket_id"> & {
   id?: string;
+  bucket_id?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -317,13 +323,18 @@ export type DebtInsert = Omit<Debt, "id" | "created_at" | "updated_at"> & {
   updated_at?: string;
 };
 
-export type UserSettingsInsert = Omit<UserSettings, "id" | "created_at" | "updated_at"> & {
+export type UserSettingsInsert = {
+  user_id: string;
   id?: string;
   default_daily_limit?: number;
   currency?: string;
   timezone?: string;
   week_starts_on?: number;
   show_savings_in_allocation?: boolean;
+  budget_setup_completed?: boolean;
+  total_monthly_income?: number | null;
+  total_fixed_expenses?: number | null;
+  calculated_daily_limit?: number | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -424,6 +435,8 @@ export interface UserOnboarding {
   expense_count: number;
   days_active: number;
   last_active_date: string | null;
+  budget_setup_completed: boolean;
+  budget_setup_step: number;
   created_at: string;
   updated_at: string;
 }
@@ -440,8 +453,72 @@ export type UserOnboardingInsert = {
   expense_count?: number;
   days_active?: number;
   last_active_date?: string | null;
+  budget_setup_completed?: boolean;
+  budget_setup_step?: number;
   created_at?: string;
   updated_at?: string;
 };
 
 export type UserOnboardingUpdate = Partial<Omit<UserOnboarding, "id" | "user_id">>;
+
+// =============================================================================
+// BUDGET BUCKET TYPES
+// =============================================================================
+
+export type BucketMatchType = "category" | "label" | "keyword";
+
+export interface BudgetBucket {
+  id: string;
+  user_id: string;
+  name: string;
+  slug: string;
+  percentage: number;
+  allocated_amount: number | null;
+  color: string | null;
+  icon: string | null;
+  is_default: boolean;
+  is_system: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExpenseBucketRule {
+  id: string;
+  user_id: string;
+  bucket_id: string;
+  match_type: BucketMatchType;
+  match_value: string;
+  priority: number;
+  created_at: string;
+}
+
+export type BudgetBucketInsert = {
+  user_id: string;
+  name: string;
+  slug: string;
+  id?: string;
+  percentage?: number;
+  allocated_amount?: number | null;
+  color?: string | null;
+  icon?: string | null;
+  is_default?: boolean;
+  is_system?: boolean;
+  sort_order?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type BudgetBucketUpdate = Partial<Omit<BudgetBucket, "id" | "user_id">>;
+
+export type ExpenseBucketRuleInsert = {
+  user_id: string;
+  bucket_id: string;
+  match_type: BucketMatchType;
+  match_value: string;
+  id?: string;
+  priority?: number;
+  created_at?: string;
+};
+
+export type ExpenseBucketRuleUpdate = Partial<Omit<ExpenseBucketRule, "id" | "user_id">>;

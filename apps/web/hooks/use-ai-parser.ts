@@ -3,12 +3,15 @@
 import { useState, useCallback, useMemo } from "react";
 import { TEMPLATES } from "@/lib/constants";
 import type { CustomShortcut } from "@/lib/types";
+import type { BudgetBucket } from "@repo/database";
 
 export interface ParsedExpense {
   amount: number;
   label: string;
   category?: string;
-  fromShortcut?: string; // The @keyword that was used
+  bucketId?: string;      // Resolved bucket ID
+  bucketSlug?: string;    // For display (e.g., "flex", "daily-spending")
+  fromShortcut?: string;  // The @keyword that was used
 }
 
 export interface UnknownShortcut {
@@ -21,7 +24,15 @@ interface UseAiParserOptions {
   onError?: (error: Error) => void;
   onUnknownShortcut?: (shortcut: UnknownShortcut) => void;
   shortcuts?: CustomShortcut[];
+  buckets?: BudgetBucket[];
+  defaultBucketId?: string;
 }
+
+// Patterns for bucket and category extraction
+// :bucket pattern - matches :word or :word-word (e.g., :flex, :daily-spending)
+const BUCKET_PATTERN = /:([a-z][a-z0-9-]*)/gi;
+// #category pattern - matches #word (e.g., #travel, #food)
+const CATEGORY_PATTERN = /#([a-zA-Z][a-zA-Z0-9]*)/g;
 
 // Template shortcuts for instant parsing
 const TEMPLATE_MAP = new Map(
@@ -35,7 +46,14 @@ const SHORTCUTS: Record<string, { amount?: number; label: string; multiplier?: n
   "round trip": { label: "Commute", multiplier: 2 },
 };
 
-export function useAiParser({ onSuccess, onError, onUnknownShortcut, shortcuts = [] }: UseAiParserOptions = {}) {
+export function useAiParser({
+  onSuccess,
+  onError,
+  onUnknownShortcut,
+  shortcuts = [],
+  buckets = [],
+  defaultBucketId,
+}: UseAiParserOptions = {}) {
   const [isParsing, setIsParsing] = useState(false);
   const [preview, setPreview] = useState<ParsedExpense[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +64,86 @@ export function useAiParser({ onSuccess, onError, onUnknownShortcut, shortcuts =
     () => new Map(shortcuts.map((s) => [s.trigger.toLowerCase(), s])),
     [shortcuts]
   );
+
+  // Build bucket map for quick lookup by slug AND name
+  const bucketMap = useMemo(() => {
+    const map = new Map<string, BudgetBucket>();
+    buckets.forEach((b) => {
+      // Add by slug
+      map.set(b.slug.toLowerCase(), b);
+      // Also add by name (lowercase, spaces replaced with hyphens)
+      const nameKey = b.name.toLowerCase().replace(/\s+/g, "-");
+      if (!map.has(nameKey)) {
+        map.set(nameKey, b);
+      }
+      // Also add by name without spaces
+      const nameKeyNoSpaces = b.name.toLowerCase().replace(/\s+/g, "");
+      if (!map.has(nameKeyNoSpaces)) {
+        map.set(nameKeyNoSpaces, b);
+      }
+    });
+    return map;
+  }, [buckets]);
+
+  // Get default bucket
+  const defaultBucket = useMemo(() => {
+    if (defaultBucketId) {
+      return buckets.find((b) => b.id === defaultBucketId);
+    }
+    return buckets.find((b) => b.is_default) ?? buckets[0];
+  }, [buckets, defaultBucketId]);
+
+  // Extract :bucket from input and return { bucketSlug, bucketId, remaining }
+  const extractBucket = useCallback((input: string): {
+    bucketSlug?: string;
+    bucketId?: string;
+    remaining: string;
+  } => {
+    const match = input.match(BUCKET_PATTERN);
+    if (match && match[0]) {
+      const slug = match[0].slice(1).toLowerCase(); // Remove : prefix
+      const bucket = bucketMap.get(slug);
+
+      // Debug logging
+      if (process.env.NODE_ENV === "development") {
+        console.log("[useAiParser] Bucket pattern found:", match[0]);
+        console.log("[useAiParser] Looking for slug:", slug);
+        console.log("[useAiParser] Available buckets:", Array.from(bucketMap.keys()));
+        console.log("[useAiParser] Found bucket:", bucket);
+      }
+
+      if (bucket) {
+        return {
+          bucketSlug: bucket.slug,
+          bucketId: bucket.id,
+          remaining: input.replace(match[0], "").trim(),
+        };
+      }
+      // Even if bucket not found, still remove the pattern from input
+      // and use the typed slug as bucketSlug (for display purposes)
+      return {
+        bucketSlug: slug, // Show what user typed even if not matched
+        remaining: input.replace(match[0], "").trim(),
+      };
+    }
+    return { remaining: input };
+  }, [bucketMap]);
+
+  // Extract #category from input and return { category, remaining }
+  const extractCategory = useCallback((input: string): {
+    category?: string;
+    remaining: string;
+  } => {
+    const match = input.match(CATEGORY_PATTERN);
+    if (match && match[0]) {
+      const category = match[0].slice(1); // Remove # prefix, keep original case
+      return {
+        category,
+        remaining: input.replace(match[0], "").trim(),
+      };
+    }
+    return { remaining: input };
+  }, []);
 
   // Parse @keyword patterns: "@book 500" → { trigger: "book", amount: 500 }
   const parseShortcutPattern = useCallback((input: string): { parsed: ParsedExpense | null; unknown: UnknownShortcut | null; remaining: string } => {
@@ -62,11 +160,24 @@ export function useAiParser({ onSuccess, onError, onUnknownShortcut, shortcuts =
     // Look up in custom shortcuts
     const shortcut = shortcutMap.get(trigger);
     if (shortcut) {
+      // Get bucket from shortcut's default or look up by slug
+      let bucketId = shortcut.defaultBucketId;
+      let bucketSlug = shortcut.defaultBucketSlug;
+
+      if (bucketSlug && !bucketId) {
+        const bucket = bucketMap.get(bucketSlug.toLowerCase());
+        if (bucket) {
+          bucketId = bucket.id;
+        }
+      }
+
       return {
         parsed: {
           amount,
           label: shortcut.label,
           category: shortcut.category,
+          bucketId,
+          bucketSlug,
           fromShortcut: trigger,
         },
         unknown: null,
@@ -80,16 +191,41 @@ export function useAiParser({ onSuccess, onError, onUnknownShortcut, shortcuts =
       unknown: { trigger, amount },
       remaining,
     };
-  }, [shortcutMap]);
+  }, [shortcutMap, bucketMap]);
 
   // Local parsing for templates and shortcuts (instant, no API needed)
   const parseLocally = useCallback((input: string): ParsedExpense[] | null => {
-    const normalized = input.toLowerCase().trim();
+    let workingInput = input;
     const results: ParsedExpense[] = [];
 
-    // First, check for @keyword patterns
-    if (input.includes("@")) {
-      const { parsed, unknown, remaining } = parseShortcutPattern(input);
+    // Debug logging
+    if (process.env.NODE_ENV === "development") {
+      console.log("[parseLocally] Input:", input);
+    }
+
+    // Step 1: Extract :bucket pattern (applies to all expenses in this input)
+    const { bucketSlug, bucketId, remaining: afterBucket } = extractBucket(workingInput);
+    workingInput = afterBucket;
+
+    // Debug logging
+    if (process.env.NODE_ENV === "development") {
+      console.log("[parseLocally] After bucket extraction:", { bucketSlug, bucketId, remaining: afterBucket });
+    }
+
+    // Step 2: Extract #category pattern (applies to all expenses in this input)
+    const { category: explicitCategory, remaining: afterCategory } = extractCategory(workingInput);
+    workingInput = afterCategory;
+
+    // Debug logging
+    if (process.env.NODE_ENV === "development") {
+      console.log("[parseLocally] After category extraction:", { category: explicitCategory, remaining: afterCategory });
+    }
+
+    const normalized = workingInput.toLowerCase().trim();
+
+    // Step 3: Check for @keyword patterns
+    if (workingInput.includes("@")) {
+      const { parsed, unknown, remaining } = parseShortcutPattern(workingInput);
 
       if (unknown) {
         // Store pending shortcut for UI to handle
@@ -99,13 +235,25 @@ export function useAiParser({ onSuccess, onError, onUnknownShortcut, shortcuts =
       }
 
       if (parsed) {
-        results.push(parsed);
+        // Apply explicit bucket/category if provided, otherwise use shortcut defaults
+        results.push({
+          ...parsed,
+          bucketId: bucketId ?? parsed.bucketId,
+          bucketSlug: bucketSlug ?? parsed.bucketSlug,
+          category: explicitCategory ?? parsed.category,
+        });
         setPendingShortcut(null);
 
         // Continue parsing remaining input if any
         if (remaining) {
           const moreResults = parseSimplePatterns(remaining);
-          results.push(...moreResults);
+          // Apply bucket/category to all parsed results
+          results.push(...moreResults.map((r) => ({
+            ...r,
+            bucketId: bucketId ?? r.bucketId,
+            bucketSlug: bucketSlug ?? r.bucketSlug,
+            category: explicitCategory ?? r.category,
+          })));
         }
 
         return results.length > 0 ? results : null;
@@ -114,7 +262,7 @@ export function useAiParser({ onSuccess, onError, onUnknownShortcut, shortcuts =
 
     setPendingShortcut(null);
 
-    // Check for shortcuts first
+    // Step 4: Check for built-in shortcuts (both ways, roundtrip)
     for (const [shortcut, config] of Object.entries(SHORTCUTS)) {
       if (normalized.includes(shortcut)) {
         const template = TEMPLATE_MAP.get(config.label.toLowerCase());
@@ -124,6 +272,9 @@ export function useAiParser({ onSuccess, onError, onUnknownShortcut, shortcuts =
             results.push({
               amount: template.amount,
               label: template.label,
+              bucketId,
+              bucketSlug,
+              category: explicitCategory,
             });
           }
         }
@@ -132,20 +283,41 @@ export function useAiParser({ onSuccess, onError, onUnknownShortcut, shortcuts =
         if (remaining) {
           // Continue parsing the rest
           const moreResults = parseSimplePatterns(remaining);
-          results.push(...moreResults);
+          results.push(...moreResults.map((r) => ({
+            ...r,
+            bucketId: bucketId ?? r.bucketId,
+            bucketSlug: bucketSlug ?? r.bucketSlug,
+            category: explicitCategory ?? r.category,
+          })));
         }
         return results.length > 0 ? results : null;
       }
     }
 
-    // Try simple patterns
+    // Step 5: Try simple patterns
     const simpleResults = parseSimplePatterns(normalized);
+    if (process.env.NODE_ENV === "development") {
+      console.log("[parseLocally] Simple patterns result:", simpleResults);
+    }
     if (simpleResults.length > 0) {
-      return simpleResults;
+      // Apply bucket/category to all parsed results
+      const finalResults = simpleResults.map((r) => ({
+        ...r,
+        bucketId: bucketId ?? r.bucketId,
+        bucketSlug: bucketSlug ?? r.bucketSlug,
+        category: explicitCategory ?? r.category,
+      }));
+      if (process.env.NODE_ENV === "development") {
+        console.log("[parseLocally] Final results:", finalResults);
+      }
+      return finalResults;
     }
 
+    if (process.env.NODE_ENV === "development") {
+      console.log("[parseLocally] No results, returning null");
+    }
     return null;
-  }, [parseShortcutPattern, onUnknownShortcut]);
+  }, [parseShortcutPattern, onUnknownShortcut, extractBucket, extractCategory]);
 
   // Parse simple patterns like "coffee 120" or "grab 180 and lunch"
   const parseSimplePatterns = (input: string): ParsedExpense[] => {
@@ -313,15 +485,30 @@ Examples:
     setPendingShortcut(null);
   }, []);
 
+  // Update a specific preview item (for changing bucket/category via UI)
+  const updatePreviewItem = useCallback((index: number, updates: Partial<ParsedExpense>) => {
+    setPreview((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const updated = [...prev];
+      const item = updated[index];
+      if (item) {
+        updated[index] = { ...item, ...updates };
+      }
+      return updated;
+    });
+  }, []);
+
   return {
     parse,
     submit,
     updatePreview,
+    updatePreviewItem,
     clearPreview,
     clearPendingShortcut,
     preview,
     isParsing,
     error,
     pendingShortcut,
+    defaultBucket,
   };
 }

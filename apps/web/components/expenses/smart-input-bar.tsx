@@ -2,12 +2,18 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Sparkles, Loader2, ArrowUp, X, Command, Plus, HelpCircle, Lightbulb, ChevronUp } from "lucide-react";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { CURRENCY } from "@/lib/constants";
+import { BucketChip } from "./bucket-chip";
+import { CategoryChip } from "./category-chip";
+import type { BudgetBucket } from "@repo/database";
 
 interface ExpensePreview {
   amount: number;
   label: string;
+  category?: string;
+  bucketId?: string;
+  bucketSlug?: string;
 }
 
 interface SmartInputBarProps {
@@ -16,14 +22,18 @@ interface SmartInputBarProps {
   isParsing: boolean;
   onInputChange: (value: string) => void;
   onSubmit: (value: string) => void;
+  buckets?: BudgetBucket[];
+  categories?: string[];
+  onPreviewUpdate?: (index: number, updates: Partial<ExpensePreview>) => void;
+  onCreateCategory?: (name: string) => void;
 }
 
 // NLP syntax examples for power users
 const SYNTAX_EXAMPLES = [
   { example: "coffee 120", desc: "Simple expense" },
-  { example: "grab 180 and lunch 200", desc: "Multiple items" },
-  { example: "@starbucks", desc: "Use saved shortcut" },
-  { example: "groceries 1.5k", desc: "Use 'k' for thousands" },
+  { example: "grab 180 and lunch", desc: "Multiple items" },
+  { example: "ticket 2000 :flex", desc: "Assign to bucket" },
+  { example: "uber 180 #travel", desc: "Add category" },
 ];
 
 // Quick suggestion chips for new users
@@ -40,6 +50,10 @@ export function SmartInputBar({
   isParsing,
   onInputChange,
   onSubmit,
+  buckets = [],
+  categories = [],
+  onPreviewUpdate,
+  onCreateCategory,
 }: SmartInputBarProps) {
   const [value, setValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -185,29 +199,7 @@ export function SmartInputBar({
 
             {/* Mobile Input Area */}
             <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              {/* Preview chips */}
-              {preview.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {preview.map((expense, index) => (
-                    <div
-                      key={`${expense.label}-${index}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/60 text-sm"
-                    >
-                      <span className="text-amber-700 font-medium">{expense.label}</span>
-                      <span className="text-amber-500 text-xs">
-                        {CURRENCY}{expense.amount.toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                  {preview.length > 1 && (
-                    <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-stone-100 text-xs font-semibold text-stone-500">
-                      Total: {CURRENCY}{totalPreview.toLocaleString()}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Input field - larger for mobile */}
+              {/* Input field with inline preview */}
               <div className="flex gap-2 mb-4">
                 <div
                   className={cn(
@@ -219,7 +211,7 @@ export function SmartInputBar({
                     isFocused && "border-amber-400 bg-white"
                   )}
                 >
-                  <div className="flex items-center gap-3 p-3">
+                  <div className="flex items-center gap-2 p-3">
                     <Sparkles className="w-5 h-5 text-amber-500 flex-shrink-0" />
                     <input
                       ref={mobileInputRef}
@@ -235,10 +227,47 @@ export function SmartInputBar({
                       onFocus={() => setIsFocused(true)}
                       onBlur={() => setIsFocused(false)}
                       placeholder="coffee 120, grab and lunch..."
-                      className="flex-1 bg-transparent text-stone-800 text-base outline-none placeholder:text-stone-400"
+                      className="flex-1 min-w-0 bg-transparent text-stone-800 text-base outline-none placeholder:text-stone-400"
                     />
+                    {/* Inline reactive preview for mobile */}
+                    {preview.length > 0 && preview[0] && (
+                      <div className="flex items-center gap-1 flex-shrink-0 animate-in fade-in duration-150">
+                        <span className="text-xs font-medium text-amber-600">
+                          {CURRENCY}{preview[0].amount.toLocaleString()}
+                        </span>
+                        {buckets.length > 0 && (
+                          <BucketChip
+                            buckets={buckets}
+                            selectedSlug={preview[0].bucketSlug}
+                            onSelect={(bucket) => {
+                              onPreviewUpdate?.(0, {
+                                bucketId: bucket.id,
+                                bucketSlug: bucket.slug,
+                              });
+                            }}
+                            size="sm"
+                          />
+                        )}
+                        {preview[0].category && (
+                          <CategoryChip
+                            categories={categories}
+                            selectedCategory={preview[0].category}
+                            onSelect={(category) => {
+                              onPreviewUpdate?.(0, { category: category || undefined });
+                            }}
+                            onCreateNew={onCreateCategory}
+                            size="sm"
+                          />
+                        )}
+                        {preview.length > 1 && (
+                          <span className="text-[10px] text-stone-400">
+                            +{preview.length - 1}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {value && (
-                      <button onClick={clearInput} className="p-1 text-stone-400">
+                      <button onClick={clearInput} className="p-1 text-stone-400 flex-shrink-0">
                         <X className="w-5 h-5" />
                       </button>
                     )}
@@ -248,7 +277,7 @@ export function SmartInputBar({
                   onClick={handleSubmit}
                   disabled={!value.trim() || isParsing}
                   className={cn(
-                    "w-14 h-14 rounded-2xl flex items-center justify-center transition-all",
+                    "w-14 h-14 rounded-2xl flex items-center justify-center transition-all flex-shrink-0",
                     value.trim() && !isParsing
                       ? "bg-stone-900 text-white active:scale-95"
                       : "bg-stone-200 text-stone-400"
@@ -324,6 +353,8 @@ export function SmartInputBar({
         className={cn(
           "fixed bottom-0 left-0 right-0 z-50",
           "hidden sm:block",
+          // Don't overlap the day detail panel on desktop
+          "lg:left-72 lg:right-[32%] xl:right-[35%]",
           "transition-all duration-500 ease-out",
           isVisible ? "translate-y-0" : "translate-y-full"
         )}
@@ -332,56 +363,6 @@ export function SmartInputBar({
 
         <div className="px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
           <div className="max-w-2xl mx-auto">
-            {/* Preview chips */}
-            <div
-              className={cn(
-                "overflow-hidden transition-all duration-300 ease-out",
-                preview.length > 0 ? "max-h-24 opacity-100 mb-3" : "max-h-0 opacity-0 mb-0"
-              )}
-            >
-              <div className="flex flex-wrap gap-2 items-center">
-                {preview.map((expense, index) => (
-                  <div
-                    key={`${expense.label}-${index}`}
-                    className={cn(
-                      "inline-flex items-center gap-1.5",
-                      "px-3 py-1.5 rounded-full",
-                      "bg-amber-50 border border-amber-200/60",
-                      "text-sm font-medium text-amber-800",
-                      "animate-in fade-in slide-in-from-bottom-2 zoom-in-95",
-                      "shadow-sm"
-                    )}
-                    style={{
-                      animationDelay: `${index * 50}ms`,
-                      animationFillMode: "backwards",
-                    }}
-                  >
-                    <span className="text-amber-600">{expense.label}</span>
-                    <span className="text-amber-500/80 text-xs">
-                      {CURRENCY}{expense.amount.toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-                {preview.length > 1 && (
-                  <div
-                    className={cn(
-                      "inline-flex items-center gap-1",
-                      "px-2.5 py-1 rounded-full",
-                      "bg-stone-100 border border-stone-200/60",
-                      "text-xs font-semibold text-stone-500",
-                      "animate-in fade-in slide-in-from-bottom-2"
-                    )}
-                    style={{
-                      animationDelay: `${preview.length * 50}ms`,
-                      animationFillMode: "backwards",
-                    }}
-                  >
-                    Total: {CURRENCY}{totalPreview.toLocaleString()}
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Main input container */}
             <div
               className={cn(
@@ -423,7 +404,7 @@ export function SmartInputBar({
                   />
                 </div>
 
-                <div className="flex-1 relative">
+                <div className="flex-1 relative min-w-0">
                   <input
                     ref={inputRef}
                     type="text"
@@ -445,22 +426,61 @@ export function SmartInputBar({
                       "caret-amber-500"
                     )}
                   />
-                  {value && (
-                    <button
-                      onClick={clearInput}
-                      className={cn(
-                        "absolute right-0 top-1/2 -translate-y-1/2",
-                        "w-6 h-6 rounded-full",
-                        "flex items-center justify-center",
-                        "text-stone-400 hover:text-stone-600",
-                        "hover:bg-stone-100",
-                        "transition-all duration-200"
-                      )}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
                 </div>
+
+                {/* Inline reactive preview */}
+                {preview.length > 0 && preview[0] && (
+                  <div className="flex items-center gap-1.5 flex-shrink-0 animate-in fade-in duration-150">
+                    <span className="text-stone-300">→</span>
+                    <span className="text-xs font-medium text-amber-600">
+                      {CURRENCY}{preview[0].amount.toLocaleString()}
+                    </span>
+                    {buckets.length > 0 && (
+                      <BucketChip
+                        buckets={buckets}
+                        selectedSlug={preview[0].bucketSlug}
+                        onSelect={(bucket) => {
+                          onPreviewUpdate?.(0, {
+                            bucketId: bucket.id,
+                            bucketSlug: bucket.slug,
+                          });
+                        }}
+                        size="sm"
+                      />
+                    )}
+                    {preview[0].category && (
+                      <CategoryChip
+                        categories={categories}
+                        selectedCategory={preview[0].category}
+                        onSelect={(category) => {
+                          onPreviewUpdate?.(0, { category: category || undefined });
+                        }}
+                        onCreateNew={onCreateCategory}
+                        size="sm"
+                      />
+                    )}
+                    {preview.length > 1 && (
+                      <span className="text-[10px] text-stone-400">
+                        +{preview.length - 1}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {value && (
+                  <button
+                    onClick={clearInput}
+                    className={cn(
+                      "flex-shrink-0 w-6 h-6 rounded-full",
+                      "flex items-center justify-center",
+                      "text-stone-400 hover:text-stone-600",
+                      "hover:bg-stone-100",
+                      "transition-all duration-200"
+                    )}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
 
                 {/* Help button */}
                 <button
@@ -498,6 +518,7 @@ export function SmartInputBar({
                   )}
                 </button>
               </div>
+
 
               {/* Desktop help panel */}
               {showHelp && (

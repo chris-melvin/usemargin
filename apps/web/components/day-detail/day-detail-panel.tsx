@@ -1,10 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Plus, Calendar, Clock, CreditCard, Banknote, Receipt, Check, CalendarDays, Trash2 } from "lucide-react";
+import { useMemo } from "react";
+import { Calendar, Clock, CreditCard, Banknote, Receipt, Check, CalendarDays, Trash2 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { CURRENCY } from "@/lib/constants";
+import { CompactSmartInput } from "@/components/expenses/compact-smart-input";
 import type { LocalExpense, LocalBill, LocalIncome, TimelineEvent } from "@/lib/types";
+import type { BudgetBucket } from "@repo/database";
+
+interface ExpensePreview {
+  amount: number;
+  label: string;
+  category?: string;
+  bucketId?: string;
+  bucketSlug?: string;
+}
 
 interface DayDetailPanelProps {
   selectedDate: Date | null;
@@ -16,6 +26,15 @@ interface DayDetailPanelProps {
   onDeleteExpense?: (expenseId: string) => void;
   onMarkBillPaid?: (billId: string) => void;
   onMarkIncomeReceived?: (incomeId: string) => void;
+  // Smart input props
+  preview?: ExpensePreview[];
+  isParsing?: boolean;
+  onInputChange?: (value: string) => void;
+  onSubmit?: (value: string) => void;
+  // Bucket/category props
+  buckets?: BudgetBucket[];
+  categories?: string[];
+  onPreviewUpdate?: (index: number, updates: Partial<ExpensePreview>) => void;
 }
 
 // Event type colors and icons
@@ -84,10 +103,16 @@ export function DayDetailPanel({
   onAddExpense,
   onDeleteExpense,
   onMarkBillPaid,
+  preview = [],
+  isParsing = false,
+  onInputChange,
+  onSubmit,
+  buckets = [],
+  categories = [],
+  onPreviewUpdate,
 }: DayDetailPanelProps) {
-  const [isAddingExpense, setIsAddingExpense] = useState(false);
-  const [newAmount, setNewAmount] = useState("");
-  const [newLabel, setNewLabel] = useState("");
+  // Check if smart input is available
+  const hasSmartInput = onInputChange && onSubmit;
 
   // Build timeline events
   const { timelineEvents, remaining } = useMemo(() => {
@@ -199,14 +224,11 @@ export function DayDetailPanel({
     };
   }, [selectedDate, expenses, bills, incomes, dailyLimit]);
 
-  const handleAddExpense = () => {
-    const amount = parseFloat(newAmount);
-    if (amount > 0 && newLabel.trim()) {
-      onAddExpense(amount, newLabel.trim());
-      setNewAmount("");
-      setNewLabel("");
-      setIsAddingExpense(false);
-    }
+  // Handler for smart input submission
+  const handleSmartInputSubmit = (expenses: Array<{ amount: number; label: string }>) => {
+    expenses.forEach((exp) => {
+      onAddExpense(exp.amount, exp.label);
+    });
   };
 
   // Empty state when no date selected
@@ -351,50 +373,22 @@ export function DayDetailPanel({
 
       {/* Add Expense Section */}
       <div className="flex-shrink-0 border-t border-stone-100 p-4 bg-stone-50/50">
-        {isAddingExpense ? (
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <input
-                type="number"
-                value={newAmount}
-                onChange={(e) => setNewAmount(e.target.value)}
-                placeholder="Amount"
-                className="flex-1 px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300/50"
-                autoFocus
-              />
-              <input
-                type="text"
-                value={newLabel}
-                onChange={(e) => setNewLabel(e.target.value)}
-                placeholder="Label"
-                className="flex-1 px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300/50"
-                onKeyDown={(e) => e.key === "Enter" && handleAddExpense()}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setIsAddingExpense(false)}
-                className="flex-1 px-3 py-2 text-sm text-stone-600 bg-white border border-stone-200 rounded-lg hover:bg-stone-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddExpense}
-                disabled={!newAmount || !newLabel.trim()}
-                className="flex-1 px-3 py-2 text-sm text-white bg-amber-500 rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add
-              </button>
-            </div>
-          </div>
+        {hasSmartInput ? (
+          <CompactSmartInput
+            onAddExpenses={handleSmartInputSubmit}
+            preview={preview}
+            isParsing={isParsing}
+            onInputChange={onInputChange}
+            onSubmit={onSubmit}
+            placeholder="coffee 120, lunch..."
+            buckets={buckets}
+            categories={categories}
+            onPreviewUpdate={onPreviewUpdate}
+          />
         ) : (
-          <button
-            onClick={() => setIsAddingExpense(true)}
-            className="w-full px-4 py-2.5 border-2 border-dashed border-stone-200 rounded-xl flex items-center justify-center gap-2 text-stone-400 hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50/50 transition-all"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="text-sm font-medium">Add Expense</span>
-          </button>
+          <p className="text-center text-xs text-stone-400">
+            Select a date to add expenses
+          </p>
         )}
       </div>
     </div>

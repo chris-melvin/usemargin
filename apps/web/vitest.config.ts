@@ -9,6 +9,11 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     include: ["**/*.test.{ts,tsx}"],
+    exclude: [
+      "**/node_modules/**",
+      "**/middleware.ts",
+      "**/*.config.ts",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

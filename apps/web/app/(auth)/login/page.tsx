@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "@/actions/auth";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function LoginPage() {
+function LoginForm() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/";
   const [error, setError] = useState<string | null>(null);
@@ -95,5 +95,13 @@ export default function LoginPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="animate-pulse space-y-4"><div className="h-8 bg-zinc-800 rounded w-1/2 mx-auto" /><div className="h-10 bg-zinc-800 rounded" /><div className="h-10 bg-zinc-800 rounded" /></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

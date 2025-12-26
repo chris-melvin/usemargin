@@ -55,7 +55,7 @@ export function useServerExpenses(initialExpenses: Expense[]) {
       date: Date,
       amount: number,
       label: string,
-      category?: string
+      options?: { category?: string; bucketId?: string }
     ): Promise<{ success: boolean; error?: string }> => {
       const dateStr = date.toISOString().split("T")[0]!;
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -66,11 +66,12 @@ export function useServerExpenses(initialExpenses: Expense[]) {
         date: dateStr,
         amount,
         label,
-        category: category ?? null,
+        category: options?.category ?? null,
         category_id: null,
         notes: null,
         time_of_day: null,
         recurring_expense_id: null,
+        bucket_id: options?.bucketId ?? null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         pending: true,
@@ -87,7 +88,8 @@ export function useServerExpenses(initialExpenses: Expense[]) {
           date: dateStr,
           amount,
           label,
-          category: category ?? null,
+          category: options?.category ?? null,
+          bucket_id: options?.bucketId ?? null,
         });
 
         if (!serverResult.success) {
@@ -107,7 +109,7 @@ export function useServerExpenses(initialExpenses: Expense[]) {
    */
   const addExpenses = useCallback(
     async (
-      expenses: Array<{ amount: number; label: string; category?: string }>,
+      expenses: Array<{ amount: number; label: string; category?: string; bucketId?: string }>,
       date: Date = new Date()
     ): Promise<{ success: boolean; errors: string[] }> => {
       const dateStr = date.toISOString().split("T")[0]!;
@@ -125,6 +127,7 @@ export function useServerExpenses(initialExpenses: Expense[]) {
           notes: null,
           time_of_day: null,
           recurring_expense_id: null,
+          bucket_id: exp.bucketId ?? null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           pending: true,
@@ -143,6 +146,7 @@ export function useServerExpenses(initialExpenses: Expense[]) {
               amount: exp.amount,
               label: exp.label,
               category: exp.category ?? null,
+              bucket_id: exp.bucketId ?? null,
             })
           )
         );
