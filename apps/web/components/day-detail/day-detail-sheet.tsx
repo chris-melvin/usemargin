@@ -24,6 +24,7 @@ interface DayDetailSheetProps {
   dailyLimit: number;
   onAddExpense: (amount: number, label: string) => void;
   onDeleteExpense?: (expenseId: string) => void;
+  onUpdateExpense?: (expenseId: string, updates: { category?: string | null; bucket_id?: string | null }) => void;
   onMarkBillPaid?: (billId: string) => void;
   // Smart input props
   preview?: ExpensePreview[];
@@ -46,6 +47,7 @@ export function DayDetailSheet({
   dailyLimit,
   onAddExpense,
   onDeleteExpense,
+  onUpdateExpense,
   onMarkBillPaid,
   preview,
   isParsing,
@@ -99,6 +101,7 @@ export function DayDetailSheet({
             dailyLimit={dailyLimit}
             onAddExpense={onAddExpense}
             onDeleteExpense={onDeleteExpense}
+            onUpdateExpense={onUpdateExpense}
             onMarkBillPaid={onMarkBillPaid}
             preview={preview}
             isParsing={isParsing}

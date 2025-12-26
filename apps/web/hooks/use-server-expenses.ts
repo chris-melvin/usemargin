@@ -3,6 +3,7 @@
 import { useOptimistic, useTransition, useCallback } from "react";
 import {
   createExpenseFromData,
+  updateExpenseFromData,
   deleteExpense as deleteExpenseAction,
 } from "@/actions/expenses";
 import type { Expense } from "@repo/database";
@@ -200,6 +201,40 @@ export function useServerExpenses(initialExpenses: Expense[]) {
   );
 
   /**
+   * Update an expense with optimistic update
+   */
+  const updateExpense = useCallback(
+    async (
+      id: string,
+      updates: { category?: string | null; bucket_id?: string | null }
+    ): Promise<{ success: boolean; error?: string }> => {
+      // Don't update temp expenses (they're still being created)
+      if (id.startsWith("temp-")) {
+        return { success: false, error: "Cannot update pending expense" };
+      }
+
+      let result: { success: boolean; error?: string } = { success: true };
+
+      startTransition(async () => {
+        // Apply optimistic update
+        setOptimisticExpenses({ type: "update", id, data: updates });
+
+        // Execute server action
+        const serverResult = await updateExpenseFromData(id, updates);
+
+        if (!serverResult.success) {
+          result = { success: false, error: serverResult.error };
+          console.error("Failed to update expense:", serverResult.error);
+          // Rollback happens automatically when revalidation occurs
+        }
+      });
+
+      return result;
+    },
+    [setOptimisticExpenses]
+  );
+
+  /**
    * Get expenses for a specific date
    */
   const getExpensesForDate = useCallback(
@@ -224,6 +259,7 @@ export function useServerExpenses(initialExpenses: Expense[]) {
     expenses: optimisticExpenses,
     addExpense,
     addExpenses,
+    updateExpense,
     removeExpense,
     getExpensesForDate,
     getTotalForDate,

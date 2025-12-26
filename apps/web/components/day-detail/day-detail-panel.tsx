@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
-import { Calendar, Clock, CreditCard, Banknote, Receipt, Check, CalendarDays, Trash2 } from "lucide-react";
+import { useMemo, useCallback, useState } from "react";
+import { Calendar, Clock, CreditCard, Banknote, Receipt, Check, CalendarDays, Trash2, ChevronDown, X } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { CURRENCY } from "@/lib/constants";
 import { CompactSmartInput } from "@/components/expenses/compact-smart-input";
@@ -24,6 +24,7 @@ interface DayDetailPanelProps {
   dailyLimit: number;
   onAddExpense: (amount: number, label: string) => void;
   onDeleteExpense?: (expenseId: string) => void;
+  onUpdateExpense?: (expenseId: string, updates: { category?: string | null; bucket_id?: string | null }) => void;
   onMarkBillPaid?: (billId: string) => void;
   onMarkIncomeReceived?: (incomeId: string) => void;
   // Smart input props
@@ -111,6 +112,7 @@ export function DayDetailPanel({
   dailyLimit,
   onAddExpense,
   onDeleteExpense,
+  onUpdateExpense,
   onMarkBillPaid,
   preview = [],
   isParsing = false,
@@ -120,6 +122,9 @@ export function DayDetailPanel({
   categories = [],
   onPreviewUpdate,
 }: DayDetailPanelProps) {
+  // State for inline editing
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+
   // Check if smart input is available
   const hasSmartInput = onInputChange && onSubmit;
 
@@ -310,107 +315,187 @@ export function DayDetailPanel({
             {timelineEvents.map((event) => {
               const config = EVENT_CONFIG[event.type];
               const Icon = config.icon;
+              const isEditing = event.type === "expense" && editingExpenseId === event.id;
+              const expense = event.type === "expense" ? (event.originalData as LocalExpense) : null;
 
               return (
                 <div
                   key={event.id}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl border transition-all group",
+                    "rounded-xl border transition-all group",
                     config.bgColor,
-                    config.borderColor
+                    config.borderColor,
+                    event.type === "expense" && onUpdateExpense && "cursor-pointer",
+                    isEditing && "ring-2 ring-amber-400"
                   )}
                 >
-                  {/* Icon */}
-                  <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", config.iconBg)}>
-                    {event.icon ? (
-                      <span className="text-base">{event.icon}</span>
-                    ) : (
-                      <Icon className={cn("h-4 w-4", config.textColor)} />
-                    )}
-                  </div>
+                  {/* Main row - clickable for expenses */}
+                  <div
+                    className="flex items-center gap-3 p-3"
+                    onClick={() => {
+                      if (event.type === "expense" && onUpdateExpense) {
+                        setEditingExpenseId(isEditing ? null : event.id);
+                      }
+                    }}
+                  >
+                    {/* Icon */}
+                    <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", config.iconBg)}>
+                      {event.icon ? (
+                        <span className="text-base">{event.icon}</span>
+                      ) : (
+                        <Icon className={cn("h-4 w-4", config.textColor)} />
+                      )}
+                    </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-800 truncate">{event.label}</p>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-stone-800 truncate">{event.label}</p>
 
-                    {/* Time, Category, and Bucket row for expenses */}
-                    {event.type === "expense" && (
-                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        {event.time && (
-                          <span className="text-[10px] text-stone-400">{event.time}</span>
-                        )}
-                        {(event.originalData as LocalExpense)?.category && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">
-                            {(event.originalData as LocalExpense).category}
-                          </span>
-                        )}
-                        {(event.originalData as LocalExpense)?.bucket_id && (
-                          <span
-                            className="text-[9px] px-1.5 py-0.5 rounded"
-                            style={{
-                              backgroundColor: getBucketColor((event.originalData as LocalExpense).bucket_id) + '20',
-                              color: getBucketColor((event.originalData as LocalExpense).bucket_id)
-                            }}
-                          >
-                            {getBucketName((event.originalData as LocalExpense).bucket_id)}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                      {/* Time, Category, and Bucket row for expenses */}
+                      {event.type === "expense" && !isEditing && (
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          {event.time && (
+                            <span className="text-[10px] text-stone-400">{event.time}</span>
+                          )}
+                          {expense?.category && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">
+                              {expense.category}
+                            </span>
+                          )}
+                          {expense?.bucket_id && (
+                            <span
+                              className="text-[9px] px-1.5 py-0.5 rounded"
+                              style={{
+                                backgroundColor: getBucketColor(expense.bucket_id) + '20',
+                                color: getBucketColor(expense.bucket_id)
+                              }}
+                            >
+                              {getBucketName(expense.bucket_id)}
+                            </span>
+                          )}
+                        </div>
+                      )}
 
-                    {/* Time for non-expense events */}
-                    {event.type !== "expense" && event.time && (
-                      <p className="text-[10px] text-stone-400">{event.time}</p>
-                    )}
+                      {/* Time for non-expense events */}
+                      {event.type !== "expense" && event.time && (
+                        <p className="text-[10px] text-stone-400">{event.time}</p>
+                      )}
 
-                    {event.status && event.type === "bill_due" && (
-                      <span
-                        className={cn(
-                          "inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded mt-0.5",
-                          event.status === "paid"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : event.status === "overdue"
-                            ? "bg-rose-100 text-rose-700"
-                            : "bg-amber-100 text-amber-700"
-                        )}
-                      >
-                        {event.status}
+                      {event.status && event.type === "bill_due" && (
+                        <span
+                          className={cn(
+                            "inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded mt-0.5",
+                            event.status === "paid"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : event.status === "overdue"
+                              ? "bg-rose-100 text-rose-700"
+                              : "bg-amber-100 text-amber-700"
+                          )}
+                        >
+                          {event.status}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Amount */}
+                    <div className="text-right flex-shrink-0">
+                      <span className={cn("text-sm font-bold tabular-nums", config.textColor)}>
+                        {config.prefix}
+                        {formatCurrency(event.amount, CURRENCY)}
                       </span>
+                    </div>
+
+                    {/* Actions */}
+                    {event.type === "expense" && onDeleteExpense && !isEditing && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteExpense(expense!.id);
+                        }}
+                        className="p-1.5 text-stone-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                        title="Delete expense"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                    {event.type === "bill_due" && event.status === "pending" && onMarkBillPaid && (
+                      <button
+                        onClick={() => {
+                          const bill = event.originalData as LocalBill;
+                          onMarkBillPaid(bill.id);
+                        }}
+                        className="p-1.5 text-emerald-500 hover:bg-emerald-100 rounded-lg transition-colors flex-shrink-0"
+                        title="Mark as paid"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
                     )}
                   </div>
 
-                  {/* Amount */}
-                  <div className="text-right flex-shrink-0">
-                    <span className={cn("text-sm font-bold tabular-nums", config.textColor)}>
-                      {config.prefix}
-                      {formatCurrency(event.amount, CURRENCY)}
-                    </span>
-                  </div>
+                  {/* Inline Edit Section */}
+                  {isEditing && expense && onUpdateExpense && (
+                    <div className="px-3 pb-3 pt-0 border-t border-stone-200 mt-0">
+                      <div className="pt-3 space-y-3">
+                        {/* Category Select */}
+                        <div>
+                          <label className="text-[10px] font-medium text-stone-500 uppercase tracking-wider block mb-1">
+                            Category
+                          </label>
+                          <div className="relative">
+                            <select
+                              value={expense.category || ""}
+                              onChange={(e) => {
+                                onUpdateExpense(expense.id, { category: e.target.value || null });
+                              }}
+                              className="w-full text-sm bg-white border border-stone-200 rounded-lg px-3 py-2 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                            >
+                              <option value="">No category</option>
+                              {categories.map((cat) => (
+                                <option key={cat} value={cat}>
+                                  {cat}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+                          </div>
+                        </div>
 
-                  {/* Actions */}
-                  {event.type === "expense" && onDeleteExpense && (
-                    <button
-                      onClick={() => {
-                        const expense = event.originalData as LocalExpense;
-                        onDeleteExpense(expense.id);
-                      }}
-                      className="p-1.5 text-stone-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
-                      title="Delete expense"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                  {event.type === "bill_due" && event.status === "pending" && onMarkBillPaid && (
-                    <button
-                      onClick={() => {
-                        const bill = event.originalData as LocalBill;
-                        onMarkBillPaid(bill.id);
-                      }}
-                      className="p-1.5 text-emerald-500 hover:bg-emerald-100 rounded-lg transition-colors flex-shrink-0"
-                      title="Mark as paid"
-                    >
-                      <Check className="h-4 w-4" />
-                    </button>
+                        {/* Bucket Select */}
+                        <div>
+                          <label className="text-[10px] font-medium text-stone-500 uppercase tracking-wider block mb-1">
+                            Bucket
+                          </label>
+                          <div className="relative">
+                            <select
+                              value={expense.bucket_id || ""}
+                              onChange={(e) => {
+                                onUpdateExpense(expense.id, { bucket_id: e.target.value || null });
+                              }}
+                              className="w-full text-sm bg-white border border-stone-200 rounded-lg px-3 py-2 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                            >
+                              <option value="">No bucket</option>
+                              {buckets.map((bucket) => (
+                                <option key={bucket.id} value={bucket.id}>
+                                  {bucket.name}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+                          </div>
+                        </div>
+
+                        {/* Done button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingExpenseId(null);
+                          }}
+                          className="w-full text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-lg py-2 transition-colors"
+                        >
+                          Done
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               );

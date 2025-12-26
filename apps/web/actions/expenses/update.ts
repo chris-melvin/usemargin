@@ -40,6 +40,9 @@ export async function updateExpense(
   const notes = formData.get("notes");
   if (notes !== null) rawData.notes = notes || null;
 
+  const bucket_id = formData.get("bucket_id");
+  if (bucket_id !== null) rawData.bucket_id = bucket_id || null;
+
   const validation = updateExpenseSchema.safeParse(rawData);
   if (!validation.success) {
     return error(
@@ -62,6 +65,48 @@ export async function updateExpense(
       userId,
       validation.data
     );
+
+    revalidatePath("/");
+    revalidatePath("/analytics");
+
+    return success(expense);
+  } catch (err) {
+    console.error("Failed to update expense:", err);
+    return error("Failed to update expense", "DATABASE_ERROR");
+  }
+}
+
+/**
+ * Update expense from data object (for programmatic use)
+ */
+export async function updateExpenseFromData(
+  id: string,
+  data: {
+    category?: string | null;
+    bucket_id?: string | null;
+    amount?: number;
+    label?: string;
+    notes?: string | null;
+  }
+): Promise<ActionResult<Expense>> {
+  const authResult = await requireAuth();
+  if (!authResult.success) return authResult;
+  const { userId, supabase } = authResult.data;
+
+  // Validate ID
+  const idValidation = expenseIdSchema.safeParse({ id });
+  if (!idValidation.success) {
+    return error("Invalid expense ID", "VALIDATION_ERROR");
+  }
+
+  // Check if expense exists
+  const existing = await expenseRepository.findById(supabase, id, userId);
+  if (!existing) {
+    return error("Expense not found", "NOT_FOUND");
+  }
+
+  try {
+    const expense = await expenseRepository.update(supabase, id, userId, data);
 
     revalidatePath("/");
     revalidatePath("/analytics");

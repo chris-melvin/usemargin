@@ -136,7 +136,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
   const savingsAllocation = 5000;
 
   // Server-backed expenses with optimistic updates
-  const { expenses, addExpense, addExpenses, removeExpense, isPending } = useServerExpenses(initialExpenses);
+  const { expenses, addExpense, addExpenses, updateExpense, removeExpense, isPending } = useServerExpenses(initialExpenses);
 
   // Onboarding
   const { restartTour, onExpenseAdded } = useOnboarding();
@@ -538,6 +538,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                     dailyLimit={DEFAULT_DAILY_LIMIT}
                     onAddExpense={handleAddExpense}
                     onDeleteExpense={handleDeleteExpense}
+                    onUpdateExpense={updateExpense}
                     preview={preview}
                     isParsing={isParsing}
                     onInputChange={updatePreview}
@@ -789,6 +790,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
         dailyLimit={DEFAULT_DAILY_LIMIT}
         onAddExpense={handleAddExpense}
         onDeleteExpense={handleDeleteExpense}
+        onUpdateExpense={updateExpense}
         preview={preview}
         isParsing={isParsing}
         onInputChange={updatePreview}
