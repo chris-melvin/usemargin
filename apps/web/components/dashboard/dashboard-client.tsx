@@ -152,6 +152,8 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
       amount: e.amount,
       label: e.label,
       category: e.category ?? undefined,
+      occurred_at: e.occurred_at ?? null,
+      bucket_id: e.bucket_id ?? null,
     })),
     [expenses]
   );

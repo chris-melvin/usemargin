@@ -18,10 +18,12 @@ export interface CalendarDay {
 // Local expense type for state management (before Supabase integration)
 export interface LocalExpense {
   id: string;
-  date: string; // ISO string
+  date: string; // ISO string (YYYY-MM-DD)
   amount: number;
   label: string;
   category?: string;
+  occurred_at?: string | null; // ISO timestamp when expense occurred
+  bucket_id?: string | null; // Budget bucket reference
 }
 
 // Income type

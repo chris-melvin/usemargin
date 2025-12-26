@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { Calendar, Clock, CreditCard, Banknote, Receipt, Check, CalendarDays, Trash2 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { CURRENCY } from "@/lib/constants";
@@ -94,6 +94,15 @@ function getCategoryIcon(category: string): string | undefined {
   return icons[category.toLowerCase()];
 }
 
+// Helper function to format ISO timestamp to time (e.g., "2:30 PM")
+function formatOccurredAt(isoTimestamp: string): string {
+  const date = new Date(isoTimestamp);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function DayDetailPanel({
   selectedDate,
   expenses,
@@ -113,6 +122,20 @@ export function DayDetailPanel({
 }: DayDetailPanelProps) {
   // Check if smart input is available
   const hasSmartInput = onInputChange && onSubmit;
+
+  // Helper to get bucket name by ID
+  const getBucketName = useCallback((bucketId: string | null | undefined): string => {
+    if (!bucketId) return '';
+    const bucket = buckets.find(b => b.id === bucketId);
+    return bucket?.name ?? '';
+  }, [buckets]);
+
+  // Helper to get bucket color by ID
+  const getBucketColor = useCallback((bucketId: string | null | undefined): string => {
+    if (!bucketId) return '#78716c'; // stone-500 default
+    const bucket = buckets.find(b => b.id === bucketId);
+    return bucket?.color ?? '#78716c';
+  }, [buckets]);
 
   // Build timeline events
   const { timelineEvents, remaining } = useMemo(() => {
@@ -135,10 +158,7 @@ export function DayDetailPanel({
           type: "expense",
           label: expense.label,
           amount: expense.amount,
-          time: new Date(expense.date).toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-          }),
+          time: expense.occurred_at ? formatOccurredAt(expense.occurred_at) : undefined,
           icon: expense.category ? getCategoryIcon(expense.category) : undefined,
           originalData: expense,
         });
@@ -312,9 +332,37 @@ export function DayDetailPanel({
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-stone-800 truncate">{event.label}</p>
-                    {event.time && (
+
+                    {/* Time, Category, and Bucket row for expenses */}
+                    {event.type === "expense" && (
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        {event.time && (
+                          <span className="text-[10px] text-stone-400">{event.time}</span>
+                        )}
+                        {(event.originalData as LocalExpense)?.category && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">
+                            {(event.originalData as LocalExpense).category}
+                          </span>
+                        )}
+                        {(event.originalData as LocalExpense)?.bucket_id && (
+                          <span
+                            className="text-[9px] px-1.5 py-0.5 rounded"
+                            style={{
+                              backgroundColor: getBucketColor((event.originalData as LocalExpense).bucket_id) + '20',
+                              color: getBucketColor((event.originalData as LocalExpense).bucket_id)
+                            }}
+                          >
+                            {getBucketName((event.originalData as LocalExpense).bucket_id)}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Time for non-expense events */}
+                    {event.type !== "expense" && event.time && (
                       <p className="text-[10px] text-stone-400">{event.time}</p>
                     )}
+
                     {event.status && event.type === "bill_due" && (
                       <span
                         className={cn(

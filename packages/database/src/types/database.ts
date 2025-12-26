@@ -72,7 +72,8 @@ export interface Expense {
   category: string | null;
   category_id: string | null;
   notes: string | null;
-  time_of_day: string | null; // HH:MM:SS
+  time_of_day: string | null; // HH:MM:SS (legacy)
+  occurred_at: string | null; // ISO timestamp when expense occurred
   recurring_expense_id: string | null;
   bucket_id: string | null; // Reference to budget bucket
   created_at: string;
@@ -281,9 +282,10 @@ export interface NetWorthSnapshot {
 // INSERT TYPES (for creating new records)
 // =============================================================================
 
-export type ExpenseInsert = Omit<Expense, "id" | "created_at" | "updated_at" | "bucket_id"> & {
+export type ExpenseInsert = Omit<Expense, "id" | "created_at" | "updated_at" | "bucket_id" | "occurred_at"> & {
   id?: string;
   bucket_id?: string | null;
+  occurred_at?: string | null;
   created_at?: string;
   updated_at?: string;
 };

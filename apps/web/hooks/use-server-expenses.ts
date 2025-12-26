@@ -70,6 +70,7 @@ export function useServerExpenses(initialExpenses: Expense[]) {
         category_id: null,
         notes: null,
         time_of_day: null,
+        occurred_at: new Date().toISOString(),
         recurring_expense_id: null,
         bucket_id: options?.bucketId ?? null,
         created_at: new Date().toISOString(),
@@ -90,6 +91,7 @@ export function useServerExpenses(initialExpenses: Expense[]) {
           label,
           category: options?.category ?? null,
           bucket_id: options?.bucketId ?? null,
+          occurred_at: new Date().toISOString(),
         });
 
         if (!serverResult.success) {
@@ -126,6 +128,7 @@ export function useServerExpenses(initialExpenses: Expense[]) {
           category_id: null,
           notes: null,
           time_of_day: null,
+          occurred_at: new Date().toISOString(),
           recurring_expense_id: null,
           bucket_id: exp.bucketId ?? null,
           created_at: new Date().toISOString(),
@@ -147,6 +150,7 @@ export function useServerExpenses(initialExpenses: Expense[]) {
               label: exp.label,
               category: exp.category ?? null,
               bucket_id: exp.bucketId ?? null,
+              occurred_at: new Date().toISOString(),
             })
           )
         );
