@@ -17,5 +17,12 @@ export {
   expenseBucketRuleRepository,
 } from "./budget-bucket.repository";
 
+// Subscription & credits repositories
+export { subscriptionRepository } from "./subscription.repository";
+export {
+  creditsRepository,
+  creditTransactionRepository,
+} from "./credits.repository";
+
 // Base class for custom repositories
 export { BaseRepository } from "./base.repository";

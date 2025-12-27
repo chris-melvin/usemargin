@@ -87,3 +87,25 @@ export type {
   ExpenseBucketRuleInsert,
   ExpenseBucketRuleUpdate,
 } from "./types/database.js";
+
+// Subscription & payment types
+export type {
+  PaymentProvider,
+  SubscriptionStatus,
+  BillingCycle,
+  SubscriptionTier,
+  Subscription,
+  SubscriptionInsert,
+  SubscriptionUpdate,
+} from "./types/database.js";
+
+// Credits types
+export type {
+  CreditTransactionType,
+  AIFeatureId,
+  UserCredits,
+  UserCreditsInsert,
+  UserCreditsUpdate,
+  CreditTransaction,
+  CreditTransactionInsert,
+} from "./types/database.js";

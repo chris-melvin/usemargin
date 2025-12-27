@@ -524,3 +524,126 @@ export type ExpenseBucketRuleInsert = {
 };
 
 export type ExpenseBucketRuleUpdate = Partial<Omit<ExpenseBucketRule, "id" | "user_id">>;
+
+// =============================================================================
+// SUBSCRIPTION & PAYMENT TYPES
+// =============================================================================
+
+export type PaymentProvider = "paddle" | "lemonsqueezy";
+
+export type SubscriptionStatus =
+  | "active"
+  | "trialing"
+  | "past_due"
+  | "paused"
+  | "cancelled"
+  | "expired";
+
+export type BillingCycle = "monthly" | "yearly";
+
+export type SubscriptionTier = "free" | "pro";
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  provider: PaymentProvider;
+  provider_subscription_id: string;
+  provider_customer_id: string;
+  status: SubscriptionStatus;
+  billing_cycle: BillingCycle;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type SubscriptionInsert = {
+  user_id: string;
+  provider: PaymentProvider;
+  provider_subscription_id: string;
+  provider_customer_id: string;
+  status: SubscriptionStatus;
+  billing_cycle: BillingCycle;
+  current_period_start: string;
+  current_period_end: string;
+  id?: string;
+  cancel_at_period_end?: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type SubscriptionUpdate = Partial<Omit<Subscription, "id" | "user_id">>;
+
+// =============================================================================
+// CREDITS TYPES
+// =============================================================================
+
+export type CreditTransactionType =
+  | "subscription_grant"
+  | "purchase"
+  | "consumption"
+  | "refund"
+  | "adjustment";
+
+export type AIFeatureId =
+  | "insights"
+  | "budget_improvement"
+  | "expense_analysis"
+  | "savings_recommendations";
+
+export interface UserCredits {
+  id: string;
+  user_id: string;
+  balance: number;
+  subscription_credits_per_month: number;
+  last_refresh_at: string | null;
+  next_refresh_at: string | null;
+  total_granted: number;
+  total_consumed: number;
+  total_purchased: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type UserCreditsInsert = {
+  user_id: string;
+  id?: string;
+  balance?: number;
+  subscription_credits_per_month?: number;
+  last_refresh_at?: string | null;
+  next_refresh_at?: string | null;
+  total_granted?: number;
+  total_consumed?: number;
+  total_purchased?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type UserCreditsUpdate = Partial<Omit<UserCredits, "id" | "user_id">>;
+
+export interface CreditTransaction {
+  id: string;
+  user_id: string;
+  transaction_type: CreditTransactionType;
+  amount: number;
+  balance_before: number;
+  balance_after: number;
+  description: string;
+  feature_id: AIFeatureId | null;
+  reference_id: string | null;
+  created_at: string;
+}
+
+export type CreditTransactionInsert = {
+  user_id: string;
+  transaction_type: CreditTransactionType;
+  amount: number;
+  balance_before: number;
+  balance_after: number;
+  description: string;
+  id?: string;
+  feature_id?: AIFeatureId | null;
+  reference_id?: string | null;
+  created_at?: string;
+};

@@ -3,6 +3,9 @@
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { type ActionResult, error, success } from "./errors";
+import { checkFeatureAccess, consumeCreditsForFeature } from "./access-control";
+import type { GatedFeature } from "@/lib/payments";
+import type { AIFeatureId } from "@repo/database";
 
 /**
  * Authenticated user data returned from requireAuth
@@ -84,4 +87,90 @@ export async function withAuth<T>(
     return authResult;
   }
   return operation(authResult.data);
+}
+
+// =============================================================================
+// FEATURE ACCESS UTILITIES
+// =============================================================================
+
+/**
+ * Require feature access for a server action
+ * Checks auth and feature gate (subscription or credits)
+ */
+export async function requireFeatureAccess(
+  feature: GatedFeature
+): Promise<ActionResult<AuthData>> {
+  const authResult = await requireAuth();
+  if (!authResult.success) return authResult;
+
+  const { userId, supabase } = authResult.data;
+
+  const accessResult = await checkFeatureAccess(supabase, userId, feature);
+
+  if (!accessResult.hasAccess) {
+    const errorCode =
+      accessResult.reason === "subscription_required" ? "FORBIDDEN" : "RATE_LIMITED";
+    return error(
+      accessResult.upgradePrompt?.description ?? "Feature not available",
+      errorCode
+    );
+  }
+
+  return authResult;
+}
+
+/**
+ * Wrapper that checks auth, feature access, and runs operation
+ * For subscription-gated features (no credit consumption)
+ */
+export async function withFeatureAccess<T>(
+  feature: GatedFeature,
+  operation: (auth: AuthData) => Promise<ActionResult<T>>
+): Promise<ActionResult<T>> {
+  const authResult = await requireFeatureAccess(feature);
+  if (!authResult.success) return authResult;
+
+  return operation(authResult.data);
+}
+
+/**
+ * Wrapper for credit-based features
+ * Checks auth, verifies credits, runs operation, consumes credits on success
+ */
+export async function withCredits<T>(
+  featureId: AIFeatureId,
+  operation: (auth: AuthData) => Promise<ActionResult<T>>,
+  options?: { description?: string }
+): Promise<ActionResult<T & { creditsConsumed: number; creditsRemaining: number }>> {
+  // Check auth and feature access
+  const authResult = await requireFeatureAccess(featureId);
+  if (!authResult.success) return authResult;
+
+  const { userId, supabase } = authResult.data;
+
+  // Run the operation
+  const result = await operation(authResult.data);
+  if (!result.success) return result;
+
+  // Consume credits on success
+  const consumeResult = await consumeCreditsForFeature(
+    supabase,
+    userId,
+    featureId,
+    options?.description
+  );
+
+  if (!consumeResult.success) {
+    // This shouldn't happen if we checked beforehand
+    return error(
+      `Failed to consume credits. Balance: ${consumeResult.balance}`,
+      "RATE_LIMITED"
+    );
+  }
+
+  return success({
+    ...result.data,
+    creditsConsumed: 1, // Could be dynamic based on feature
+    creditsRemaining: consumeResult.balance,
+  });
 }
