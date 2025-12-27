@@ -331,6 +331,8 @@ export class PaddleProvider implements PaymentProvider {
    */
   private normalizeSubscriptionEvent(data: Record<string, unknown>): PaymentEvent {
     const eventType = data.event_type as string;
+    const eventId = data.event_id as string | undefined;
+    const occurredAt = data.occurred_at as string | undefined;
     const sub = data.data as Record<string, unknown>;
 
     const billingPeriod = sub.current_billing_period as Record<string, string> | undefined;
@@ -340,6 +342,8 @@ export class PaddleProvider implements PaymentProvider {
 
     return {
       type: this.mapEventType(eventType),
+      eventId,
+      occurredAt,
       providerSubscriptionId: sub.id as string,
       providerCustomerId: sub.customer_id as string,
       status: this.mapStatus(sub.status as string),
@@ -356,11 +360,15 @@ export class PaddleProvider implements PaymentProvider {
    * Normalize one-time payment event (credit pack)
    */
   private normalizeOneTimeEvent(data: Record<string, unknown>): OneTimePaymentEvent {
+    const eventId = data.event_id as string | undefined;
+    const occurredAt = data.occurred_at as string | undefined;
     const transaction = data.data as Record<string, unknown>;
     const customData = transaction.custom_data as Record<string, unknown> | undefined;
 
     return {
       type: "one_time.completed",
+      eventId,
+      occurredAt,
       providerTransactionId: transaction.id as string,
       providerCustomerId: transaction.customer_id as string,
       productId: customData?.packId as string,

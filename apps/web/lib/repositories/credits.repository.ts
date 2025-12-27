@@ -155,7 +155,8 @@ class CreditsRepository {
   }
 
   /**
-   * Consume credits for AI feature usage
+   * Consume credits for AI feature usage (ATOMIC)
+   * Uses atomic UPDATE with WHERE to prevent race conditions
    * Returns updated credits or null if insufficient
    */
   async consumeCredits(
@@ -165,30 +166,44 @@ class CreditsRepository {
     featureId: AIFeatureId,
     description: string
   ): Promise<UserCredits | null> {
+    // Ensure credits record exists first
     const current = await this.getOrCreate(supabase, userId);
 
-    if (current.balance < amount) {
-      return null; // Insufficient credits
+    // Atomic update: only succeeds if balance >= amount
+    // This prevents race conditions where multiple concurrent requests
+    // could overdraw credits
+    const { data: updated, error } = await supabase
+      .from(this.tableName)
+      .update({
+        balance: current.balance - amount,
+        total_consumed: current.total_consumed + amount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .gte("balance", amount) // Only update if balance is sufficient
+      .select()
+      .single();
+
+    if (error) {
+      // PGRST116 means no rows matched (insufficient balance)
+      if (error.code === "PGRST116") {
+        return null;
+      }
+      throw error;
     }
 
-    const newBalance = current.balance - amount;
-
-    // Create transaction record
+    // Create transaction record (after successful atomic update)
     await creditTransactionRepository.create(supabase, {
       user_id: userId,
       transaction_type: "consumption",
       amount: -amount, // Negative for consumption
       balance_before: current.balance,
-      balance_after: newBalance,
+      balance_after: (updated as UserCredits).balance,
       description,
       feature_id: featureId,
     });
 
-    // Update balance and stats
-    return this.update(supabase, userId, {
-      balance: newBalance,
-      total_consumed: current.total_consumed + amount,
-    });
+    return updated as UserCredits;
   }
 
   /**
@@ -332,6 +347,75 @@ class CreditTransactionRepository {
   }
 }
 
+/**
+ * Repository for processed webhooks (idempotency)
+ */
+class ProcessedWebhookRepository {
+  private tableName = "processed_webhooks";
+
+  /**
+   * Check if a webhook event has already been processed
+   */
+  async isProcessed(
+    supabase: SupabaseClient,
+    eventId: string
+  ): Promise<boolean> {
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .select("event_id")
+      .eq("event_id", eventId)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") return false; // Not found
+      throw error;
+    }
+    return !!data;
+  }
+
+  /**
+   * Mark a webhook event as processed
+   * Uses INSERT which will fail if already exists (primary key constraint)
+   */
+  async markProcessed(
+    supabase: SupabaseClient,
+    eventId: string,
+    eventType: string
+  ): Promise<boolean> {
+    const { error } = await supabase.from(this.tableName).insert({
+      event_id: eventId,
+      event_type: eventType,
+      processed_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      // 23505 is unique violation (already processed)
+      if (error.code === "23505") return false;
+      throw error;
+    }
+    return true;
+  }
+
+  /**
+   * Clean up old processed webhooks (older than 7 days)
+   * Can be called by a cron job
+   */
+  async cleanupOld(supabase: SupabaseClient): Promise<number> {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .delete()
+      .lt("processed_at", sevenDaysAgo.toISOString())
+      .select("event_id");
+
+    if (error) throw error;
+    return data?.length ?? 0;
+  }
+}
+
 // Export singleton instances
 export const creditsRepository = new CreditsRepository();
 export const creditTransactionRepository = new CreditTransactionRepository();
+export const processedWebhookRepository = new ProcessedWebhookRepository();

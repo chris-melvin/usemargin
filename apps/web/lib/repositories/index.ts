@@ -22,6 +22,7 @@ export { subscriptionRepository } from "./subscription.repository";
 export {
   creditsRepository,
   creditTransactionRepository,
+  processedWebhookRepository,
 } from "./credits.repository";
 
 // Base class for custom repositories

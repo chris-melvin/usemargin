@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { type ActionResult, error, success } from "./errors";
 import { checkFeatureAccess, consumeCreditsForFeature } from "./access-control";
-import type { GatedFeature } from "@/lib/payments";
+import { FEATURE_GATES, type GatedFeature } from "@/lib/payments";
+import { creditsRepository } from "@/lib/repositories";
 import type { AIFeatureId } from "@repo/database";
 
 /**
@@ -135,7 +136,8 @@ export async function withFeatureAccess<T>(
 
 /**
  * Wrapper for credit-based features
- * Checks auth, verifies credits, runs operation, consumes credits on success
+ * Consumes credits BEFORE operation, refunds on failure
+ * This prevents free usage if operation succeeds but credit consumption fails
  */
 export async function withCredits<T>(
   featureId: AIFeatureId,
@@ -148,11 +150,7 @@ export async function withCredits<T>(
 
   const { userId, supabase } = authResult.data;
 
-  // Run the operation
-  const result = await operation(authResult.data);
-  if (!result.success) return result;
-
-  // Consume credits on success
+  // 1. Consume credits FIRST (before running operation)
   const consumeResult = await consumeCreditsForFeature(
     supabase,
     userId,
@@ -161,16 +159,38 @@ export async function withCredits<T>(
   );
 
   if (!consumeResult.success) {
-    // This shouldn't happen if we checked beforehand
     return error(
-      `Failed to consume credits. Balance: ${consumeResult.balance}`,
+      `Insufficient credits. Balance: ${consumeResult.balance}`,
       "RATE_LIMITED"
     );
   }
 
+  // 2. Run the operation
+  const result = await operation(authResult.data);
+
+  // 3. If operation fails, refund the credits
+  if (!result.success) {
+    try {
+      const creditsToRefund = FEATURE_GATES[featureId]?.creditsRequired ?? 1;
+
+      await creditsRepository.addCredits(
+        supabase,
+        userId,
+        creditsToRefund,
+        "refund",
+        `Refund: ${options?.description ?? featureId} operation failed`
+      );
+    } catch (refundError) {
+      // Log but don't fail - the operation already failed
+      console.error("Failed to refund credits:", refundError);
+    }
+
+    return result;
+  }
+
   return success({
     ...result.data,
-    creditsConsumed: 1, // Could be dynamic based on feature
+    creditsConsumed: FEATURE_GATES[featureId]?.creditsRequired ?? 1,
     creditsRemaining: consumeResult.balance,
   });
 }

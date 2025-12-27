@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getPaymentProvider, SUBSCRIPTION_TIERS, getCreditPack } from "@/lib/payments";
 import type { PaymentEvent, OneTimePaymentEvent } from "@/lib/payments";
-import { subscriptionRepository, creditsRepository, settingsRepository } from "@/lib/repositories";
+import {
+  subscriptionRepository,
+  creditsRepository,
+  creditTransactionRepository,
+  processedWebhookRepository,
+  settingsRepository,
+} from "@/lib/repositories";
 import type { SubscriptionInsert, SubscriptionUpdate } from "@repo/database";
+
+// Webhook timestamp tolerance (5 minutes)
+const WEBHOOK_TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000;
 
 /**
  * Webhook handler for payment provider events
@@ -15,6 +24,11 @@ import type { SubscriptionInsert, SubscriptionUpdate } from "@repo/database";
  * - subscription.payment_succeeded - Successful payment
  * - subscription.payment_failed - Failed payment
  * - one_time.completed - Credit pack purchase
+ *
+ * Security:
+ * - Signature verification via provider.parseWebhook()
+ * - Timestamp validation (reject old webhooks)
+ * - Idempotency (deduplicate by event_id)
  */
 export async function POST(request: NextRequest) {
   const payload = await request.text();
@@ -38,8 +52,35 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Validate timestamp (reject old webhooks to prevent replay attacks)
+  if (event.occurredAt) {
+    const eventTime = new Date(event.occurredAt).getTime();
+    const now = Date.now();
+    if (now - eventTime > WEBHOOK_TIMESTAMP_TOLERANCE_MS) {
+      console.warn(`Webhook too old: ${event.eventId}, occurred at ${event.occurredAt}`);
+      return NextResponse.json(
+        { error: "Webhook timestamp too old" },
+        { status: 400 }
+      );
+    }
+  }
+
   // Create service client (bypasses RLS)
   const supabase = createServiceClient();
+
+  // Idempotency check: skip if already processed
+  if (event.eventId) {
+    const wasProcessed = await processedWebhookRepository.markProcessed(
+      supabase,
+      event.eventId,
+      event.type
+    );
+
+    if (!wasProcessed) {
+      console.log(`Webhook already processed: ${event.eventId}`);
+      return NextResponse.json({ received: true, deduplicated: true });
+    }
+  }
 
   try {
     // Handle one-time payment (credit pack)
@@ -187,17 +228,31 @@ async function handleSubscriptionUpdated(
     updateData
   );
 
-  // Update tier based on status
-  const activeTier =
-    event.status === "active" || event.status === "trialing"
-      ? "pro"
-      : "free";
+  // Determine tier based on status AND period end
+  // User keeps 'pro' access until their period actually expires
+  let tier: "pro" | "free" = "free";
+
+  if (event.status === "active" || event.status === "trialing") {
+    // Clearly active subscription
+    tier = "pro";
+  } else if (
+    event.status === "cancelled" ||
+    event.status === "past_due" ||
+    event.status === "paused"
+  ) {
+    // User might still have access until period end
+    const periodEnd = new Date(event.currentPeriodEnd);
+    if (periodEnd > new Date()) {
+      tier = "pro"; // Still within paid period
+    }
+  }
+  // 'expired' status = definitely free
 
   await settingsRepository.upsert(supabase, existing.user_id, {
-    subscription_tier: activeTier,
+    subscription_tier: tier,
   } as Record<string, unknown>);
 
-  console.log(`Subscription updated for user ${existing.user_id}`);
+  console.log(`Subscription updated for user ${existing.user_id}, tier: ${tier}`);
 }
 
 /**

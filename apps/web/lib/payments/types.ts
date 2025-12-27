@@ -61,6 +61,8 @@ export type PaymentEventType =
  */
 export interface PaymentEvent {
   type: PaymentEventType;
+  eventId?: string; // Provider's unique event ID (for idempotency)
+  occurredAt?: string; // When the event occurred (ISO string)
   providerSubscriptionId: string;
   providerCustomerId: string;
   status: SubscriptionStatus;
@@ -77,6 +79,8 @@ export interface PaymentEvent {
  */
 export interface OneTimePaymentEvent {
   type: "one_time.completed";
+  eventId?: string; // Provider's unique event ID (for idempotency)
+  occurredAt?: string; // When the event occurred (ISO string)
   providerTransactionId: string;
   providerCustomerId: string;
   productId: string; // Credit pack ID

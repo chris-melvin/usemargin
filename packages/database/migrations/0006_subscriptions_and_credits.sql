@@ -174,6 +174,24 @@ CREATE POLICY "Users can insert own transactions"
   WITH CHECK (auth.uid() = user_id);
 
 -- =============================================================================
+-- PROCESSED WEBHOOKS TABLE (Idempotency)
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS processed_webhooks (
+  event_id VARCHAR(255) PRIMARY KEY,
+  event_type VARCHAR(100) NOT NULL,
+  processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Index for cleanup of old webhooks (can be pruned after 7 days)
+CREATE INDEX IF NOT EXISTS idx_processed_webhooks_processed_at
+  ON processed_webhooks(processed_at);
+
+-- RLS for processed_webhooks (service role only - no user access needed)
+ALTER TABLE processed_webhooks ENABLE ROW LEVEL SECURITY;
+-- No policies needed - only service role can access
+
+-- =============================================================================
 -- TRIGGERS
 -- =============================================================================
 
