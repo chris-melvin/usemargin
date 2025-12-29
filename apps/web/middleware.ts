@@ -42,13 +42,24 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Define auth pages (public)
+  // Define auth pages (login/signup)
   const isAuthPage =
     pathname.startsWith("/login") || pathname.startsWith("/signup");
+
+  // Define public marketing pages
+  const isMarketingPage =
+    pathname === "/" ||
+    pathname === "/pricing" ||
+    pathname === "/about" ||
+    pathname === "/features" ||
+    pathname === "/blog" ||
+    pathname === "/privacy" ||
+    pathname === "/terms";
 
   // Define public paths that don't require auth
   const isPublicPath =
     isAuthPage ||
+    isMarketingPage ||
     pathname.startsWith("/api/webhooks") ||
     pathname === "/favicon.ico";
 
@@ -60,10 +71,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from auth pages to dashboard
   if (user && isAuthPage) {
-    const redirect = request.nextUrl.searchParams.get("redirect") || "/";
+    const redirect = request.nextUrl.searchParams.get("redirect") || "/dashboard";
     return NextResponse.redirect(new URL(redirect, request.url));
+  }
+
+  // Redirect authenticated users from landing page to dashboard
+  if (user && pathname === "/") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return supabaseResponse;
