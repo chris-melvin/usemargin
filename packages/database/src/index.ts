@@ -109,3 +109,19 @@ export type {
   CreditTransaction,
   CreditTransactionInsert,
 } from "./types/database.js";
+
+// Feedback & roadmap types
+export type {
+  FeedbackType,
+  FeedbackStatus,
+  RoadmapStatus,
+  Feedback,
+  RoadmapItem,
+  RoadmapVote,
+  FeedbackInsert,
+  RoadmapItemInsert,
+  RoadmapVoteInsert,
+  FeedbackUpdate,
+  RoadmapItemUpdate,
+  RoadmapVoteUpdate,
+} from "./types/database.js";

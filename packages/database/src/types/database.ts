@@ -59,6 +59,21 @@ export type SavingsTransactionType =
   | "interest"
   | "adjustment";
 
+export type FeedbackType = "bug" | "feature" | "improvement" | "other";
+
+export type FeedbackStatus =
+  | "new"
+  | "reviewed"
+  | "accepted"
+  | "rejected"
+  | "converted";
+
+export type RoadmapStatus =
+  | "under_consideration"
+  | "planned"
+  | "in_progress"
+  | "completed";
+
 // =============================================================================
 // CORE TYPES (Updated)
 // =============================================================================
@@ -279,6 +294,44 @@ export interface NetWorthSnapshot {
 }
 
 // =============================================================================
+// FEEDBACK & ROADMAP TYPES
+// =============================================================================
+
+export interface Feedback {
+  id: string;
+  user_id: string;
+  type: FeedbackType;
+  title: string;
+  description: string;
+  status: FeedbackStatus;
+  roadmap_item_id: string | null;
+  user_email: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RoadmapItem {
+  id: string;
+  title: string;
+  description: string;
+  status: RoadmapStatus;
+  category: string | null;
+  vote_count: number;
+  is_public: boolean;
+  sort_order: number;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RoadmapVote {
+  id: string;
+  user_id: string;
+  roadmap_item_id: string;
+  created_at: string;
+}
+
+// =============================================================================
 // INSERT TYPES (for creating new records)
 // =============================================================================
 
@@ -398,6 +451,40 @@ export type NetWorthSnapshotInsert = Omit<NetWorthSnapshot, "id" | "created_at">
   created_at?: string;
 };
 
+export type FeedbackInsert = {
+  user_id: string;
+  type: FeedbackType;
+  title: string;
+  description: string;
+  id?: string;
+  status?: FeedbackStatus;
+  roadmap_item_id?: string | null;
+  user_email?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type RoadmapItemInsert = {
+  title: string;
+  description: string;
+  id?: string;
+  status?: RoadmapStatus;
+  category?: string | null;
+  vote_count?: number;
+  is_public?: boolean;
+  sort_order?: number;
+  completed_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type RoadmapVoteInsert = {
+  user_id: string;
+  roadmap_item_id: string;
+  id?: string;
+  created_at?: string;
+};
+
 // =============================================================================
 // UPDATE TYPES (for updating records)
 // =============================================================================
@@ -415,6 +502,9 @@ export type ShortcutUpdate = Partial<Omit<Shortcut, "id" | "user_id">>;
 export type SavingsGoalUpdate = Partial<Omit<SavingsGoal, "id" | "user_id">>;
 export type AssetUpdate = Partial<Omit<Asset, "id" | "user_id">>;
 export type LiabilityUpdate = Partial<Omit<Liability, "id" | "user_id">>;
+export type FeedbackUpdate = Partial<Omit<Feedback, "id" | "user_id">>;
+export type RoadmapItemUpdate = Partial<Omit<RoadmapItem, "id">>;
+export type RoadmapVoteUpdate = Partial<Omit<RoadmapVote, "id" | "user_id">>;
 
 // =============================================================================
 // ONBOARDING TYPES

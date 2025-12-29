@@ -25,5 +25,10 @@ export {
   processedWebhookRepository,
 } from "./credits.repository";
 
+// Feedback & roadmap repositories
+export { feedbackRepository } from "./feedback.repository";
+export { roadmapRepository } from "./roadmap.repository";
+export { roadmapVoteRepository } from "./roadmap-vote.repository";
+
 // Base class for custom repositories
 export { BaseRepository } from "./base.repository";

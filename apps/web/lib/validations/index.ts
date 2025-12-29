@@ -68,3 +68,24 @@ export {
   type CreateDailyOverrideInput,
   type UpdateDailyOverrideInput,
 } from "./flex-bucket.schema";
+
+// Feedback & roadmap schemas
+export {
+  submitFeedbackSchema,
+  updateFeedbackStatusSchema,
+  createRoadmapItemSchema,
+  updateRoadmapItemSchema,
+  convertFeedbackToRoadmapSchema,
+  toggleVoteSchema,
+  feedbackQuerySchema,
+  type SubmitFeedbackInput,
+  type UpdateFeedbackStatusInput,
+  type CreateRoadmapItemInput,
+  type UpdateRoadmapItemInput,
+  type ConvertFeedbackToRoadmapInput,
+  type ToggleVoteInput,
+  type FeedbackQueryInput,
+  type FeedbackType,
+  type FeedbackStatus,
+  type RoadmapStatus,
+} from "./feedback.schema";
