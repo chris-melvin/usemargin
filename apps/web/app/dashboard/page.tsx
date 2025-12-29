@@ -23,23 +23,28 @@ export default async function DashboardPage() {
   let onboardingState: UserOnboarding | null = null;
   let userSettings: UserSettings | null = null;
   let buckets: BudgetBucket[] = [];
+  let shouldRedirectToSetup = false;
 
   // Fetch user settings
   try {
     userSettings = await settingsRepository.getOrCreate(supabase, user.id);
 
-    // Redirect to setup if budget setup not completed
+    // Check if we need to redirect to setup
     // But only after the UI tour is complete (or skipped)
     if (!userSettings.budget_setup_completed) {
-      // Check if onboarding tour is done first
       const onboarding = await onboardingRepository.getOrCreate(supabase, user.id);
       if (onboarding.has_completed_tour || onboarding.tour_skipped_at) {
-        redirect("/setup");
+        shouldRedirectToSetup = true;
       }
     }
   } catch (err) {
     // Settings table might not have new columns yet, continue without redirect
     console.warn("User settings not available:", err);
+  }
+
+  // Redirect outside try-catch (redirect throws NEXT_REDIRECT which must not be caught)
+  if (shouldRedirectToSetup) {
+    redirect("/setup");
   }
 
   // Fetch expenses for current month
