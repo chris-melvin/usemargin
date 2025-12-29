@@ -330,8 +330,8 @@ export function useAiParser({
       const trimmed = part.trim();
       if (!trimmed) continue;
 
-      // Check if it's just a template name
-      const templateMatch = TEMPLATE_MAP.get(trimmed);
+      // Check if it's just a template name (case-insensitive)
+      const templateMatch = TEMPLATE_MAP.get(trimmed.toLowerCase());
       if (templateMatch) {
         results.push({
           amount: templateMatch.amount,
@@ -354,7 +354,7 @@ export function useAiParser({
         const template = TEMPLATE_MAP.get(labelPart.toLowerCase());
 
         results.push({
-          amount: template ? template.amount : amount,
+          amount: amount,  // Always use user-provided amount
           label: template ? template.label : labelPart || "Expense",
           category: template?.label,
         });
