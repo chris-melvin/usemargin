@@ -110,7 +110,8 @@ class CreditsRepository {
   }
 
   /**
-   * Add credits to user balance
+   * Add credits to user balance (ATOMIC)
+   * Uses PostgreSQL function to prevent race conditions
    * Used for subscription grants, purchases, and refunds
    */
   async addCredits(
@@ -121,42 +122,32 @@ class CreditsRepository {
     description: string,
     referenceId?: string
   ): Promise<UserCredits> {
-    const current = await this.getOrCreate(supabase, userId);
-    const newBalance = current.balance + amount;
-
-    // Create transaction record
-    await creditTransactionRepository.create(supabase, {
-      user_id: userId,
-      transaction_type: transactionType,
-      amount: amount, // Positive for adding
-      balance_before: current.balance,
-      balance_after: newBalance,
-      description,
-      reference_id: referenceId ?? null,
+    // Use atomic RPC function to prevent race conditions
+    // This ensures that concurrent calls don't lose credits
+    const { data, error } = await supabase.rpc("add_credits_atomic", {
+      p_user_id: userId,
+      p_amount: amount,
+      p_transaction_type: transactionType,
+      p_description: description,
+      p_reference_id: referenceId ?? null,
     });
 
-    // Update balance and stats
-    const updates: UserCreditsUpdate = {
-      balance: newBalance,
-    };
-
-    if (transactionType === "subscription_grant") {
-      updates.total_granted = current.total_granted + amount;
-      updates.last_refresh_at = new Date().toISOString();
-      // Set next refresh to 1 month from now
-      const nextRefresh = new Date();
-      nextRefresh.setMonth(nextRefresh.getMonth() + 1);
-      updates.next_refresh_at = nextRefresh.toISOString();
-    } else if (transactionType === "purchase") {
-      updates.total_purchased = current.total_purchased + amount;
+    if (error) {
+      console.error("Failed to add credits atomically:", error);
+      throw error;
     }
 
-    return this.update(supabase, userId, updates);
+    // The RPC returns a table, so data is an array with one row
+    if (!data || data.length === 0) {
+      throw new Error("No data returned from add_credits_atomic");
+    }
+
+    return data[0] as UserCredits;
   }
 
   /**
    * Consume credits for AI feature usage (ATOMIC)
-   * Uses atomic UPDATE with WHERE to prevent race conditions
+   * Uses PostgreSQL function to prevent race conditions
    * Returns updated credits or null if insufficient
    */
   async consumeCredits(
@@ -167,43 +158,28 @@ class CreditsRepository {
     description: string
   ): Promise<UserCredits | null> {
     // Ensure credits record exists first
-    const current = await this.getOrCreate(supabase, userId);
+    await this.getOrCreate(supabase, userId);
 
-    // Atomic update: only succeeds if balance >= amount
-    // This prevents race conditions where multiple concurrent requests
-    // could overdraw credits
-    const { data: updated, error } = await supabase
-      .from(this.tableName)
-      .update({
-        balance: current.balance - amount,
-        total_consumed: current.total_consumed + amount,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId)
-      .gte("balance", amount) // Only update if balance is sufficient
-      .select()
-      .single();
+    // Use atomic RPC function to prevent race conditions
+    // This locks the row, checks balance, updates, and creates transaction in one call
+    const { data, error } = await supabase.rpc("consume_credits_atomic", {
+      p_user_id: userId,
+      p_amount: amount,
+      p_feature_id: featureId,
+      p_description: description,
+    });
 
     if (error) {
-      // PGRST116 means no rows matched (insufficient balance)
-      if (error.code === "PGRST116") {
-        return null;
-      }
+      console.error("Failed to consume credits atomically:", error);
       throw error;
     }
 
-    // Create transaction record (after successful atomic update)
-    await creditTransactionRepository.create(supabase, {
-      user_id: userId,
-      transaction_type: "consumption",
-      amount: -amount, // Negative for consumption
-      balance_before: current.balance,
-      balance_after: (updated as UserCredits).balance,
-      description,
-      feature_id: featureId,
-    });
+    // Empty result means insufficient balance
+    if (!data || data.length === 0) {
+      return null;
+    }
 
-    return updated as UserCredits;
+    return data[0] as UserCredits;
   }
 
   /**

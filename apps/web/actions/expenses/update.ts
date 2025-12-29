@@ -51,13 +51,9 @@ export async function updateExpense(
     );
   }
 
-  // 4. Check if expense exists
-  const existing = await expenseRepository.findById(supabase, id, userId);
-  if (!existing) {
-    return error("Expense not found", "NOT_FOUND");
-  }
-
-  // 5. Execute update
+  // 4. Execute update directly (no TOCTOU check)
+  // This eliminates the race condition where expense could be deleted between
+  // checking existence and updating
   try {
     const expense = await expenseRepository.update(
       supabase,
@@ -71,6 +67,10 @@ export async function updateExpense(
 
     return success(expense);
   } catch (err) {
+    // Handle PGRST116 (no rows returned) - expense was deleted or doesn't exist
+    if (err && typeof err === "object" && "code" in err && err.code === "PGRST116") {
+      return error("Expense not found or was deleted", "NOT_FOUND");
+    }
     console.error("Failed to update expense:", err);
     return error("Failed to update expense", "DATABASE_ERROR");
   }
@@ -99,12 +99,7 @@ export async function updateExpenseFromData(
     return error("Invalid expense ID", "VALIDATION_ERROR");
   }
 
-  // Check if expense exists
-  const existing = await expenseRepository.findById(supabase, id, userId);
-  if (!existing) {
-    return error("Expense not found", "NOT_FOUND");
-  }
-
+  // Execute update directly (no TOCTOU check)
   try {
     const expense = await expenseRepository.update(supabase, id, userId, data);
 
@@ -113,6 +108,10 @@ export async function updateExpenseFromData(
 
     return success(expense);
   } catch (err) {
+    // Handle PGRST116 (no rows returned) - expense was deleted or doesn't exist
+    if (err && typeof err === "object" && "code" in err && err.code === "PGRST116") {
+      return error("Expense not found or was deleted", "NOT_FOUND");
+    }
     console.error("Failed to update expense:", err);
     return error("Failed to update expense", "DATABASE_ERROR");
   }

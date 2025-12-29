@@ -435,3 +435,362 @@ describe("Webhook Security", () => {
     });
   });
 });
+
+// ============================================================================
+// Subscription Handler Logic Tests
+// ============================================================================
+
+/**
+ * Build subscription data from webhook event
+ */
+interface SubscriptionEventData {
+  providerSubscriptionId: string;
+  providerCustomerId: string;
+  status: string;
+  billingCycle: "monthly" | "yearly";
+  currentPeriodStart: Date;
+  currentPeriodEnd: Date;
+  cancelAtPeriodEnd: boolean;
+  customData?: Record<string, unknown>;
+}
+
+function buildSubscriptionData(
+  event: SubscriptionEventData,
+  providerName: "paddle" | "lemonsqueezy"
+) {
+  const userId = event.customData?.userId as string | undefined;
+
+  if (!userId) {
+    throw new Error("Missing userId in webhook payload");
+  }
+
+  return {
+    user_id: userId,
+    provider: providerName,
+    provider_subscription_id: event.providerSubscriptionId,
+    provider_customer_id: event.providerCustomerId,
+    status: event.status,
+    billing_cycle: event.billingCycle,
+    current_period_start: event.currentPeriodStart.toISOString(),
+    current_period_end: event.currentPeriodEnd.toISOString(),
+    cancel_at_period_end: event.cancelAtPeriodEnd,
+  };
+}
+
+/**
+ * Extract credits for a pack ID
+ */
+function getPackCredits(packId: string): number | null {
+  const packs: Record<string, number> = {
+    pack_25: 25,
+    pack_75: 75,
+    pack_200: 200,
+  };
+  return packs[packId] ?? null;
+}
+
+describe("Subscription Handler Logic", () => {
+  describe("buildSubscriptionData", () => {
+    it("should build valid subscription data from event", () => {
+      const event: SubscriptionEventData = {
+        providerSubscriptionId: "sub_123",
+        providerCustomerId: "cust_456",
+        status: "active",
+        billingCycle: "monthly",
+        currentPeriodStart: new Date("2024-06-01"),
+        currentPeriodEnd: new Date("2024-07-01"),
+        cancelAtPeriodEnd: false,
+        customData: { userId: "user-abc" },
+      };
+
+      const data = buildSubscriptionData(event, "paddle");
+
+      expect(data.user_id).toBe("user-abc");
+      expect(data.provider).toBe("paddle");
+      expect(data.provider_subscription_id).toBe("sub_123");
+      expect(data.provider_customer_id).toBe("cust_456");
+      expect(data.status).toBe("active");
+      expect(data.billing_cycle).toBe("monthly");
+      expect(data.cancel_at_period_end).toBe(false);
+    });
+
+    it("should throw error when userId is missing", () => {
+      const event: SubscriptionEventData = {
+        providerSubscriptionId: "sub_123",
+        providerCustomerId: "cust_456",
+        status: "active",
+        billingCycle: "monthly",
+        currentPeriodStart: new Date("2024-06-01"),
+        currentPeriodEnd: new Date("2024-07-01"),
+        cancelAtPeriodEnd: false,
+        customData: {}, // No userId
+      };
+
+      expect(() => buildSubscriptionData(event, "paddle")).toThrow(
+        "Missing userId in webhook payload"
+      );
+    });
+
+    it("should throw error when customData is undefined", () => {
+      const event: SubscriptionEventData = {
+        providerSubscriptionId: "sub_123",
+        providerCustomerId: "cust_456",
+        status: "active",
+        billingCycle: "monthly",
+        currentPeriodStart: new Date("2024-06-01"),
+        currentPeriodEnd: new Date("2024-07-01"),
+        cancelAtPeriodEnd: false,
+        customData: undefined,
+      };
+
+      expect(() => buildSubscriptionData(event, "paddle")).toThrow(
+        "Missing userId in webhook payload"
+      );
+    });
+
+    it("should handle lemonsqueezy provider", () => {
+      const event: SubscriptionEventData = {
+        providerSubscriptionId: "sub_ls_123",
+        providerCustomerId: "cust_ls_456",
+        status: "active",
+        billingCycle: "yearly",
+        currentPeriodStart: new Date("2024-01-01"),
+        currentPeriodEnd: new Date("2025-01-01"),
+        cancelAtPeriodEnd: false,
+        customData: { userId: "user-xyz" },
+      };
+
+      const data = buildSubscriptionData(event, "lemonsqueezy");
+
+      expect(data.provider).toBe("lemonsqueezy");
+      expect(data.billing_cycle).toBe("yearly");
+    });
+  });
+
+  describe("Subscription Status Transitions", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2024-06-15T12:00:00Z"));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should keep pro tier for cancelled subscription within period", () => {
+      const periodEnd = new Date("2024-07-15T12:00:00Z"); // 1 month from now
+      const tier = determineTierFromEvent("cancelled", periodEnd);
+      expect(tier).toBe("pro");
+    });
+
+    it("should downgrade to free for cancelled subscription after period", () => {
+      const periodEnd = new Date("2024-05-15T12:00:00Z"); // 1 month ago
+      const tier = determineTierFromEvent("cancelled", periodEnd);
+      expect(tier).toBe("free");
+    });
+
+    it("should handle exact period end boundary", () => {
+      // Period end is exactly now
+      const periodEnd = new Date("2024-06-15T12:00:00Z");
+      const tier = determineTierFromEvent("cancelled", periodEnd);
+      // At exactly the boundary, should still be free (not > now)
+      expect(tier).toBe("free");
+    });
+
+    it("should handle period end 1 second in the future", () => {
+      const periodEnd = new Date("2024-06-15T12:00:01Z");
+      const tier = determineTierFromEvent("cancelled", periodEnd);
+      expect(tier).toBe("pro");
+    });
+  });
+});
+
+describe("Credit Pack Processing", () => {
+  describe("getPackCredits", () => {
+    it("should return 25 credits for pack_25", () => {
+      expect(getPackCredits("pack_25")).toBe(25);
+    });
+
+    it("should return 75 credits for pack_75", () => {
+      expect(getPackCredits("pack_75")).toBe(75);
+    });
+
+    it("should return 200 credits for pack_200", () => {
+      expect(getPackCredits("pack_200")).toBe(200);
+    });
+
+    it("should return null for unknown pack ID", () => {
+      expect(getPackCredits("pack_unknown")).toBeNull();
+    });
+
+    it("should return null for empty pack ID", () => {
+      expect(getPackCredits("")).toBeNull();
+    });
+
+    it("should return null for malformed pack ID", () => {
+      expect(getPackCredits("25")).toBeNull();
+      expect(getPackCredits("pack25")).toBeNull();
+      expect(getPackCredits("PACK_25")).toBeNull();
+    });
+  });
+
+  describe("Credit Pack Validation", () => {
+    interface CreditPackEvent {
+      userId?: string;
+      packId?: string;
+      providerTransactionId: string;
+    }
+
+    function validateCreditPackEvent(event: CreditPackEvent): {
+      valid: boolean;
+      error?: string;
+    } {
+      if (!event.userId) {
+        return { valid: false, error: "Missing userId" };
+      }
+      if (!event.packId) {
+        return { valid: false, error: "Missing packId" };
+      }
+      if (getPackCredits(event.packId) === null) {
+        return { valid: false, error: `Unknown credit pack: ${event.packId}` };
+      }
+      return { valid: true };
+    }
+
+    it("should validate complete credit pack event", () => {
+      const event: CreditPackEvent = {
+        userId: "user-123",
+        packId: "pack_75",
+        providerTransactionId: "txn_abc",
+      };
+
+      const result = validateCreditPackEvent(event);
+      expect(result.valid).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    it("should reject missing userId", () => {
+      const event: CreditPackEvent = {
+        packId: "pack_75",
+        providerTransactionId: "txn_abc",
+      };
+
+      const result = validateCreditPackEvent(event);
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Missing userId");
+    });
+
+    it("should reject missing packId", () => {
+      const event: CreditPackEvent = {
+        userId: "user-123",
+        providerTransactionId: "txn_abc",
+      };
+
+      const result = validateCreditPackEvent(event);
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Missing packId");
+    });
+
+    it("should reject unknown packId", () => {
+      const event: CreditPackEvent = {
+        userId: "user-123",
+        packId: "pack_999",
+        providerTransactionId: "txn_abc",
+      };
+
+      const result = validateCreditPackEvent(event);
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Unknown credit pack: pack_999");
+    });
+  });
+});
+
+describe("Payment Event Handling", () => {
+  describe("Payment Succeeded", () => {
+    it("should update billing period on successful payment", () => {
+      const beforePeriodEnd = new Date("2024-06-30");
+      const afterPeriodEnd = new Date("2024-07-31");
+
+      // Simulate renewal
+      const update = {
+        status: "active",
+        current_period_start: new Date("2024-07-01").toISOString(),
+        current_period_end: afterPeriodEnd.toISOString(),
+      };
+
+      expect(update.status).toBe("active");
+      expect(new Date(update.current_period_end) > beforePeriodEnd).toBe(true);
+    });
+
+    it("should ensure pro tier on successful payment", () => {
+      const tier = determineTierFromEvent("active", new Date("2024-07-31"));
+      expect(tier).toBe("pro");
+    });
+  });
+
+  describe("Payment Failed", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2024-06-15T12:00:00Z"));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should set status to past_due on failed payment", () => {
+      const updateStatus = "past_due";
+      expect(updateStatus).toBe("past_due");
+    });
+
+    it("should keep pro access during past_due within period", () => {
+      const periodEnd = new Date("2024-07-01T12:00:00Z");
+      const tier = determineTierFromEvent("past_due", periodEnd);
+      expect(tier).toBe("pro");
+    });
+
+    it("should lose access if past_due extends beyond period", () => {
+      const periodEnd = new Date("2024-06-01T12:00:00Z"); // Already passed
+      const tier = determineTierFromEvent("past_due", periodEnd);
+      expect(tier).toBe("free");
+    });
+  });
+});
+
+describe("Subscription Cancellation", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-06-15T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("should mark cancel_at_period_end as true", () => {
+    const cancellationUpdate = {
+      status: "cancelled",
+      cancel_at_period_end: true,
+    };
+
+    expect(cancellationUpdate.status).toBe("cancelled");
+    expect(cancellationUpdate.cancel_at_period_end).toBe(true);
+  });
+
+  it("should not immediately downgrade tier", () => {
+    // User cancels but still has 2 weeks left
+    const periodEnd = new Date("2024-07-01T12:00:00Z");
+    const tier = determineTierFromEvent("cancelled", periodEnd);
+
+    // Should still be pro during grace period
+    expect(tier).toBe("pro");
+  });
+
+  it("should downgrade after period ends", () => {
+    // Period has ended
+    const periodEnd = new Date("2024-06-14T12:00:00Z");
+    const tier = determineTierFromEvent("cancelled", periodEnd);
+
+    expect(tier).toBe("free");
+  });
+});

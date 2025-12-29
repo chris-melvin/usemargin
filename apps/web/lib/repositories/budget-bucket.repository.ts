@@ -79,29 +79,25 @@ class BudgetBucketRepository extends BaseRepository<
   }
 
   /**
-   * Set a bucket as the default (and unset all others)
+   * Set a bucket as the default (and unset all others) - ATOMIC
+   * Uses PostgreSQL function to prevent race conditions where concurrent
+   * calls could result in 0 or 2 default buckets
    */
   async setDefault(
     supabase: SupabaseClient,
     userId: string,
     bucketId: string
   ): Promise<void> {
-    // First, unset all buckets as default
-    const { error: unsetError } = await supabase
-      .from(this.tableName)
-      .update({ is_default: false })
-      .eq("user_id", userId);
+    // Use atomic RPC function to ensure exactly one bucket is default
+    const { error } = await supabase.rpc("set_default_bucket", {
+      p_user_id: userId,
+      p_bucket_id: bucketId,
+    });
 
-    if (unsetError) throw unsetError;
-
-    // Then set the specified bucket as default
-    const { error: setError } = await supabase
-      .from(this.tableName)
-      .update({ is_default: true })
-      .eq("id", bucketId)
-      .eq("user_id", userId);
-
-    if (setError) throw setError;
+    if (error) {
+      console.error("Failed to set default bucket atomically:", error);
+      throw error;
+    }
   }
 
   /**

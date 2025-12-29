@@ -9,7 +9,7 @@ import {
   processedWebhookRepository,
   settingsRepository,
 } from "@/lib/repositories";
-import type { SubscriptionInsert, SubscriptionUpdate } from "@repo/database";
+import type { SubscriptionUpdate } from "@repo/database";
 
 // Webhook timestamp tolerance (5 minutes)
 const WEBHOOK_TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000;
@@ -138,7 +138,8 @@ async function handleSubscriptionEvent(
 }
 
 /**
- * Handle new subscription created
+ * Handle new subscription created (ATOMIC)
+ * Uses PostgreSQL function to ensure all operations succeed or all fail
  */
 async function handleSubscriptionCreated(
   supabase: ReturnType<typeof createServiceClient>,
@@ -153,44 +154,30 @@ async function handleSubscriptionCreated(
     throw new Error("Missing userId in webhook payload");
   }
 
-  // Create subscription record
-  const subscriptionData: SubscriptionInsert = {
-    user_id: userId,
-    provider: providerName,
-    provider_subscription_id: event.providerSubscriptionId,
-    provider_customer_id: event.providerCustomerId,
-    status: event.status,
-    billing_cycle: event.billingCycle,
-    current_period_start: event.currentPeriodStart.toISOString(),
-    current_period_end: event.currentPeriodEnd.toISOString(),
-    cancel_at_period_end: event.cancelAtPeriodEnd,
-  };
-
-  await subscriptionRepository.upsert(supabase, subscriptionData);
-
-  // Update user_settings.subscription_tier
-  await settingsRepository.upsert(supabase, userId, {
-    subscription_tier: "pro",
-  } as Record<string, unknown>);
-
-  // Grant initial subscription credits
   const creditsPerMonth = SUBSCRIPTION_TIERS.pro.creditsPerMonth;
-  await creditsRepository.addCredits(
-    supabase,
-    userId,
-    creditsPerMonth,
-    "subscription_grant",
-    "Initial Pro subscription credits"
-  );
 
-  // Set credits per month for future refreshes
-  await creditsRepository.setSubscriptionCredits(
-    supabase,
-    userId,
-    creditsPerMonth
-  );
+  // Use atomic RPC function to ensure all operations succeed or all fail
+  // This prevents partial states where subscription exists but credits weren't granted
+  const { data, error } = await supabase.rpc("handle_subscription_created", {
+    p_user_id: userId,
+    p_provider: providerName,
+    p_provider_subscription_id: event.providerSubscriptionId,
+    p_provider_customer_id: event.providerCustomerId,
+    p_status: event.status,
+    p_billing_cycle: event.billingCycle,
+    p_current_period_start: event.currentPeriodStart.toISOString(),
+    p_current_period_end: event.currentPeriodEnd.toISOString(),
+    p_cancel_at_period_end: event.cancelAtPeriodEnd,
+    p_credits_per_month: creditsPerMonth,
+    p_subscription_tier: "pro",
+  });
 
-  console.log(`Subscription created for user ${userId}`);
+  if (error) {
+    console.error("Failed to create subscription atomically:", error);
+    throw error;
+  }
+
+  console.log(`Subscription created for user ${userId}:`, data);
 }
 
 /**
