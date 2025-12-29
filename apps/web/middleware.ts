@@ -42,12 +42,15 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Define auth pages (login/signup/forgot-password)
+  // Define auth pages (login/signup/forgot-password/etc)
   const isAuthPage =
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/reset-password");
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/check-email") ||
+    pathname.startsWith("/email-confirmed") ||
+    pathname.startsWith("/auth-error");
 
   // Define public marketing pages
   const isMarketingPage =
@@ -64,6 +67,7 @@ export async function middleware(request: NextRequest) {
     isAuthPage ||
     isMarketingPage ||
     pathname.startsWith("/api/webhooks") ||
+    pathname.startsWith("/auth/callback") ||
     pathname === "/favicon.ico";
 
   // Redirect unauthenticated users to login (except for public paths)

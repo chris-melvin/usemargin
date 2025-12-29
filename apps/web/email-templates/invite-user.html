@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're invited to useMargin</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #FDFCFB;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #FDFCFB;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background-color: #ffffff; border-radius: 16px; border: 1px solid #e7e5e4; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding: 32px 32px 24px 32px;">
+              <span style="font-size: 24px; font-weight: 600; color: #1c1917;">use<span style="color: #d97706;">Margin</span></span>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 0 32px 32px 32px;">
+              <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 700; color: #1c1917; text-align: center;">
+                You're invited!
+              </h1>
+              <p style="margin: 0 0 8px 0; font-size: 14px; line-height: 1.6; color: #78716c; text-align: center;">
+                Hello <strong style="color: #1c1917;">{{ .Email }}</strong>
+              </p>
+              <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #78716c; text-align: center;">
+                You've been invited to join useMargin, the simple way to track your daily spending and stay on budget.
+              </p>
+              <!-- Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center">
+                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 12px 32px; background-color: #059669; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+                      Accept Invitation
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 24px 0 0 0; font-size: 12px; line-height: 1.5; color: #a8a29e; text-align: center;">
+                If you weren't expecting this invitation, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; border-top: 1px solid #e7e5e4;">
+              <p style="margin: 0; font-size: 12px; color: #a8a29e; text-align: center;">
+                <a href="{{ .SiteURL }}" style="color: #d97706; text-decoration: none;">useMargin</a> - Daily budget tracking made simple
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

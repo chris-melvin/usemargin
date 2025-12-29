@@ -23,7 +23,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     target: "smart-input-bar",
     title: "Add Your First Expense",
     description:
-      'Type naturally like "coffee 120" or "lunch and grab 380" and press Enter. Our AI understands what you mean!',
+      'Type naturally like "coffee 120" or "lunch and grab 380" and press Enter. We\'ll figure out the rest!',
     position: "top",
     mobilePosition: "top",
     highlight: true,

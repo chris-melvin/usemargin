@@ -26,6 +26,9 @@ export async function signUp(formData: FormData): Promise<ActionResult<void>> {
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: validation.data.email,
     password: validation.data.password,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/callback`,
+    },
   });
 
   if (authError) {
@@ -42,7 +45,6 @@ export async function signUp(formData: FormData): Promise<ActionResult<void>> {
     }
   }
 
-  // Get redirect URL from form data or default to home
-  const redirectTo = formData.get("redirectTo")?.toString() || "/";
-  redirect(redirectTo);
+  // Redirect to check-email page after successful signup
+  redirect("/check-email");
 }
