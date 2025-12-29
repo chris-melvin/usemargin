@@ -33,15 +33,15 @@ function LoginForm() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold text-zinc-100">Welcome back</h1>
-        <p className="text-sm text-zinc-400">
-          Sign in to your usemargin account
+        <h1 className="text-2xl font-bold text-stone-900">Welcome back</h1>
+        <p className="text-sm text-stone-500">
+          Sign in to your useMargin account
         </p>
       </div>
 
       <form action={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-zinc-200">
+          <Label htmlFor="email" className="text-stone-700">
             Email
           </Label>
           <Input
@@ -51,45 +51,53 @@ function LoginForm() {
             placeholder="you@example.com"
             required
             autoComplete="email"
-            className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-500"
+            className="bg-stone-50 border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:ring-amber-500"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-zinc-200">
-            Password
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-stone-700">
+              Password
+            </Label>
+            <Link
+              href="/forgot-password"
+              className="text-xs text-amber-600 hover:text-amber-700 hover:underline underline-offset-4"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <Input
             id="password"
             name="password"
             type="password"
-            placeholder="••••••••"
+            placeholder="Enter your password"
             required
             autoComplete="current-password"
-            className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-500"
+            className="bg-stone-50 border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:ring-amber-500"
           />
         </div>
 
         {error && (
-          <div className="text-sm text-red-400 bg-red-400/10 px-3 py-2 rounded-md">
+          <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2 rounded-lg">
             {error}
           </div>
         )}
 
         <Button
           type="submit"
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
           disabled={isLoading}
         >
           {isLoading ? "Signing in..." : "Sign in"}
         </Button>
       </form>
 
-      <div className="text-center text-sm text-zinc-400">
+      <div className="text-center text-sm text-stone-500">
         Don&apos;t have an account?{" "}
         <Link
           href={`/signup${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
-          className="text-emerald-400 hover:text-emerald-300 underline-offset-4 hover:underline"
+          className="text-amber-600 hover:text-amber-700 font-medium hover:underline underline-offset-4"
         >
           Sign up
         </Link>
@@ -98,9 +106,31 @@ function LoginForm() {
   );
 }
 
+function LoginSkeleton() {
+  return (
+    <div className="animate-pulse space-y-6">
+      <div className="space-y-2 text-center">
+        <div className="h-7 bg-stone-200 rounded w-1/2 mx-auto" />
+        <div className="h-4 bg-stone-100 rounded w-2/3 mx-auto" />
+      </div>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <div className="h-4 bg-stone-200 rounded w-16" />
+          <div className="h-10 bg-stone-100 rounded" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 bg-stone-200 rounded w-20" />
+          <div className="h-10 bg-stone-100 rounded" />
+        </div>
+        <div className="h-10 bg-stone-200 rounded" />
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="animate-pulse space-y-4"><div className="h-8 bg-zinc-800 rounded w-1/2 mx-auto" /><div className="h-10 bg-zinc-800 rounded" /><div className="h-10 bg-zinc-800 rounded" /></div>}>
+    <Suspense fallback={<LoginSkeleton />}>
       <LoginForm />
     </Suspense>
   );

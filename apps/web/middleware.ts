@@ -42,9 +42,12 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Define auth pages (login/signup)
+  // Define auth pages (login/signup/forgot-password)
   const isAuthPage =
-    pathname.startsWith("/login") || pathname.startsWith("/signup");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password");
 
   // Define public marketing pages
   const isMarketingPage =

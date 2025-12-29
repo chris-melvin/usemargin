@@ -33,15 +33,15 @@ function SignUpForm() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold text-zinc-100">Create an account</h1>
-        <p className="text-sm text-zinc-400">
-          Start tracking your daily spending with usemargin
+        <h1 className="text-2xl font-bold text-stone-900">Create an account</h1>
+        <p className="text-sm text-stone-500">
+          Start tracking your daily spending with useMargin
         </p>
       </div>
 
       <form action={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-zinc-200">
+          <Label htmlFor="email" className="text-stone-700">
             Email
           </Label>
           <Input
@@ -51,63 +51,63 @@ function SignUpForm() {
             placeholder="you@example.com"
             required
             autoComplete="email"
-            className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-500"
+            className="bg-stone-50 border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:ring-amber-500"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-zinc-200">
+          <Label htmlFor="password" className="text-stone-700">
             Password
           </Label>
           <Input
             id="password"
             name="password"
             type="password"
-            placeholder="••••••••"
+            placeholder="Create a password"
             required
             minLength={6}
             autoComplete="new-password"
-            className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-500"
+            className="bg-stone-50 border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:ring-amber-500"
           />
-          <p className="text-xs text-zinc-500">Must be at least 6 characters</p>
+          <p className="text-xs text-stone-500">Must be at least 6 characters</p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword" className="text-zinc-200">
+          <Label htmlFor="confirmPassword" className="text-stone-700">
             Confirm Password
           </Label>
           <Input
             id="confirmPassword"
             name="confirmPassword"
             type="password"
-            placeholder="••••••••"
+            placeholder="Confirm your password"
             required
             minLength={6}
             autoComplete="new-password"
-            className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-500"
+            className="bg-stone-50 border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:ring-amber-500"
           />
         </div>
 
         {error && (
-          <div className="text-sm text-red-400 bg-red-400/10 px-3 py-2 rounded-md">
+          <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2 rounded-lg">
             {error}
           </div>
         )}
 
         <Button
           type="submit"
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
           disabled={isLoading}
         >
           {isLoading ? "Creating account..." : "Create account"}
         </Button>
       </form>
 
-      <div className="text-center text-sm text-zinc-400">
+      <div className="text-center text-sm text-stone-500">
         Already have an account?{" "}
         <Link
           href={`/login${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
-          className="text-emerald-400 hover:text-emerald-300 underline-offset-4 hover:underline"
+          className="text-amber-600 hover:text-amber-700 font-medium hover:underline underline-offset-4"
         >
           Sign in
         </Link>
@@ -116,9 +116,35 @@ function SignUpForm() {
   );
 }
 
+function SignUpSkeleton() {
+  return (
+    <div className="animate-pulse space-y-6">
+      <div className="space-y-2 text-center">
+        <div className="h-7 bg-stone-200 rounded w-2/3 mx-auto" />
+        <div className="h-4 bg-stone-100 rounded w-3/4 mx-auto" />
+      </div>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <div className="h-4 bg-stone-200 rounded w-16" />
+          <div className="h-10 bg-stone-100 rounded" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 bg-stone-200 rounded w-20" />
+          <div className="h-10 bg-stone-100 rounded" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 bg-stone-200 rounded w-32" />
+          <div className="h-10 bg-stone-100 rounded" />
+        </div>
+        <div className="h-10 bg-stone-200 rounded" />
+      </div>
+    </div>
+  );
+}
+
 export default function SignUpPage() {
   return (
-    <Suspense fallback={<div className="animate-pulse space-y-4"><div className="h-8 bg-zinc-800 rounded w-1/2 mx-auto" /><div className="h-10 bg-zinc-800 rounded" /><div className="h-10 bg-zinc-800 rounded" /><div className="h-10 bg-zinc-800 rounded" /></div>}>
+    <Suspense fallback={<SignUpSkeleton />}>
       <SignUpForm />
     </Suspense>
   );
