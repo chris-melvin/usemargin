@@ -12,13 +12,13 @@ import {
   Settings,
   ChevronRight,
   X,
+  Receipt,
 } from "lucide-react";
 import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import { DayDetailPanel } from "@/components/day-detail/day-detail-panel";
 import { DayDetailSheet } from "@/components/day-detail/day-detail-sheet";
 import { SmartInputBar } from "@/components/expenses/smart-input-bar";
 import { CreateShortcutModal } from "@/components/shortcuts/create-shortcut-modal";
-import { ShortcutsSettingsPanel } from "@/components/shortcuts/shortcuts-settings-panel";
 import { SuccessFlash } from "@/components/ui/success-flash";
 import { useServerExpenses } from "@/hooks/use-server-expenses";
 import { useCalendar } from "@/hooks/use-calendar";
@@ -31,9 +31,52 @@ import { WeeklyPatternCard } from "@/components/dashboard/weekly-pattern-card";
 import { IncomeAllocationCard } from "@/components/dashboard/income-allocation-card";
 import { formatKey, formatCurrency, cn } from "@/lib/utils";
 import { DEFAULT_DAILY_LIMIT, CURRENCY } from "@/lib/constants";
-import type { Expense, BudgetBucket } from "@repo/database";
+import type { Expense, BudgetBucket, Income, Debt } from "@repo/database";
 import type { LocalIncome, LocalBill } from "@/lib/types";
 import { useBuckets } from "@/hooks/use-buckets";
+
+// Helper to transform database Income to LocalIncome
+function toLocalIncome(income: Income): LocalIncome {
+  return {
+    id: income.id,
+    label: income.label,
+    amount: income.amount,
+    dayOfMonth: income.day_of_month ?? 1,
+    expectedDate: income.expected_date ?? undefined,
+    receivedDate: income.received_date ?? undefined,
+    isRecurring: income.frequency !== "once",
+    recurringPattern: income.frequency !== "once" ? {
+      frequency: income.frequency as "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly",
+      endDate: income.end_date ?? undefined,
+    } : undefined,
+    status: income.status as "pending" | "received" | "expected",
+  };
+}
+
+// Helper to transform database Debt to LocalBill
+function toLocalBill(bill: Debt): LocalBill {
+  const today = new Date();
+  const dueDay = bill.due_date ?? 1;
+  const dueDate = new Date(today.getFullYear(), today.getMonth(), dueDay);
+
+  return {
+    id: bill.id,
+    label: bill.label,
+    amount: bill.amount,
+    icon: bill.icon ?? undefined,
+    receiveDate: bill.receive_date ?? undefined,
+    dueDate: dueDate.toISOString().split("T")[0] ?? "",
+    paidDate: bill.paid_date ?? undefined,
+    dueDayOfMonth: bill.due_date ?? undefined,
+    isRecurring: bill.is_recurring,
+    recurringPattern: bill.is_recurring ? {
+      frequency: bill.frequency as "weekly" | "biweekly" | "monthly" | "yearly",
+      dayOfMonth: bill.due_date ?? undefined,
+      endDate: bill.end_date ?? undefined,
+    } : undefined,
+    status: bill.status as "pending" | "paid" | "overdue" | "partially_paid",
+  };
+}
 
 // Demo data for income and bills
 const DEMO_INCOMES: LocalIncome[] = [
@@ -111,18 +154,32 @@ interface DashboardClientProps {
   initialExpenses: Expense[];
   dailyLimit?: number;
   initialBuckets?: BudgetBucket[];
+  initialIncomes?: Income[];
+  initialBills?: Debt[];
 }
 
-export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = [] }: DashboardClientProps) {
+export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = [], initialIncomes = [], initialBills = [] }: DashboardClientProps) {
   const [activeTab, setActiveTab] = useState<TabType>("calendar");
   const [isShortcutModalOpen, setIsShortcutModalOpen] = useState(false);
-  const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isMobileDaySheetOpen, setIsMobileDaySheetOpen] = useState(false);
   const [flexBucket] = useState(5000);
-  const [incomes] = useState(DEMO_INCOMES);
-  const [bills] = useState(DEMO_BILLS);
   const [pendingShortcutData, setPendingShortcutData] = useState<UnknownShortcut | null>(null);
+
+  // Transform database types to local types, fall back to demo data if empty
+  const incomes = useMemo(() => {
+    if (initialIncomes.length > 0) {
+      return initialIncomes.map(toLocalIncome);
+    }
+    return DEMO_INCOMES;
+  }, [initialIncomes]);
+
+  const bills = useMemo(() => {
+    if (initialBills.length > 0) {
+      return initialBills.map(toLocalBill);
+    }
+    return DEMO_BILLS;
+  }, [initialBills]);
   const [hideSavings, setHideSavings] = useState(false);
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
   const [showSuccessFlash, setShowSuccessFlash] = useState(false);
@@ -366,18 +423,25 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
         {/* Right Actions */}
         <div className="flex items-center gap-1 sm:gap-2">
           <Link
+            href="/dashboard/budget"
+            className="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg text-stone-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
+          >
+            <Receipt className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+            <span className="hidden sm:inline sm:ml-1">Budget</span>
+          </Link>
+          <Link
             href="/analytics"
             className="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg text-stone-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
           >
             <BarChart3 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             <span className="hidden sm:inline sm:ml-1">Analytics</span>
           </Link>
-          <button
-            onClick={() => setIsSettingsPanelOpen(true)}
+          <Link
+            href="/dashboard/settings"
             className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
           >
             <Settings className="w-4 h-4" />
-          </button>
+          </Link>
         </div>
       </header>
 
@@ -808,17 +872,6 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
         amount={pendingShortcutData?.amount || 0}
         onSave={handleSaveShortcut}
         onSaveAndLog={handleSaveAndLogShortcut}
-      />
-
-      {/* Shortcuts Settings Panel */}
-      <ShortcutsSettingsPanel
-        isOpen={isSettingsPanelOpen}
-        onClose={() => setIsSettingsPanelOpen(false)}
-        shortcuts={shortcuts}
-        onDelete={deleteShortcut}
-        onUpdate={updateShortcut}
-        onCreateNew={handleOpenCreateShortcut}
-        onRestartTutorial={restartTour}
       />
 
       {/* Smart Input Bar */}

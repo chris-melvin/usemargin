@@ -6,6 +6,22 @@ const statusEnum = z.enum(["pending", "paid", "overdue", "partially_paid"]);
 /**
  * Schema for creating a bill/debt
  */
+// Helper to coerce empty strings to null for optional number fields
+const optionalNumber = z.preprocess(
+  (val) => (val === "" || val === undefined ? null : val),
+  z.coerce.number().positive().max(999999999.99).optional().nullable()
+);
+
+const optionalNumberOrZero = z.preprocess(
+  (val) => (val === "" || val === undefined ? null : val),
+  z.coerce.number().min(0).max(999999999.99).optional().nullable()
+);
+
+const optionalRate = z.preprocess(
+  (val) => (val === "" || val === undefined ? null : val),
+  z.coerce.number().min(0).max(1).optional().nullable()
+);
+
 export const createBillSchema = z.object({
   label: z
     .string()
@@ -15,14 +31,20 @@ export const createBillSchema = z.object({
     .number()
     .positive("Amount must be positive")
     .max(999999999.99, "Amount too large"),
-  due_date: z.coerce.number().int().min(1).max(31).optional().nullable(),
+  due_date: z.preprocess(
+    (val) => (val === "" || val === undefined ? null : val),
+    z.coerce.number().int().min(1).max(31).optional().nullable()
+  ),
   icon: z.string().max(10).optional().nullable(),
-  total_amount: z.coerce.number().positive().max(999999999.99).optional().nullable(),
-  remaining_balance: z.coerce.number().min(0).max(999999999.99).optional().nullable(),
-  interest_rate: z.coerce.number().min(0).max(1).optional().nullable(), // APR as decimal
-  minimum_payment: z.coerce.number().positive().max(999999999.99).optional().nullable(),
+  total_amount: optionalNumber,
+  remaining_balance: optionalNumberOrZero,
+  interest_rate: optionalRate, // APR as decimal
+  minimum_payment: optionalNumber,
   frequency: frequencyEnum.default("monthly"),
-  day_of_week: z.coerce.number().int().min(0).max(6).optional().nullable(),
+  day_of_week: z.preprocess(
+    (val) => (val === "" || val === undefined ? null : val),
+    z.coerce.number().int().min(0).max(6).optional().nullable()
+  ),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   is_recurring: z.boolean().default(true),

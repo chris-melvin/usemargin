@@ -3,8 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
 import { OnboardingProvider, OnboardingTour } from "@/components/onboarding";
 import { onboardingRepository } from "@/lib/repositories/onboarding.repository";
-import { settingsRepository, budgetBucketRepository } from "@/lib/repositories";
-import type { Expense, UserOnboarding, UserSettings, BudgetBucket } from "@repo/database";
+import { settingsRepository, budgetBucketRepository, incomeRepository, billRepository } from "@/lib/repositories";
+import type { Expense, UserOnboarding, UserSettings, BudgetBucket, Income, Debt } from "@repo/database";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -23,6 +23,8 @@ export default async function DashboardPage() {
   let onboardingState: UserOnboarding | null = null;
   let userSettings: UserSettings | null = null;
   let buckets: BudgetBucket[] = [];
+  let incomes: Income[] = [];
+  let bills: Debt[] = [];
   let shouldRedirectToSetup = false;
 
   // Fetch user settings
@@ -76,6 +78,19 @@ export default async function DashboardPage() {
     console.warn("Budget buckets not available:", err);
   }
 
+  // Fetch incomes and bills
+  try {
+    incomes = await incomeRepository.findActive(supabase, user.id);
+  } catch (err) {
+    console.warn("Incomes not available:", err);
+  }
+
+  try {
+    bills = await billRepository.findActive(supabase, user.id);
+  } catch (err) {
+    console.warn("Bills not available:", err);
+  }
+
   // Fetch onboarding state (creates default if new user)
   try {
     onboardingState = await onboardingRepository.getOrCreate(supabase, user.id);
@@ -90,6 +105,8 @@ export default async function DashboardPage() {
         initialExpenses={expenses}
         dailyLimit={userSettings?.default_daily_limit}
         initialBuckets={buckets}
+        initialIncomes={incomes}
+        initialBills={bills}
       />
       <OnboardingTour />
     </OnboardingProvider>
