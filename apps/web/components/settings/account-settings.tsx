@@ -119,51 +119,30 @@ export function AccountSettings({ userEmail, subscription }: AccountSettingsProp
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 rounded-lg bg-stone-50 border border-stone-200/60">
             <div className="flex items-center gap-3">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  isPro ? "bg-amber-100" : "bg-stone-200"
-                }`}
-              >
-                <Crown
-                  className={`w-5 h-5 ${isPro ? "text-amber-600" : "text-stone-500"}`}
-                />
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-stone-200">
+                <Crown className="w-5 h-5 text-stone-500" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-stone-900">
-                    {isPro ? "Pro Plan" : "Free Plan"}
-                  </p>
-                  <Badge variant={isPro ? "default" : "secondary"}>
-                    {subscription?.tier ?? "free"}
-                  </Badge>
+                  <p className="text-sm font-medium text-stone-900">Free Plan</p>
+                  <Badge variant="secondary">free</Badge>
                 </div>
                 <p className="text-xs text-stone-500">
-                  {isPro
-                    ? subscription?.cancelAtPeriodEnd
-                      ? `Cancels on ${new Date(subscription.periodEnd!).toLocaleDateString()}`
-                      : `Renews on ${new Date(subscription?.periodEnd!).toLocaleDateString()}`
-                    : "Upgrade to Pro for unlimited features"}
+                  Pro features coming soon
                 </p>
               </div>
             </div>
-            {isPro && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleManageSubscription}
-                disabled={isPending}
-              >
-                Manage
-              </Button>
-            )}
           </div>
 
-          {!isPro && (
-            <Button className="w-full gap-2" onClick={() => router.push("/pricing")}>
+          <div className="relative">
+            <Button className="w-full gap-2" disabled>
               <Crown className="w-4 h-4" />
               Upgrade to Pro
             </Button>
-          )}
+            <Badge className="absolute -top-2 -right-2 bg-amber-500 hover:bg-amber-500">
+              Coming Soon
+            </Badge>
+          </div>
         </CardContent>
       </Card>
 

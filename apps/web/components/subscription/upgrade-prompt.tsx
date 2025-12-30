@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Lock, Sparkles, ArrowRight } from "lucide-react";
+import { Lock, Sparkles, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AccessCheckResult } from "@/hooks/use-subscription";
 
@@ -13,19 +12,18 @@ interface UpgradePromptProps {
 
 /**
  * Upgrade prompt component shown when user doesn't have access to a feature
+ * Currently shows "Coming Soon" since payment gateway is not yet set up
  */
 export function UpgradePrompt({
   accessResult,
   variant = "card",
   className,
 }: UpgradePromptProps) {
-  const router = useRouter();
-
   if (accessResult.hasAccess || !accessResult.upgradePrompt) {
     return null;
   }
 
-  const { title, description, ctaText, ctaHref } = accessResult.upgradePrompt;
+  const { title, description } = accessResult.upgradePrompt;
   const isCredits = accessResult.reason === "insufficient_credits";
   const Icon = isCredits ? Sparkles : Lock;
 
@@ -44,17 +42,15 @@ export function UpgradePrompt({
             <Icon className="w-5 h-5 text-amber-600 shrink-0" />
             <span className="text-sm text-amber-900">{description}</span>
           </div>
-          <button
-            onClick={() => router.push(ctaHref)}
+          <div
             className={cn(
               "flex items-center gap-1.5 px-4 py-1.5 rounded-lg shrink-0",
-              "bg-amber-600 text-white text-sm font-medium",
-              "hover:bg-amber-700 transition-colors"
+              "bg-stone-200 text-stone-500 text-sm font-medium"
             )}
           >
-            {ctaText}
-            <ArrowRight className="w-4 h-4" />
-          </button>
+            <Clock className="w-4 h-4" />
+            Coming Soon
+          </div>
         </div>
       </div>
     );
@@ -73,16 +69,15 @@ export function UpgradePrompt({
         <div className="flex-1 min-w-0">
           <p className="text-sm text-amber-900 truncate">{description}</p>
         </div>
-        <button
-          onClick={() => router.push(ctaHref)}
+        <div
           className={cn(
             "flex items-center gap-1 px-3 py-1 rounded-md shrink-0",
-            "bg-amber-600 text-white text-sm font-medium",
-            "hover:bg-amber-700 transition-colors"
+            "bg-stone-200 text-stone-500 text-sm font-medium"
           )}
         >
-          {ctaText}
-        </button>
+          <Clock className="w-3 h-3" />
+          Coming Soon
+        </div>
       </div>
     );
   }
@@ -104,25 +99,22 @@ export function UpgradePrompt({
       <h3 className="text-lg font-semibold text-stone-900 mb-2">{title}</h3>
       <p className="text-sm text-stone-500 max-w-sm mb-6">{description}</p>
 
-      <button
-        onClick={() => router.push(ctaHref)}
+      <div
         className={cn(
           "flex items-center gap-2 px-6 py-3 rounded-xl",
-          "bg-gradient-to-r from-amber-500 to-amber-600",
-          "text-white font-semibold shadow-lg shadow-amber-500/25",
-          "hover:shadow-xl hover:shadow-amber-500/30 hover:-translate-y-0.5",
-          "transition-all duration-200"
+          "bg-stone-200 text-stone-500 font-semibold"
         )}
       >
-        {ctaText}
-        <ArrowRight className="w-5 h-5" />
-      </button>
+        <Clock className="w-5 h-5" />
+        Coming Soon
+      </div>
     </div>
   );
 }
 
 /**
  * Simple lock icon overlay for locked features
+ * Shows "Coming Soon" since payment gateway is not yet set up
  */
 export function LockedOverlay({
   className,
@@ -142,8 +134,8 @@ export function LockedOverlay({
       )}
     >
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 shadow-sm">
-        <Lock className="w-4 h-4 text-stone-500" />
-        <span className="text-sm font-medium text-stone-600">Pro</span>
+        <Clock className="w-4 h-4 text-amber-500" />
+        <span className="text-sm font-medium text-stone-600">Coming Soon</span>
       </div>
     </div>
   );

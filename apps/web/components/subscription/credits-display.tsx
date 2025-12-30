@@ -1,7 +1,6 @@
 "use client";
 
-import { Sparkles, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Sparkles, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreditsState } from "@/hooks/use-subscription";
 
@@ -14,6 +13,7 @@ interface CreditsDisplayProps {
 
 /**
  * Display user's credit balance
+ * Buy button shows "Coming Soon" since payment gateway is not yet set up
  */
 export function CreditsDisplay({
   className,
@@ -21,7 +21,6 @@ export function CreditsDisplay({
   showBuyButton = false,
   size = "md",
 }: CreditsDisplayProps) {
-  const router = useRouter();
   const { balance, hasCredits, isLoading } = useCreditsState();
 
   const sizeClasses = {
@@ -55,17 +54,17 @@ export function CreditsDisplay({
       </div>
 
       {showBuyButton && (
-        <button
-          onClick={() => router.push("/credits")}
+        <div
           className={cn(
-            "flex items-center rounded-lg",
+            "flex items-center rounded-lg cursor-not-allowed",
             sizeClasses[size],
-            "bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors"
+            "bg-stone-100 text-stone-400"
           )}
+          title="Coming Soon"
         >
-          <Plus className={iconSizes[size]} />
-          <span className="font-medium">Buy</span>
-        </button>
+          <Clock className={iconSizes[size]} />
+          <span className="font-medium">Soon</span>
+        </div>
       )}
     </div>
   );
