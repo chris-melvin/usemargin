@@ -1,7 +1,7 @@
 "use client";
 
-import { BudgetSetupWizard } from "@/components/budget-setup/budget-setup-wizard";
+import { BudgetSetupPage } from "@/components/budget-setup/budget-setup-page";
 
 export default function SetupPage() {
-  return <BudgetSetupWizard />;
+  return <BudgetSetupPage />;
 }

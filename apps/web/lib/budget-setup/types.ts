@@ -72,3 +72,17 @@ export const WIZARD_STEPS = [
 ] as const;
 
 export type WizardStepId = (typeof WIZARD_STEPS)[number]["id"];
+
+/**
+ * Simplified debt type for setup wizard
+ */
+export interface WizardDebt {
+  id: string;
+  label: string;
+  monthlyPayment: number;
+  dueDate?: number;
+  totalBalance?: number;
+  interestRate?: number;
+  monthsRemaining?: number;
+  icon: string;
+}
