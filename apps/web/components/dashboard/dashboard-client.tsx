@@ -13,11 +13,13 @@ import {
   ChevronRight,
   X,
   Receipt,
+  MessageSquarePlus,
 } from "lucide-react";
 import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import { DayDetailPanel } from "@/components/day-detail/day-detail-panel";
 import { DayDetailSheet } from "@/components/day-detail/day-detail-sheet";
 import { SmartInputBar } from "@/components/expenses/smart-input-bar";
+import { FeedbackDialog } from "@/components/feedback/feedback-dialog";
 import { CreateShortcutModal } from "@/components/shortcuts/create-shortcut-modal";
 import { SuccessFlash } from "@/components/ui/success-flash";
 import { useServerExpenses } from "@/hooks/use-server-expenses";
@@ -184,6 +186,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
   const [showSuccessFlash, setShowSuccessFlash] = useState(false);
   const [successMessage, setSuccessMessage] = useState("Added!");
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   // Demo allocation values
   const totalIncome = useMemo(() => incomes.reduce((sum, inc) => sum + inc.amount, 0), [incomes]);
@@ -442,6 +445,13 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
           >
             <Settings className="w-4 h-4" />
           </Link>
+          <button
+            onClick={() => setFeedbackOpen(true)}
+            className="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg text-stone-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
+          >
+            <MessageSquarePlus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+            <span className="hidden sm:inline sm:ml-1">Feedback</span>
+          </button>
         </div>
       </header>
 
@@ -894,6 +904,9 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
         size="medium"
         onComplete={() => setShowSuccessFlash(false)}
       />
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   );
 }

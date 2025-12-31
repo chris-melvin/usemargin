@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Sparkles, Loader2, ArrowUp, X, Command, Plus, HelpCircle, Lightbulb, ChevronUp } from "lucide-react";
+import { Sparkles, Loader2, ArrowUp, X, Plus, HelpCircle, Lightbulb, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CURRENCY } from "@/lib/constants";
 import { BucketChip } from "./bucket-chip";
@@ -58,14 +58,14 @@ export function SmartInputBar({
   const [value, setValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false); // Mobile sheet
+  const [isDesktopModalOpen, setIsDesktopModalOpen] = useState(false); // Desktop modal
   const [showHelp, setShowHelp] = useState(false);
-  const [showHotkeyHint, setShowHotkeyHint] = useState(true);
-  const inputRef = useRef<HTMLInputElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
+  const desktopInputRef = useRef<HTMLInputElement>(null);
   const lastScrollY = useRef(0);
 
-  // Global keyboard shortcut to focus input (/ or Cmd+K)
+  // Global keyboard shortcut to open input modal (Cmd+K / Ctrl+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -73,18 +73,15 @@ export function SmartInputBar({
         return;
       }
 
-      if (e.key === "/") {
-        e.preventDefault();
-        inputRef.current?.focus();
-        setIsVisible(true);
-        setShowHotkeyHint(false);
-      }
-
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        inputRef.current?.focus();
-        setIsVisible(true);
-        setShowHotkeyHint(false);
+        // Check if we're on mobile or desktop
+        const isMobile = window.innerWidth < 640;
+        if (isMobile) {
+          setIsExpanded(true);
+        } else {
+          setIsDesktopModalOpen(true);
+        }
       }
     };
 
@@ -118,6 +115,13 @@ export function SmartInputBar({
     }
   }, [isExpanded]);
 
+  // Focus desktop input when modal opens
+  useEffect(() => {
+    if (isDesktopModalOpen) {
+      setTimeout(() => desktopInputRef.current?.focus(), 100);
+    }
+  }, [isDesktopModalOpen]);
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
@@ -132,6 +136,7 @@ export function SmartInputBar({
     onSubmit(value);
     setValue("");
     setIsExpanded(false);
+    setIsDesktopModalOpen(false);
   }, [value, isParsing, onSubmit]);
 
   const handleKeyDown = useCallback(
@@ -143,9 +148,10 @@ export function SmartInputBar({
       if (e.key === "Escape") {
         setValue("");
         onInputChange("");
-        inputRef.current?.blur();
         mobileInputRef.current?.blur();
+        desktopInputRef.current?.blur();
         setIsExpanded(false);
+        setIsDesktopModalOpen(false);
       }
     },
     [handleSubmit, onInputChange]
@@ -154,8 +160,8 @@ export function SmartInputBar({
   const clearInput = useCallback(() => {
     setValue("");
     onInputChange("");
-    inputRef.current?.focus();
     mobileInputRef.current?.focus();
+    desktopInputRef.current?.focus();
   }, [onInputChange]);
 
   const handleQuickAdd = useCallback((label: string, amount: number) => {
@@ -179,6 +185,24 @@ export function SmartInputBar({
           "transition-all duration-300",
           "active:scale-90",
           isExpanded || !isVisible ? "scale-0 opacity-0" : "scale-100 opacity-100"
+        )}
+      >
+        <Plus className="w-6 h-6 text-white" />
+      </button>
+
+      {/* Desktop FAB - Only show when modal is closed */}
+      <button
+        data-onboarding-target="smart-input-bar"
+        onClick={() => setIsDesktopModalOpen(true)}
+        className={cn(
+          "fixed bottom-6 right-6 z-50 hidden sm:flex",
+          "w-14 h-14 rounded-2xl",
+          "bg-gradient-to-br from-amber-500 to-amber-600",
+          "shadow-lg shadow-amber-500/30",
+          "items-center justify-center",
+          "transition-all duration-300",
+          "hover:scale-105 active:scale-95",
+          isDesktopModalOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"
         )}
       >
         <Plus className="w-6 h-6 text-white" />
@@ -347,264 +371,179 @@ export function SmartInputBar({
         </div>
       )}
 
-      {/* Desktop Input Bar */}
-      <div
-        data-onboarding-target="smart-input-bar"
-        className={cn(
-          "fixed bottom-0 left-0 right-0 z-50",
-          "hidden sm:block",
-          // Don't overlap the day detail panel on desktop
-          "lg:left-72 lg:right-[32%] xl:right-[35%]",
-          "transition-all duration-500 ease-out",
-          isVisible ? "translate-y-0" : "translate-y-full"
-        )}
-      >
-        <div className="absolute inset-x-0 bottom-full h-20 bg-gradient-to-t from-[#FDFCFB] to-transparent pointer-events-none" />
-
-        <div className="px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-          <div className="max-w-2xl mx-auto">
-            {/* Main input container */}
-            <div
-              className={cn(
-                "relative",
-                "bg-white/80 backdrop-blur-xl",
-                "border border-stone-200/60",
-                "rounded-2xl",
-                "shadow-[0_-4px_30px_-10px_rgba(0,0,0,0.1)]",
-                "transition-all duration-300",
-                isFocused && "border-amber-300/60 shadow-[0_-4px_40px_-10px_rgba(245,158,11,0.15)]"
-              )}
-            >
-              <div
-                className={cn(
-                  "absolute inset-0 rounded-2xl pointer-events-none",
-                  "bg-gradient-to-b from-amber-50/0 to-amber-50/30",
-                  "opacity-0 transition-opacity duration-300",
-                  isFocused && "opacity-100"
-                )}
-              />
-
-              <div className="relative flex items-center gap-2 p-2">
+      {/* Desktop Modal */}
+      {isDesktopModalOpen && (
+        <div
+          className="fixed inset-0 z-50 hidden sm:flex items-center justify-center"
+          onClick={() => setIsDesktopModalOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-xl mx-4 bg-white rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal content */}
+            <div className="p-5">
+              {/* Input field with inline preview */}
+              <div className="flex gap-3 mb-5">
                 <div
                   className={cn(
-                    "flex-shrink-0 w-10 h-10 rounded-xl",
-                    "flex items-center justify-center",
-                    "bg-gradient-to-br from-amber-100 to-amber-50",
-                    "border border-amber-200/50",
+                    "flex-1 relative",
+                    "bg-stone-50",
+                    "border-2 border-stone-200",
+                    "rounded-xl",
                     "transition-all duration-300",
-                    isFocused && "from-amber-200 to-amber-100"
+                    isFocused && "border-amber-400 bg-white"
                   )}
                 >
-                  <Sparkles
-                    className={cn(
-                      "w-4 h-4 text-amber-500",
-                      "transition-transform duration-300",
-                      isFocused && "scale-110"
+                  <div className="flex items-center gap-3 p-3">
+                    <Sparkles className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                    <input
+                      ref={desktopInputRef}
+                      type="text"
+                      autoComplete="off"
+                      value={value}
+                      onChange={handleChange}
+                      onKeyDown={handleKeyDown}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
+                      placeholder="coffee 120, grab and lunch, @starbucks..."
+                      className="flex-1 min-w-0 bg-transparent text-stone-800 text-base outline-none placeholder:text-stone-400"
+                    />
+                    {/* Inline reactive preview */}
+                    {preview.length > 0 && preview[0] && (
+                      <div className="flex items-center gap-1.5 flex-shrink-0 animate-in fade-in duration-150">
+                        <span className="text-sm font-medium text-amber-600">
+                          {CURRENCY}{preview[0].amount.toLocaleString()}
+                        </span>
+                        {buckets.length > 0 && (
+                          <BucketChip
+                            buckets={buckets}
+                            selectedSlug={preview[0].bucketSlug}
+                            onSelect={(bucket) => {
+                              onPreviewUpdate?.(0, {
+                                bucketId: bucket.id,
+                                bucketSlug: bucket.slug,
+                              });
+                            }}
+                            size="sm"
+                          />
+                        )}
+                        {preview[0].category && (
+                          <CategoryChip
+                            categories={categories}
+                            selectedCategory={preview[0].category}
+                            onSelect={(category) => {
+                              onPreviewUpdate?.(0, { category: category || undefined });
+                            }}
+                            onCreateNew={onCreateCategory}
+                            size="sm"
+                          />
+                        )}
+                        {preview.length > 1 && (
+                          <span className="text-xs text-stone-400">
+                            +{preview.length - 1}
+                          </span>
+                        )}
+                      </div>
                     )}
-                  />
-                </div>
-
-                <div className="flex-1 relative min-w-0">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={value}
-                    onChange={handleChange}
-                    onKeyDown={handleKeyDown}
-                    onFocus={() => {
-                      setIsFocused(true);
-                      setShowHotkeyHint(false);
-                    }}
-                    onBlur={() => setIsFocused(false)}
-                    placeholder="coffee 120, grab and lunch, @starbucks..."
-                    className={cn(
-                      "w-full bg-transparent",
-                      "text-stone-800 text-sm",
-                      "placeholder:text-stone-400/70",
-                      "outline-none",
-                      "py-2.5 px-1",
-                      "caret-amber-500"
-                    )}
-                  />
-                </div>
-
-                {/* Inline reactive preview */}
-                {preview.length > 0 && preview[0] && (
-                  <div className="flex items-center gap-1.5 flex-shrink-0 animate-in fade-in duration-150">
-                    <span className="text-stone-300">→</span>
-                    <span className="text-xs font-medium text-amber-600">
-                      {CURRENCY}{preview[0].amount.toLocaleString()}
-                    </span>
-                    {buckets.length > 0 && (
-                      <BucketChip
-                        buckets={buckets}
-                        selectedSlug={preview[0].bucketSlug}
-                        onSelect={(bucket) => {
-                          onPreviewUpdate?.(0, {
-                            bucketId: bucket.id,
-                            bucketSlug: bucket.slug,
-                          });
-                        }}
-                        size="sm"
-                      />
-                    )}
-                    {preview[0].category && (
-                      <CategoryChip
-                        categories={categories}
-                        selectedCategory={preview[0].category}
-                        onSelect={(category) => {
-                          onPreviewUpdate?.(0, { category: category || undefined });
-                        }}
-                        onCreateNew={onCreateCategory}
-                        size="sm"
-                      />
-                    )}
-                    {preview.length > 1 && (
-                      <span className="text-[10px] text-stone-400">
-                        +{preview.length - 1}
-                      </span>
+                    {value && (
+                      <button onClick={clearInput} className="p-1 text-stone-400 hover:text-stone-600 flex-shrink-0">
+                        <X className="w-5 h-5" />
+                      </button>
                     )}
                   </div>
-                )}
-
-                {value && (
-                  <button
-                    onClick={clearInput}
-                    className={cn(
-                      "flex-shrink-0 w-6 h-6 rounded-full",
-                      "flex items-center justify-center",
-                      "text-stone-400 hover:text-stone-600",
-                      "hover:bg-stone-100",
-                      "transition-all duration-200"
-                    )}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-
-                {/* Help button */}
-                <button
-                  onClick={() => setShowHelp(!showHelp)}
-                  className={cn(
-                    "flex-shrink-0 w-8 h-8 rounded-lg",
-                    "flex items-center justify-center",
-                    "transition-all duration-200",
-                    showHelp
-                      ? "bg-amber-100 text-amber-600"
-                      : "text-stone-400 hover:text-stone-600 hover:bg-stone-100"
-                  )}
-                  title="Show input syntax help"
-                >
-                  <HelpCircle className="w-4 h-4" />
-                </button>
-
+                </div>
                 <button
                   onClick={handleSubmit}
                   disabled={!value.trim() || isParsing}
                   className={cn(
-                    "flex-shrink-0 w-10 h-10 rounded-xl",
-                    "flex items-center justify-center",
-                    "transition-all duration-300",
-                    "disabled:opacity-40 disabled:cursor-not-allowed",
+                    "w-12 h-12 rounded-xl flex items-center justify-center transition-all flex-shrink-0",
                     value.trim() && !isParsing
-                      ? "bg-stone-900 text-stone-50 hover:bg-stone-800 active:scale-95 shadow-lg shadow-stone-900/20"
-                      : "bg-stone-100 text-stone-400"
+                      ? "bg-stone-900 text-white hover:bg-stone-800 active:scale-95"
+                      : "bg-stone-200 text-stone-400"
                   )}
                 >
                   {isParsing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <ArrowUp className="w-4 h-4" />
+                    <ArrowUp className="w-5 h-5" />
                   )}
                 </button>
               </div>
 
+              {/* Quick suggestions */}
+              <div className="mb-4">
+                <p className="text-xs text-stone-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                  <Lightbulb className="w-3 h-3" /> Quick add
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {QUICK_SUGGESTIONS.map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => handleQuickAdd(item.label, item.amount)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-stone-100 hover:bg-amber-100 transition-colors"
+                    >
+                      <span className="text-lg">{item.icon}</span>
+                      <span className="text-sm font-medium text-stone-700">{item.label}</span>
+                      <span className="text-xs text-stone-400">{CURRENCY}{item.amount}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              {/* Desktop help panel */}
+              {/* Help toggle */}
+              <button
+                onClick={() => setShowHelp(!showHelp)}
+                className="flex items-center gap-2 text-xs text-stone-400 hover:text-stone-600 mb-3"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                {showHelp ? "Hide tips" : "Show tips for faster input"}
+                <ChevronUp className={cn("w-3 h-3 transition-transform", !showHelp && "rotate-180")} />
+              </button>
+
+              {/* Syntax help */}
               {showHelp && (
-                <div className="border-t border-stone-100 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2">
-                        Input Syntax
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {SYNTAX_EXAMPLES.map((item) => (
-                          <button
-                            key={item.example}
-                            onClick={() => {
-                              setValue(item.example);
-                              onInputChange(item.example);
-                              inputRef.current?.focus();
-                            }}
-                            className="text-left p-2 rounded-lg bg-stone-50 hover:bg-amber-50 border border-stone-100 hover:border-amber-200 transition-colors"
-                          >
-                            <code className="text-xs font-mono text-amber-600">{item.example}</code>
-                            <p className="text-[10px] text-stone-400 mt-0.5">{item.desc}</p>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="text-xs text-stone-400 bg-stone-50 rounded-lg p-2 max-w-[180px]">
-                      <p className="font-medium text-stone-500 mb-1">Pro tips</p>
-                      <ul className="space-y-1 text-[10px]">
-                        <li>• Use "and" to add multiple items</li>
-                        <li>• Create shortcuts with @name</li>
-                        <li>• Use "k" for thousands (1.5k = 1500)</li>
-                      </ul>
-                    </div>
+                <div className="bg-stone-50 rounded-xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">Examples</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {SYNTAX_EXAMPLES.map((item) => (
+                      <button
+                        key={item.example}
+                        onClick={() => {
+                          setValue(item.example);
+                          onInputChange(item.example);
+                          desktopInputRef.current?.focus();
+                        }}
+                        className="text-left p-3 rounded-lg bg-white border border-stone-200 hover:bg-amber-50 hover:border-amber-200 transition-colors"
+                      >
+                        <code className="text-sm font-mono text-amber-600">{item.example}</code>
+                        <p className="text-xs text-stone-400 mt-1">{item.desc}</p>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Keyboard hints */}
-            <div
-              className={cn(
-                "flex items-center justify-center gap-4 mt-2",
-                "text-[10px] text-stone-400",
-                "transition-opacity duration-300",
-                isFocused || showHotkeyHint ? "opacity-100" : "opacity-0"
-              )}
-            >
-              {!isFocused && showHotkeyHint ? (
-                <span className="flex items-center gap-1.5 animate-pulse">
-                  Press
+              {/* Keyboard hints */}
+              <div className="flex items-center justify-center gap-4 mt-4 text-xs text-stone-400">
+                <span className="flex items-center gap-1">
                   <kbd className="px-1.5 py-0.5 rounded bg-stone-100 font-mono text-stone-500">
-                    /
+                    ↵
                   </kbd>
-                  or
-                  <kbd className="px-1.5 py-0.5 rounded bg-stone-100 font-mono text-stone-500 flex items-center gap-0.5">
-                    <Command className="w-2.5 h-2.5" />K
-                  </kbd>
-                  to add expense
+                  to add
                 </span>
-              ) : (
-                <>
-                  <span className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-stone-100 font-mono text-stone-500">
-                      ↵
-                    </kbd>
-                    to add
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-stone-100 font-mono text-stone-500">
-                      esc
-                    </kbd>
-                    to clear
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-stone-100 font-mono text-stone-500">
-                      ?
-                    </kbd>
-                    syntax help
-                  </span>
-                </>
-              )}
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 rounded bg-stone-100 font-mono text-stone-500">
+                    esc
+                  </kbd>
+                  to close
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
