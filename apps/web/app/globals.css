@@ -3,13 +3,71 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* usemargin theme - Stone/Amber palette */
+/* =================================================================
+   useMargin Theme - Teal/Ocean + Scholarly Marginalia Aesthetic
+   ================================================================= */
+
+/* Brand Colors */
 @theme {
-  --color-margin-bg: #FDFCFB;
-  --color-margin-accent: #F59E0B;
-  --color-margin-accent-light: #FEF3C7;
-  --color-margin-positive: #059669;
-  --color-margin-negative: #F43F5E;
+  /* Primary Teal Palette */
+  --color-teal-50: #F0FAFA;
+  --color-teal-100: #CCEBEB;
+  --color-teal-200: #99D6D6;
+  --color-teal-300: #66C2C2;
+  --color-teal-400: #40B0B0;
+  --color-teal-500: #1A9E9E;
+  --color-teal-600: #148585;
+  --color-teal-700: #0F6B6B;
+  --color-teal-800: #0A5252;
+  --color-teal-900: #063C3C;
+  --color-teal-950: #032626;
+
+  /* Coral Accent Palette */
+  --color-coral-50: #FEF5F2;
+  --color-coral-100: #FDE8E1;
+  --color-coral-200: #FAD0C3;
+  --color-coral-300: #F5B49F;
+  --color-coral-400: #EF9278;
+  --color-coral-500: #E87356;
+  --color-coral-600: #D45A3E;
+  --color-coral-700: #B44530;
+  --color-coral-800: #8F3626;
+  --color-coral-900: #6B291D;
+
+  /* Warm Neutral Palette (Parchment-tinted) */
+  --color-neutral-50: #FAFAF9;
+  --color-neutral-100: #F5F5F3;
+  --color-neutral-200: #E7E7E4;
+  --color-neutral-300: #D4D4D0;
+  --color-neutral-400: #A3A39E;
+  --color-neutral-500: #737370;
+  --color-neutral-600: #545451;
+  --color-neutral-700: #3F3F3C;
+  --color-neutral-800: #292927;
+  --color-neutral-900: #1A1A18;
+  --color-neutral-950: #0D0D0C;
+
+  /* Semantic Status Colors */
+  --color-success: #22C55E;
+  --color-success-light: #DCFCE7;
+  --color-warning: #D4A017;
+  --color-warning-light: #FEF9C3;
+  --color-danger: #DC4C64;
+  --color-danger-light: #FEE2E2;
+  --color-info: #3B82F6;
+  --color-info-light: #DBEAFE;
+
+  /* Legacy Brand Variables (for backward compatibility during migration) */
+  --color-margin-bg: #FDFBF7;
+  --color-margin-accent: #1A9E9E;
+  --color-margin-accent-light: #CCEBEB;
+  --color-margin-positive: #22C55E;
+  --color-margin-negative: #DC4C64;
+
+  /* Typography */
+  --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-handwriting: 'Caveat', cursive;
 }
 
 /* Base styles */
@@ -20,12 +78,40 @@ body {
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-sans);
   background-color: var(--color-margin-bg);
-  color: theme(colors.stone.800);
+  color: var(--color-neutral-800);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Heading typography - Scholarly Lora */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Handwriting/annotation text */
+.font-annotation {
+  font-family: var(--font-handwriting);
+}
+
+/* Typography scale utilities */
+.text-display-2xl { font-size: 4.5rem; line-height: 1.1; letter-spacing: -0.02em; }
+.text-display-xl { font-size: 3.75rem; line-height: 1.15; letter-spacing: -0.02em; }
+.text-display-lg { font-size: 3rem; line-height: 1.2; letter-spacing: -0.015em; }
+.text-overline {
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Tabular numbers for financial amounts */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 @theme inline {
@@ -71,71 +157,106 @@ body {
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+
+  /* Backgrounds - Warm parchment feel */
+  --background: oklch(0.987 0.008 85);
+  --foreground: oklch(0.265 0.005 100);
+  --card: oklch(0.978 0.006 80);
+  --card-foreground: oklch(0.265 0.005 100);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.265 0.005 100);
+
+  /* Primary - Teal brand color */
+  --primary: oklch(0.620 0.115 180);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+
+  /* Secondary - Light parchment */
+  --secondary: oklch(0.962 0.008 75);
+  --secondary-foreground: oklch(0.350 0.006 100);
+
+  /* Muted - Subtle backgrounds */
+  --muted: oklch(0.945 0.006 70);
+  --muted-foreground: oklch(0.540 0.008 100);
+
+  /* Accent - Coral for CTAs and highlights */
+  --accent: oklch(0.660 0.155 25);
+  --accent-foreground: oklch(0.985 0 0);
+
+  /* Destructive - Dusty rose */
+  --destructive: oklch(0.580 0.180 15);
+
+  /* Borders & Inputs */
+  --border: oklch(0.920 0.005 100);
+  --input: oklch(0.920 0.005 100);
+  --ring: oklch(0.620 0.115 180);
+
+  /* Chart Colors - Teal-complementary palette */
+  --chart-1: oklch(0.620 0.115 180);  /* Primary teal */
+  --chart-2: oklch(0.660 0.155 25);   /* Coral */
+  --chart-3: oklch(0.720 0.155 85);   /* Warm gold */
+  --chart-4: oklch(0.610 0.200 260);  /* Ocean blue */
+  --chart-5: oklch(0.700 0.170 145);  /* Sage green */
+
+  /* Sidebar */
+  --sidebar: oklch(0.978 0.006 80);
+  --sidebar-foreground: oklch(0.265 0.005 100);
+  --sidebar-primary: oklch(0.620 0.115 180);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent: oklch(0.975 0.015 190);
+  --sidebar-accent-foreground: oklch(0.350 0.006 100);
+  --sidebar-border: oklch(0.920 0.005 100);
+  --sidebar-ring: oklch(0.620 0.115 180);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  /* Backgrounds - Deep ocean/night study */
+  --background: oklch(0.155 0.020 180);
+  --foreground: oklch(0.935 0.006 100);
+  --card: oklch(0.195 0.025 180);
+  --card-foreground: oklch(0.935 0.006 100);
+  --popover: oklch(0.240 0.030 180);
+  --popover-foreground: oklch(0.935 0.006 100);
+
+  /* Primary - Lighter teal for dark mode */
+  --primary: oklch(0.695 0.110 182);
+  --primary-foreground: oklch(0.155 0.020 180);
+
+  /* Secondary */
+  --secondary: oklch(0.240 0.030 180);
+  --secondary-foreground: oklch(0.935 0.006 100);
+
+  /* Muted */
+  --muted: oklch(0.275 0.030 180);
+  --muted-foreground: oklch(0.695 0.008 100);
+
+  /* Accent - Coral lighter for dark mode */
+  --accent: oklch(0.730 0.135 25);
+  --accent-foreground: oklch(0.155 0.020 180);
+
+  /* Destructive */
+  --destructive: oklch(0.650 0.160 15);
+
+  /* Borders & Inputs */
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --ring: oklch(0.695 0.110 182);
+
+  /* Chart Colors - Lighter for dark mode */
+  --chart-1: oklch(0.765 0.090 183);  /* Light teal */
+  --chart-2: oklch(0.730 0.135 25);   /* Light coral */
+  --chart-3: oklch(0.800 0.140 85);   /* Warm gold */
+  --chart-4: oklch(0.700 0.180 260);  /* Ocean blue */
+  --chart-5: oklch(0.780 0.150 145);  /* Sage green */
+
+  /* Sidebar */
+  --sidebar: oklch(0.195 0.025 180);
+  --sidebar-foreground: oklch(0.935 0.006 100);
+  --sidebar-primary: oklch(0.695 0.110 182);
+  --sidebar-primary-foreground: oklch(0.155 0.020 180);
+  --sidebar-accent: oklch(0.275 0.030 180);
+  --sidebar-accent-foreground: oklch(0.935 0.006 100);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.695 0.110 182);
 }
 
 @layer base {
@@ -190,10 +311,10 @@ body {
 
 @keyframes ring-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+    box-shadow: 0 0 0 0 rgba(26, 158, 158, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+    box-shadow: 0 0 0 8px rgba(26, 158, 158, 0);
   }
 }
 
@@ -254,3 +375,111 @@ body {
 .stagger-3 { animation-delay: 150ms; }
 .stagger-4 { animation-delay: 200ms; }
 .stagger-5 { animation-delay: 250ms; }
+
+/* =================================================================
+   Marginalia Aesthetic - Paper Textures & Scholarly Elements
+   ================================================================= */
+
+/* Paper texture overlay - subtle noise for parchment feel */
+.texture-paper {
+  position: relative;
+}
+
+.texture-paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.texture-paper-strong::before {
+  opacity: 0.06;
+}
+
+/* Ruled lines (notebook effect) */
+.texture-ruled {
+  background-image:
+    repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      var(--color-neutral-300) 31px,
+      var(--color-neutral-300) 32px
+    );
+  background-size: 100% 32px;
+}
+
+/* Graph paper grid */
+.texture-grid {
+  background-image:
+    linear-gradient(var(--color-neutral-300) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-neutral-300) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.4;
+}
+
+/* Shadow system - Paper layer elevation */
+.shadow-page {
+  box-shadow: 0 1px 2px rgba(28,25,23,0.04);
+}
+
+.shadow-note {
+  box-shadow: 1px 1px 0 rgba(28,25,23,0.08);
+}
+
+.shadow-card {
+  box-shadow: 0 2px 4px rgba(28,25,23,0.04), 0 1px 2px rgba(28,25,23,0.06);
+}
+
+.shadow-stack {
+  box-shadow: 0 4px 6px -1px rgba(28,25,23,0.05), 0 2px 4px -1px rgba(28,25,23,0.04);
+}
+
+.shadow-manuscript {
+  box-shadow: 0 8px 16px -4px rgba(28,25,23,0.08), 0 4px 6px -2px rgba(28,25,23,0.04);
+}
+
+.shadow-tome {
+  box-shadow: 0 20px 40px -8px rgba(28,25,23,0.12), 0 8px 16px -4px rgba(28,25,23,0.06);
+}
+
+/* Annotation shadows (offset for handwritten feel) */
+.shadow-annotation {
+  box-shadow: 2px 2px 0 var(--color-teal-500);
+}
+
+.shadow-annotation-coral {
+  box-shadow: 2px 2px 0 var(--color-coral-500);
+}
+
+/* Highlight marker effect */
+.highlight-marker {
+  background: linear-gradient(
+    180deg,
+    transparent 60%,
+    var(--color-teal-100) 60%
+  );
+  padding: 0 4px;
+}
+
+.highlight-marker-coral {
+  background: linear-gradient(
+    180deg,
+    transparent 60%,
+    var(--color-coral-100) 60%
+  );
+  padding: 0 4px;
+}
+
+/* Status color utilities */
+.text-status-safe { color: var(--color-success); }
+.text-status-warning { color: var(--color-warning); }
+.text-status-danger { color: var(--color-danger); }
+.text-status-info { color: var(--color-info); }
+
+.bg-status-safe { background-color: var(--color-success-light); }
+.bg-status-warning { background-color: var(--color-warning-light); }
+.bg-status-danger { background-color: var(--color-danger-light); }
+.bg-status-info { background-color: var(--color-info-light); }

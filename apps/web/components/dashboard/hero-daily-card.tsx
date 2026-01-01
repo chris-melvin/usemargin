@@ -33,7 +33,7 @@ const STATUS_CONFIG = {
     message: "You're on track. Keep it up!",
     icon: Sparkles,
     gradientFrom: "from-emerald-50/40",
-    gradientVia: "via-stone-50/20",
+    gradientVia: "via-neutral-50/20",
     gradientTo: "to-transparent",
     ringColor: "stroke-emerald-500",
     ringBg: "stroke-emerald-100",
@@ -135,7 +135,7 @@ function CircularProgress({
         <span className={cn("text-2xl font-bold", config.textColor)}>
           <AnimatedNumber value={Math.round(clampedPercent)} duration={800} />%
         </span>
-        <span className="text-[10px] text-stone-400 uppercase tracking-wider">
+        <span className="text-[10px] text-neutral-400 uppercase tracking-wider">
           left
         </span>
       </div>
@@ -185,10 +185,10 @@ export function HeroDailyCard({
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="animate-in fade-in slide-in-from-left-2 duration-500">
-            <p className="text-xs text-stone-400 uppercase tracking-[0.2em] font-medium mb-1">
+            <p className="text-xs text-neutral-400 uppercase tracking-[0.2em] font-medium mb-1">
               Today
             </p>
-            <h2 className="text-sm sm:text-base text-stone-600 font-medium">
+            <h2 className="text-sm sm:text-base text-neutral-600 font-medium">
               {today}
             </h2>
           </div>
@@ -218,14 +218,14 @@ export function HeroDailyCard({
             <div className="mb-1">
               <span className={cn(
                 "text-4xl sm:text-5xl font-bold tracking-tight",
-                status === "over" ? "text-rose-600" : "text-stone-900"
+                status === "over" ? "text-rose-600" : "text-neutral-900"
               )}>
                 {status === "over" && "-"}
                 {CURRENCY}
                 <AnimatedNumber value={Math.abs(remaining)} duration={600} />
               </span>
             </div>
-            <p className="text-sm text-stone-400">
+            <p className="text-sm text-neutral-400">
               {status === "over" ? (
                 <>over your {CURRENCY}{limit.toLocaleString()} budget</>
               ) : (
@@ -248,7 +248,7 @@ export function HeroDailyCard({
             status === "close" ? "bg-amber-400" :
             status === "low" ? "bg-orange-400" : "bg-rose-400"
           )} />
-          <p className="text-sm text-stone-600 font-medium">
+          <p className="text-sm text-neutral-600 font-medium">
             {config.message}
           </p>
         </div>
@@ -256,7 +256,7 @@ export function HeroDailyCard({
         {/* Today's expenses */}
         {expenses.length > 0 && (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-500">
-            <p className="text-[10px] text-stone-400 uppercase tracking-[0.15em] mb-2">
+            <p className="text-[10px] text-neutral-400 uppercase tracking-[0.15em] mb-2">
               Today's Expenses
             </p>
             <div className="flex flex-wrap gap-2">
@@ -266,13 +266,13 @@ export function HeroDailyCard({
                   className={cn(
                     "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
                     "bg-white/80 border border-stone-100",
-                    "text-xs text-stone-600 font-medium",
+                    "text-xs text-neutral-600 font-medium",
                     "animate-in fade-in zoom-in duration-300"
                   )}
                   style={{ animationDelay: `${600 + i * 50}ms` }}
                 >
                   {expense.label}
-                  <span className="text-stone-400 tabular-nums">
+                  <span className="text-neutral-400 tabular-nums">
                     {CURRENCY}{expense.amount}
                   </span>
                 </span>
@@ -284,7 +284,7 @@ export function HeroDailyCard({
         {/* Empty state for no expenses */}
         {expenses.length === 0 && spent === 0 && (
           <div className="animate-in fade-in duration-500 delay-500 text-center py-2">
-            <p className="text-xs text-stone-400">
+            <p className="text-xs text-neutral-400">
               No expenses yet today. Start fresh!
             </p>
           </div>

@@ -29,7 +29,7 @@ interface CollapsibleSectionProps {
 export function CollapsibleSection({
   title,
   icon: Icon,
-  iconColor = "text-stone-500",
+  iconColor = "text-neutral-500",
   count,
   total,
   currency = "PHP",
@@ -42,11 +42,11 @@ export function CollapsibleSection({
   const isEmpty = count === 0;
 
   return (
-    <Card className="border-stone-200/60 overflow-hidden">
+    <Card className="border-neutral-200/60 overflow-hidden">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CardHeader className="p-0">
           <CollapsibleTrigger asChild>
-            <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors">
+            <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-neutral-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div
                   className={cn(
@@ -61,14 +61,14 @@ export function CollapsibleSection({
                       ? "bg-violet-100"
                       : iconColor.includes("blue")
                       ? "bg-blue-100"
-                      : "bg-stone-100"
+                      : "bg-neutral-100"
                   )}
                 >
                   <Icon className={cn("w-4 h-4", iconColor)} />
                 </div>
                 <div className="text-left">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-stone-900">
+                    <span className="text-sm font-semibold text-neutral-900">
                       {title}
                     </span>
                     {count !== undefined && (
@@ -78,7 +78,7 @@ export function CollapsibleSection({
                     )}
                   </div>
                   {total !== undefined && total > 0 && (
-                    <p className="text-xs text-stone-500 tabular-nums">
+                    <p className="text-xs text-neutral-500 tabular-nums">
                       {formatCurrency(total, currency)}/mo
                     </p>
                   )}
@@ -100,7 +100,7 @@ export function CollapsibleSection({
                 )}
                 <ChevronDown
                   className={cn(
-                    "w-4 h-4 text-stone-400 transition-transform duration-200",
+                    "w-4 h-4 text-neutral-400 transition-transform duration-200",
                     isOpen && "rotate-180"
                   )}
                 />
@@ -110,10 +110,10 @@ export function CollapsibleSection({
         </CardHeader>
 
         <CollapsibleContent>
-          <CardContent className="p-0 border-t border-stone-100">
+          <CardContent className="p-0 border-t border-neutral-100">
             {isEmpty ? (
               <div className="p-8 text-center">
-                <p className="text-sm text-stone-400">{emptyMessage}</p>
+                <p className="text-sm text-neutral-400">{emptyMessage}</p>
                 {onAdd && (
                   <Button
                     variant="outline"
@@ -127,7 +127,7 @@ export function CollapsibleSection({
                 )}
               </div>
             ) : (
-              <div className="divide-y divide-stone-100">{children}</div>
+              <div className="divide-y divide-neutral-100">{children}</div>
             )}
           </CardContent>
         </CollapsibleContent>

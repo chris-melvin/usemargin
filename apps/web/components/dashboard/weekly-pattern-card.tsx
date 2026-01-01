@@ -39,7 +39,7 @@ function TrendIndicator({ current, previous }: { current: number; previous: numb
 
   if (change === 0) {
     return (
-      <span className="inline-flex items-center gap-0.5 text-stone-400 text-xs">
+      <span className="inline-flex items-center gap-0.5 text-neutral-400 text-xs">
         <Minus className="w-3 h-3" />
         <span className="tabular-nums">0%</span>
       </span>
@@ -66,14 +66,14 @@ function TrendIndicator({ current, previous }: { current: number; previous: numb
 function AnimatedBar({
   percent,
   delay = 0,
-  colorClass = "bg-stone-800"
+  colorClass = "bg-neutral-800"
 }: {
   percent: number;
   delay?: number;
   colorClass?: string;
 }) {
   return (
-    <div className="flex-1 h-2 bg-stone-100 rounded-full overflow-hidden">
+    <div className="flex-1 h-2 bg-neutral-100 rounded-full overflow-hidden">
       <div
         className={cn(
           "h-full rounded-full transition-all duration-1000 ease-out",
@@ -123,21 +123,21 @@ export function WeeklyPatternCard({
       {/* Header - Always visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-5 flex items-center justify-between hover:bg-stone-50/50 transition-colors"
+        className="w-full p-5 flex items-center justify-between hover:bg-neutral-50/50 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center border border-amber-200/50">
             <BarChart3 className="w-5 h-5 text-amber-600" />
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-semibold text-stone-800 tracking-tight">
+            <h3 className="text-sm font-semibold text-neutral-800 tracking-tight">
               This Week's Story
             </h3>
-            <p className="text-xs text-stone-400">
+            <p className="text-xs text-neutral-400">
               {CURRENCY}{weeklyTotal.toLocaleString()} spent
               <span className={cn(
                 "ml-2",
-                weeklyChange > 0 ? "text-rose-500" : weeklyChange < 0 ? "text-emerald-500" : "text-stone-400"
+                weeklyChange > 0 ? "text-rose-500" : weeklyChange < 0 ? "text-emerald-500" : "text-neutral-400"
               )}>
                 {weeklyChange > 0 ? "+" : ""}{weeklyChange}% vs last week
               </span>
@@ -146,7 +146,7 @@ export function WeeklyPatternCard({
         </div>
         <ChevronDown
           className={cn(
-            "w-5 h-5 text-stone-400 transition-transform duration-300",
+            "w-5 h-5 text-neutral-400 transition-transform duration-300",
             isExpanded && "rotate-180"
           )}
         />
@@ -167,18 +167,18 @@ export function WeeklyPatternCard({
           <div className="grid grid-cols-2 gap-4">
             {/* Top Category */}
             {topCategory && (
-              <div className="p-4 rounded-xl bg-stone-50/50 border border-stone-100">
+              <div className="p-4 rounded-xl bg-neutral-50/50 border border-stone-100">
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
                     Top Category
                   </span>
                 </div>
-                <p className="text-sm font-semibold text-stone-800 mb-1">
+                <p className="text-sm font-semibold text-neutral-800 mb-1">
                   {topCategory.icon && <span className="mr-1">{topCategory.icon}</span>}
                   {topCategory.category}
                 </p>
-                <p className="text-lg font-bold text-stone-900 tabular-nums">
+                <p className="text-lg font-bold text-neutral-900 tabular-nums">
                   {CURRENCY}{topCategory.amount.toLocaleString()}
                 </p>
                 <div className="mt-2 flex items-center gap-2">
@@ -186,7 +186,7 @@ export function WeeklyPatternCard({
                     percent={(topCategory.amount / weeklyTotal) * 100}
                     colorClass="bg-amber-400"
                   />
-                  <span className="text-[10px] text-stone-400 tabular-nums">
+                  <span className="text-[10px] text-neutral-400 tabular-nums">
                     {Math.round((topCategory.amount / weeklyTotal) * 100)}%
                   </span>
                 </div>
@@ -194,26 +194,26 @@ export function WeeklyPatternCard({
             )}
 
             {/* Highest Day */}
-            <div className="p-4 rounded-xl bg-stone-50/50 border border-stone-100">
+            <div className="p-4 rounded-xl bg-neutral-50/50 border border-stone-100">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="w-4 h-4 text-amber-500" />
-                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
                   Highest Day
                 </span>
               </div>
-              <p className="text-sm font-semibold text-stone-800 mb-1">
+              <p className="text-sm font-semibold text-neutral-800 mb-1">
                 {highestDay.day}
               </p>
-              <p className="text-lg font-bold text-stone-900 tabular-nums">
+              <p className="text-lg font-bold text-neutral-900 tabular-nums">
                 {CURRENCY}{highestDay.amount.toLocaleString()}
               </p>
               <div className="mt-2 flex items-center gap-2">
                 <AnimatedBar
                   percent={(highestDay.amount / weeklyTotal) * 100}
                   delay={100}
-                  colorClass="bg-stone-600"
+                  colorClass="bg-neutral-600"
                 />
-                <span className="text-[10px] text-stone-400 tabular-nums">
+                <span className="text-[10px] text-neutral-400 tabular-nums">
                   {Math.round((highestDay.amount / weeklyTotal) * 100)}%
                 </span>
               </div>
@@ -223,7 +223,7 @@ export function WeeklyPatternCard({
           {/* Category Breakdown */}
           {categoryBreakdown.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+              <h4 className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
                 Category Breakdown
               </h4>
               <div className="space-y-3">
@@ -240,12 +240,12 @@ export function WeeklyPatternCard({
                           {category.icon && (
                             <span className="text-sm">{category.icon}</span>
                           )}
-                          <span className="text-sm text-stone-700">
+                          <span className="text-sm text-neutral-700">
                             {category.category}
                           </span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-semibold text-stone-800 tabular-nums">
+                          <span className="text-sm font-semibold text-neutral-800 tabular-nums">
                             {CURRENCY}{category.amount.toLocaleString()}
                           </span>
                           <TrendIndicator
@@ -275,7 +275,7 @@ export function WeeklyPatternCard({
                 <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1">
                   Suggestion
                 </p>
-                <p className="text-sm text-stone-600 leading-relaxed">
+                <p className="text-sm text-neutral-600 leading-relaxed">
                   {suggestion}
                 </p>
               </div>

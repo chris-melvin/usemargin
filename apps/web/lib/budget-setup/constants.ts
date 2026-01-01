@@ -20,7 +20,7 @@ export const DEFAULT_BUCKETS: Omit<WizardBucket, "allocatedAmount">[] = [
     name: "Daily Spending",
     slug: "daily-spending",
     percentage: 60,
-    color: "#3b82f6", // blue-500
+    color: "#1A9E9E", // teal-500 (brand primary)
     icon: "Wallet",
     isDefault: true, // Expenses go here by default
     isSystem: true,
@@ -78,18 +78,19 @@ export const BILL_FREQUENCIES = [
 
 /**
  * Bucket color options for custom buckets
+ * Teal-first palette aligned with brand identity
  */
 export const BUCKET_COLORS = [
-  "#22c55e", // green-500
-  "#3b82f6", // blue-500
-  "#f59e0b", // amber-500
+  "#1A9E9E", // teal-500 (brand primary)
+  "#E87356", // coral-500 (brand accent)
+  "#22c55e", // green-500 (success)
+  "#3b82f6", // blue-500 (info)
   "#8b5cf6", // violet-500
-  "#ec4899", // pink-500
-  "#14b8a6", // teal-500
+  "#D4A017", // warm gold (warning)
   "#f97316", // orange-500
+  "#ec4899", // pink-500
   "#6366f1", // indigo-500
-  "#84cc16", // lime-500
-  "#06b6d4", // cyan-500
+  "#64748b", // slate-500
 ];
 
 /**

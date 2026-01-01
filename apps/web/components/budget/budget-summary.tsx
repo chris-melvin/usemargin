@@ -25,7 +25,7 @@ export function BudgetSummary({
   const remainingPercent = 100 - spentPercent;
 
   return (
-    <div className="group relative h-full bg-white rounded-2xl border border-stone-200 overflow-hidden hover:border-amber-200 hover:shadow-lg transition-all duration-300">
+    <div className="group relative h-full bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:border-teal-200 hover:shadow-lg transition-all duration-300">
       {/* Paper texture overlay */}
       <div className="absolute inset-0 bg-paper-texture opacity-5 pointer-events-none" />
 
@@ -36,8 +36,8 @@ export function BudgetSummary({
             <PieChart className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-stone-900">Budget Overview</h3>
-            <p className="text-xs text-stone-500">Monthly snapshot</p>
+            <h3 className="text-lg font-semibold text-neutral-900">Budget Overview</h3>
+            <p className="text-xs text-neutral-500">Monthly snapshot</p>
           </div>
         </div>
 
@@ -66,7 +66,7 @@ export function BudgetSummary({
               )}>
                 {Math.round(remainingPercent)}%
               </p>
-              <p className="text-[10px] text-stone-500 uppercase tracking-wider">
+              <p className="text-[10px] text-neutral-500 uppercase tracking-wider">
                 {isPositive ? "Available" : "Over"}
               </p>
             </div>

@@ -12,10 +12,10 @@ export default function AuthErrorPage() {
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-stone-900">
+        <h1 className="text-2xl font-bold text-neutral-900">
           Verification Failed
         </h1>
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-neutral-500">
           The confirmation link may have expired or is invalid.
           <br />
           Please try signing up again or request a new link.
@@ -25,14 +25,14 @@ export default function AuthErrorPage() {
       <div className="pt-2 space-y-3">
         <Button
           asChild
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+          className="w-full bg-teal-600 hover:bg-teal-700 text-white shadow-sm"
         >
           <Link href="/signup">Try Again</Link>
         </Button>
         <div>
           <Link
             href="/login"
-            className="text-sm text-amber-600 hover:text-amber-700 font-medium hover:underline underline-offset-4"
+            className="text-sm text-teal-600 hover:text-teal-700 font-medium hover:underline underline-offset-4"
           >
             Back to sign in
           </Link>

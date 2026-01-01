@@ -33,15 +33,15 @@ function LoginForm() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold text-stone-900">Welcome back</h1>
-        <p className="text-sm text-stone-500">
+        <h1 className="text-2xl font-bold text-neutral-900">Welcome back</h1>
+        <p className="text-sm text-neutral-500">
           Sign in to your useMargin account
         </p>
       </div>
 
       <form action={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-stone-700">
+          <Label htmlFor="email" className="text-neutral-700">
             Email
           </Label>
           <Input
@@ -51,18 +51,18 @@ function LoginForm() {
             placeholder="you@example.com"
             required
             autoComplete="email"
-            className="bg-stone-50 border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:ring-amber-500"
+            className="bg-neutral-50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-teal-500 focus:ring-teal-500"
           />
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-stone-700">
+            <Label htmlFor="password" className="text-neutral-700">
               Password
             </Label>
             <Link
               href="/forgot-password"
-              className="text-xs text-amber-600 hover:text-amber-700 hover:underline underline-offset-4"
+              className="text-xs text-teal-600 hover:text-teal-700 hover:underline underline-offset-4"
             >
               Forgot password?
             </Link>
@@ -74,7 +74,7 @@ function LoginForm() {
             placeholder="Enter your password"
             required
             autoComplete="current-password"
-            className="bg-stone-50 border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:ring-amber-500"
+            className="bg-neutral-50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-teal-500 focus:ring-teal-500"
           />
         </div>
 
@@ -86,18 +86,18 @@ function LoginForm() {
 
         <Button
           type="submit"
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+          className="w-full bg-teal-600 hover:bg-teal-700 text-white shadow-sm"
           disabled={isLoading}
         >
           {isLoading ? "Signing in..." : "Sign in"}
         </Button>
       </form>
 
-      <div className="text-center text-sm text-stone-500">
+      <div className="text-center text-sm text-neutral-500">
         Don&apos;t have an account?{" "}
         <Link
           href={`/signup${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
-          className="text-amber-600 hover:text-amber-700 font-medium hover:underline underline-offset-4"
+          className="text-teal-600 hover:text-teal-700 font-medium hover:underline underline-offset-4"
         >
           Sign up
         </Link>
@@ -110,19 +110,19 @@ function LoginSkeleton() {
   return (
     <div className="animate-pulse space-y-6">
       <div className="space-y-2 text-center">
-        <div className="h-7 bg-stone-200 rounded w-1/2 mx-auto" />
-        <div className="h-4 bg-stone-100 rounded w-2/3 mx-auto" />
+        <div className="h-7 bg-neutral-200 rounded w-1/2 mx-auto" />
+        <div className="h-4 bg-neutral-100 rounded w-2/3 mx-auto" />
       </div>
       <div className="space-y-4">
         <div className="space-y-2">
-          <div className="h-4 bg-stone-200 rounded w-16" />
-          <div className="h-10 bg-stone-100 rounded" />
+          <div className="h-4 bg-neutral-200 rounded w-16" />
+          <div className="h-10 bg-neutral-100 rounded" />
         </div>
         <div className="space-y-2">
-          <div className="h-4 bg-stone-200 rounded w-20" />
-          <div className="h-10 bg-stone-100 rounded" />
+          <div className="h-4 bg-neutral-200 rounded w-20" />
+          <div className="h-10 bg-neutral-100 rounded" />
         </div>
-        <div className="h-10 bg-stone-200 rounded" />
+        <div className="h-10 bg-neutral-200 rounded" />
       </div>
     </div>
   );

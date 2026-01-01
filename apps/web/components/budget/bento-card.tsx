@@ -37,8 +37,8 @@ export function BentoCard({
   return (
     <div
       className={cn(
-        "group relative h-full bg-white rounded-2xl border border-stone-200 overflow-hidden",
-        "hover:border-amber-200 hover:shadow-lg transition-all duration-300",
+        "group relative h-full bg-white rounded-2xl border border-neutral-200 overflow-hidden",
+        "hover:border-teal-200 hover:shadow-lg transition-all duration-300",
         className
       )}
     >
@@ -60,15 +60,15 @@ export function BentoCard({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-stone-900 text-sm">{title}</h3>
+                <h3 className="font-semibold text-neutral-900 text-sm">{title}</h3>
                 {count !== undefined && count > 0 && (
-                  <span className="text-[10px] bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded-full">
+                  <span className="text-[10px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded-full">
                     {count}
                   </span>
                 )}
               </div>
               {total !== undefined && (
-                <p className="text-xs text-stone-500 tabular-nums">
+                <p className="text-xs text-neutral-500 tabular-nums">
                   {formatCurrency(total, currency)}
                 </p>
               )}
@@ -80,7 +80,7 @@ export function BentoCard({
               variant="ghost"
               size="sm"
               onClick={onAdd}
-              className="h-8 w-8 p-0 text-stone-400 hover:text-amber-600 hover:bg-amber-50"
+              className="h-8 w-8 p-0 text-neutral-400 hover:text-teal-600 hover:bg-teal-50"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -94,7 +94,7 @@ export function BentoCard({
         {showViewAll && onViewAll && (
           <button
             onClick={onViewAll}
-            className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-center gap-1 text-xs text-stone-500 hover:text-amber-600 transition-colors w-full"
+            className="mt-3 pt-3 border-t border-neutral-100 flex items-center justify-center gap-1 text-xs text-neutral-500 hover:text-amber-600 transition-colors w-full"
           >
             View all
             <ChevronRight className="w-3 h-3" />
@@ -117,13 +117,13 @@ export function BentoCardEmpty({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-4 text-center">
-      <p className="text-xs text-stone-400 mb-2">{message}</p>
+      <p className="text-xs text-neutral-400 mb-2">{message}</p>
       {actionLabel && onAction && (
         <Button
           variant="ghost"
           size="sm"
           onClick={onAction}
-          className="text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+          className="text-xs text-teal-600 hover:text-teal-700 hover:bg-teal-50"
         >
           <Plus className="w-3 h-3 mr-1" />
           {actionLabel}

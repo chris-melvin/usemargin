@@ -369,7 +369,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
   return (
     <div className="h-screen bg-[#fafaf9] flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="flex-shrink-0 h-14 sm:h-12 px-3 sm:px-4 flex items-center justify-between border-b border-stone-200/60 bg-white/80 backdrop-blur-sm safe-area-top">
+      <header className="flex-shrink-0 h-14 sm:h-12 px-3 sm:px-4 flex items-center justify-between border-b border-neutral-200/60 bg-white/80 backdrop-blur-sm safe-area-top">
         {/* Today's Status */}
         <button
           data-onboarding-target="header-status"
@@ -395,13 +395,13 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
           <span className={cn("text-sm font-bold tabular-nums", statusColor)}>
             {formatCurrency(Math.abs(todayStatus.remaining), CURRENCY)}
           </span>
-          <span className="text-[10px] text-stone-400 uppercase hidden min-[400px]:inline">
+          <span className="text-[10px] text-neutral-400 uppercase hidden min-[400px]:inline">
             {isOverBudget ? "over" : "left"}
           </span>
         </button>
 
         {/* Tab Navigation */}
-        <div className="flex items-center bg-stone-100/80 rounded-xl p-1">
+        <div className="flex items-center bg-neutral-100/80 rounded-xl p-1">
           {[
             { id: "calendar" as TabType, icon: Calendar, label: "Calendar" },
             { id: "insights" as TabType, icon: PieChart, label: "Insights" },
@@ -413,8 +413,8 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
               className={cn(
                 "flex items-center justify-center gap-1.5 p-2.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
                 activeTab === tab.id
-                  ? "bg-white text-stone-900 shadow-sm"
-                  : "text-stone-500 hover:text-stone-700"
+                  ? "bg-white text-neutral-900 shadow-sm"
+                  : "text-neutral-500 hover:text-neutral-700"
               )}
             >
               <tab.icon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
@@ -427,27 +427,27 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
         <div className="flex items-center gap-1 sm:gap-2">
           <Link
             href="/dashboard/budget"
-            className="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg text-stone-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
+            className="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg text-neutral-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
           >
             <Receipt className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             <span className="hidden sm:inline sm:ml-1">Budget</span>
           </Link>
           <Link
             href="/analytics"
-            className="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg text-stone-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
+            className="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg text-neutral-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
           >
             <BarChart3 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             <span className="hidden sm:inline sm:ml-1">Analytics</span>
           </Link>
           <Link
             href="/dashboard/settings"
-            className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
+            className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
           >
             <Settings className="w-4 h-4" />
           </Link>
           <button
             onClick={() => setFeedbackOpen(true)}
-            className="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg text-stone-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
+            className="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg text-neutral-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
           >
             <MessageSquarePlus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             <span className="hidden sm:inline sm:ml-1">Feedback</span>
@@ -458,9 +458,9 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex w-72 flex-shrink-0 border-r border-stone-200/60 bg-white/50 flex-col overflow-y-auto">
+        <aside className="hidden lg:flex w-72 flex-shrink-0 border-r border-neutral-200/60 bg-white/50 flex-col overflow-y-auto">
           {/* Today's Status - Circular Progress */}
-          <div className="p-4 border-b border-stone-100">
+          <div className="p-4 border-b border-neutral-100">
             <div className="flex items-center gap-4">
               <div className="relative w-20 h-20 flex-shrink-0">
                 <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
@@ -481,19 +481,19 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                   <span className={cn("text-lg font-bold tabular-nums", statusColor)}>
                     {formatCurrency(Math.abs(todayStatus.remaining), CURRENCY)}
                   </span>
-                  <span className="text-[9px] text-stone-400 uppercase tracking-wider">
+                  <span className="text-[9px] text-neutral-400 uppercase tracking-wider">
                     {isOverBudget ? "Over" : "Left"}
                   </span>
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-stone-400 uppercase tracking-wider mb-0.5">
+                <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">
                   {new Date().toLocaleDateString("en-US", { weekday: "long" })}
                 </p>
-                <p className="text-sm font-semibold text-stone-800 truncate">
+                <p className="text-sm font-semibold text-neutral-800 truncate">
                   {isOverBudget ? "Over Budget" : budgetPercent >= 80 ? "Almost There" : "On Track"}
                 </p>
-                <p className="text-xs text-stone-500 mt-1">
+                <p className="text-xs text-neutral-500 mt-1">
                   Spent {formatCurrency(todayStatus.spent, CURRENCY)} of{" "}
                   {formatCurrency(todayStatus.limit, CURRENCY)}
                 </p>
@@ -503,46 +503,46 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
               <div className="mt-3 space-y-1">
                 {todayExpenses.slice(0, 3).map((exp, i) => (
                   <div key={i} className="flex items-center justify-between text-xs">
-                    <span className="text-stone-500 truncate">{exp.label}</span>
-                    <span className="text-stone-700 font-medium tabular-nums">
+                    <span className="text-neutral-500 truncate">{exp.label}</span>
+                    <span className="text-neutral-700 font-medium tabular-nums">
                       -{formatCurrency(exp.amount, CURRENCY)}
                     </span>
                   </div>
                 ))}
                 {todayExpenses.length > 3 && (
-                  <p className="text-[10px] text-stone-400">+{todayExpenses.length - 3} more</p>
+                  <p className="text-[10px] text-neutral-400">+{todayExpenses.length - 3} more</p>
                 )}
               </div>
             )}
           </div>
 
           {/* Flex Bucket */}
-          <div className="p-4 border-b border-stone-100">
+          <div className="p-4 border-b border-neutral-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
                   <Wallet className="w-4 h-4 text-violet-600" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-stone-400 uppercase tracking-wider">Flex Bucket</p>
-                  <p className="text-sm font-semibold text-stone-800 tabular-nums">
+                  <p className="text-[10px] text-neutral-400 uppercase tracking-wider">Flex Bucket</p>
+                  <p className="text-sm font-semibold text-neutral-800 tabular-nums">
                     {formatCurrency(flexBucket, CURRENCY)}
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-stone-300" />
+              <ChevronRight className="w-4 h-4 text-neutral-300" />
             </div>
           </div>
 
           {/* Quick Add Grid */}
           <div data-onboarding-target="quick-add-grid" className="p-4 flex-1">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium">
+              <p className="text-[10px] text-neutral-400 uppercase tracking-wider font-medium">
                 Quick Add
               </p>
               <button
                 onClick={handleOpenCreateShortcut}
-                className="p-1 rounded text-stone-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                className="p-1 rounded text-neutral-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -552,13 +552,13 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                 <button
                   key={template.label}
                   onClick={() => handleQuickAdd(template.amount, template.label)}
-                  className="flex flex-col items-center gap-1 p-2 rounded-xl bg-stone-50 hover:bg-amber-50 border border-transparent hover:border-amber-200 transition-all group"
+                  className="flex flex-col items-center gap-1 p-2 rounded-xl bg-neutral-50 hover:bg-amber-50 border border-transparent hover:border-amber-200 transition-all group"
                   title={`${template.label}: ${formatCurrency(template.amount, CURRENCY)}`}
                 >
                   <span className="text-lg group-hover:scale-110 transition-transform">
                     {template.icon}
                   </span>
-                  <span className="text-[9px] text-stone-500 group-hover:text-amber-700 truncate w-full text-center">
+                  <span className="text-[9px] text-neutral-500 group-hover:text-amber-700 truncate w-full text-center">
                     {template.label}
                   </span>
                 </button>
@@ -566,7 +566,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
             </div>
             {shortcuts.length > 0 && (
               <div className="mt-4">
-                <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium mb-2">
+                <p className="text-[10px] text-neutral-400 uppercase tracking-wider font-medium mb-2">
                   Your Shortcuts
                 </p>
                 <div className="grid grid-cols-4 gap-2">
@@ -602,7 +602,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                 />
               </div>
 
-              <div className="hidden lg:flex lg:w-[32%] xl:w-[35%] border-l border-stone-200/60 bg-white/50 overflow-hidden">
+              <div className="hidden lg:flex lg:w-[32%] xl:w-[35%] border-l border-neutral-200/60 bg-white/50 overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                   <DayDetailPanel
                     selectedDate={selectedDate}
@@ -652,16 +652,16 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
           {activeTab === "transactions" && (
             <div className="flex-1 p-3 sm:p-4 overflow-auto">
               <div className="max-w-2xl mx-auto">
-                <div className="bg-white rounded-2xl border border-stone-200/60 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-stone-800">Recent Transactions</h3>
-                    <span className="text-xs text-stone-400">{expenses.length} total</span>
+                <div className="bg-white rounded-2xl border border-neutral-200/60 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-neutral-800">Recent Transactions</h3>
+                    <span className="text-xs text-neutral-400">{expenses.length} total</span>
                   </div>
                   <div className="divide-y divide-stone-100 max-h-[calc(100vh-200px)] overflow-y-auto">
                     {expenses.length === 0 ? (
                       <div className="p-8 text-center">
-                        <p className="text-stone-400 text-sm">No transactions yet</p>
-                        <p className="text-stone-300 text-xs mt-1">Add your first expense above</p>
+                        <p className="text-neutral-400 text-sm">No transactions yet</p>
+                        <p className="text-neutral-300 text-xs mt-1">Add your first expense above</p>
                       </div>
                     ) : (
                       expenses
@@ -672,13 +672,13 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                           <div
                             key={expense.id}
                             className={cn(
-                              "px-4 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors active:bg-stone-100",
+                              "px-4 py-3 flex items-center justify-between hover:bg-neutral-50 transition-colors active:bg-neutral-100",
                               expense.id.startsWith("temp-") && "opacity-60"
                             )}
                           >
                             <div>
-                              <p className="text-sm font-medium text-stone-800">{expense.label}</p>
-                              <p className="text-xs text-stone-400">
+                              <p className="text-sm font-medium text-neutral-800">{expense.label}</p>
+                              <p className="text-xs text-neutral-400">
                                 {new Date(expense.date).toLocaleDateString("en-US", {
                                   weekday: "short",
                                   month: "short",
@@ -686,7 +686,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                                 })}
                               </p>
                             </div>
-                            <span className="text-sm font-semibold text-stone-700 tabular-nums">
+                            <span className="text-sm font-semibold text-neutral-700 tabular-nums">
                               -{formatCurrency(expense.amount, CURRENCY)}
                             </span>
                           </div>
@@ -712,10 +712,10 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-center pt-3 pb-2">
-              <div className="w-10 h-1 rounded-full bg-stone-300" />
+              <div className="w-10 h-1 rounded-full bg-neutral-300" />
             </div>
 
-            <div className="px-4 pb-4 border-b border-stone-100">
+            <div className="px-4 pb-4 border-b border-neutral-100">
               <div className="flex items-center gap-4">
                 <div className="relative w-16 h-16 flex-shrink-0">
                   <svg className="w-16 h-16 -rotate-90" viewBox="0 0 80 80">
@@ -738,23 +738,23 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                   </div>
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-stone-400 uppercase tracking-wider">
+                  <p className="text-xs text-neutral-400 uppercase tracking-wider">
                     {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
                   </p>
                   <p className={cn("text-xl font-bold tabular-nums", statusColor)}>
                     {formatCurrency(Math.abs(todayStatus.remaining), CURRENCY)}{" "}
-                    <span className="text-sm font-normal text-stone-400">
+                    <span className="text-sm font-normal text-neutral-400">
                       {isOverBudget ? "over" : "left"}
                     </span>
                   </p>
-                  <p className="text-xs text-stone-500 mt-0.5">
+                  <p className="text-xs text-neutral-500 mt-0.5">
                     Spent {formatCurrency(todayStatus.spent, CURRENCY)} of{" "}
                     {formatCurrency(todayStatus.limit, CURRENCY)}
                   </p>
                 </div>
                 <button
                   onClick={() => setIsQuickActionsOpen(false)}
-                  className="p-2 rounded-full bg-stone-100 text-stone-500"
+                  className="p-2 rounded-full bg-neutral-100 text-neutral-500"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -765,10 +765,10 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                   {todayExpenses.map((exp, i) => (
                     <div
                       key={i}
-                      className="flex-shrink-0 px-3 py-1.5 rounded-full bg-stone-100 text-xs"
+                      className="flex-shrink-0 px-3 py-1.5 rounded-full bg-neutral-100 text-xs"
                     >
-                      <span className="text-stone-600">{exp.label}</span>
-                      <span className="text-stone-400 ml-1">
+                      <span className="text-neutral-600">{exp.label}</span>
+                      <span className="text-neutral-400 ml-1">
                         {formatCurrency(exp.amount, CURRENCY)}
                       </span>
                     </div>
@@ -777,24 +777,24 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
               )}
             </div>
 
-            <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
+            <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
                   <Wallet className="w-5 h-5 text-violet-600" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-stone-400 uppercase tracking-wider">Flex Bucket</p>
-                  <p className="text-base font-semibold text-stone-800 tabular-nums">
+                  <p className="text-[10px] text-neutral-400 uppercase tracking-wider">Flex Bucket</p>
+                  <p className="text-base font-semibold text-neutral-800 tabular-nums">
                     {formatCurrency(flexBucket, CURRENCY)}
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-stone-300" />
+              <ChevronRight className="w-5 h-5 text-neutral-300" />
             </div>
 
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs text-stone-500 uppercase tracking-wider font-medium">
+                <p className="text-xs text-neutral-500 uppercase tracking-wider font-medium">
                   Quick Add
                 </p>
                 <button
@@ -802,7 +802,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                     setIsQuickActionsOpen(false);
                     handleOpenCreateShortcut();
                   }}
-                  className="p-1.5 rounded-lg text-stone-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -815,10 +815,10 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                       handleQuickAdd(template.amount, template.label);
                       setIsQuickActionsOpen(false);
                     }}
-                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-stone-50 active:bg-amber-100 active:scale-95 border border-stone-100 transition-all"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-neutral-50 active:bg-amber-100 active:scale-95 border border-neutral-100 transition-all"
                   >
                     <span className="text-2xl">{template.icon}</span>
-                    <span className="text-[10px] text-stone-600 truncate w-full text-center">
+                    <span className="text-[10px] text-neutral-600 truncate w-full text-center">
                       {template.label}
                     </span>
                   </button>
@@ -826,7 +826,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
               </div>
               {shortcuts.length > 0 && (
                 <div className="mt-4">
-                  <p className="text-xs text-stone-500 uppercase tracking-wider font-medium mb-3">
+                  <p className="text-xs text-neutral-500 uppercase tracking-wider font-medium mb-3">
                     Your Shortcuts
                   </p>
                   <div className="grid grid-cols-4 gap-3">

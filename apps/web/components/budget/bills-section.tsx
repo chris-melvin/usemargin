@@ -224,7 +224,7 @@ function BillCardCompact({
   return (
     <div
       className={cn(
-        "flex items-center justify-between py-2 px-2 rounded-lg hover:bg-stone-50 transition-colors group",
+        "flex items-center justify-between py-2 px-2 rounded-lg hover:bg-neutral-50 transition-colors group",
         isPending && "opacity-60"
       )}
     >
@@ -233,7 +233,7 @@ function BillCardCompact({
           "w-2 h-2 rounded-full flex-shrink-0",
           isPaid ? "bg-emerald-500" : isOverdue ? "bg-rose-500" : "bg-amber-400"
         )} />
-        <span className="text-sm text-stone-700 truncate">{bill.label}</span>
+        <span className="text-sm text-neutral-700 truncate">{bill.label}</span>
       </div>
       <div className="flex items-center gap-1">
         <span className="text-sm font-medium text-amber-600 tabular-nums">
@@ -301,7 +301,7 @@ function BillCardFull({
   return (
     <div
       className={cn(
-        "p-3 rounded-xl border border-stone-200 hover:border-amber-200 transition-colors",
+        "p-3 rounded-xl border border-neutral-200 hover:border-teal-200 transition-colors",
         isPending && "opacity-60"
       )}
     >
@@ -310,7 +310,7 @@ function BillCardFull({
           <div className="text-xl">{bill.icon || "📋"}</div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-stone-900 truncate">
+              <p className="text-sm font-medium text-neutral-900 truncate">
                 {bill.label}
               </p>
               <Badge
@@ -323,7 +323,7 @@ function BillCardFull({
                 {isPaid ? "Paid" : isOverdue ? "Overdue" : "Pending"}
               </Badge>
             </div>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-neutral-500">
               {bill.due_date && `Due on ${bill.due_date}${getOrdinalSuffix(bill.due_date)}`}
             </p>
           </div>
@@ -332,7 +332,7 @@ function BillCardFull({
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold text-amber-600 tabular-nums">
             -{formatCurrency(bill.amount, currency)}
-            <span className="text-xs font-normal text-stone-400">/mo</span>
+            <span className="text-xs font-normal text-neutral-400">/mo</span>
           </p>
 
           <DropdownMenu>

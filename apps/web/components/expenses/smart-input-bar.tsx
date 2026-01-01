@@ -179,8 +179,8 @@ export function SmartInputBar({
         className={cn(
           "fixed bottom-6 right-4 z-50 sm:hidden",
           "w-14 h-14 rounded-2xl",
-          "bg-gradient-to-br from-amber-500 to-amber-600",
-          "shadow-lg shadow-amber-500/30",
+          "bg-gradient-to-br from-teal-500 to-teal-600",
+          "shadow-lg shadow-teal-500/30",
           "flex items-center justify-center",
           "transition-all duration-300",
           "active:scale-90",
@@ -197,8 +197,8 @@ export function SmartInputBar({
         className={cn(
           "fixed bottom-6 right-6 z-50 hidden sm:flex",
           "w-14 h-14 rounded-2xl",
-          "bg-gradient-to-br from-amber-500 to-amber-600",
-          "shadow-lg shadow-amber-500/30",
+          "bg-gradient-to-br from-teal-500 to-teal-600",
+          "shadow-lg shadow-teal-500/30",
           "items-center justify-center",
           "transition-all duration-300",
           "hover:scale-105 active:scale-95",
@@ -218,7 +218,7 @@ export function SmartInputBar({
           >
             {/* Handle */}
             <div className="flex justify-center pt-3">
-              <div className="w-10 h-1 rounded-full bg-stone-300" />
+              <div className="w-10 h-1 rounded-full bg-neutral-300" />
             </div>
 
             {/* Mobile Input Area */}
@@ -228,15 +228,15 @@ export function SmartInputBar({
                 <div
                   className={cn(
                     "flex-1 relative",
-                    "bg-stone-50",
-                    "border-2 border-stone-200",
+                    "bg-neutral-50",
+                    "border-2 border-neutral-200",
                     "rounded-2xl",
                     "transition-all duration-300",
-                    isFocused && "border-amber-400 bg-white"
+                    isFocused && "border-teal-400 bg-white"
                   )}
                 >
                   <div className="flex items-center gap-2 p-3">
-                    <Sparkles className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                    <Sparkles className="w-5 h-5 text-teal-500 flex-shrink-0" />
                     <input
                       ref={mobileInputRef}
                       type="text"
@@ -251,12 +251,12 @@ export function SmartInputBar({
                       onFocus={() => setIsFocused(true)}
                       onBlur={() => setIsFocused(false)}
                       placeholder="coffee 120, grab and lunch..."
-                      className="flex-1 min-w-0 bg-transparent text-stone-800 text-base outline-none placeholder:text-stone-400"
+                      className="flex-1 min-w-0 bg-transparent text-neutral-800 text-base outline-none placeholder:text-neutral-400"
                     />
                     {/* Inline reactive preview for mobile */}
                     {preview.length > 0 && preview[0] && (
                       <div className="flex items-center gap-1 flex-shrink-0 animate-in fade-in duration-150">
-                        <span className="text-xs font-medium text-amber-600">
+                        <span className="text-xs font-medium text-teal-600">
                           {CURRENCY}{preview[0].amount.toLocaleString()}
                         </span>
                         {buckets.length > 0 && (
@@ -284,14 +284,14 @@ export function SmartInputBar({
                           />
                         )}
                         {preview.length > 1 && (
-                          <span className="text-[10px] text-stone-400">
+                          <span className="text-[10px] text-neutral-400">
                             +{preview.length - 1}
                           </span>
                         )}
                       </div>
                     )}
                     {value && (
-                      <button onClick={clearInput} className="p-1 text-stone-400 flex-shrink-0">
+                      <button onClick={clearInput} className="p-1 text-neutral-400 flex-shrink-0">
                         <X className="w-5 h-5" />
                       </button>
                     )}
@@ -303,8 +303,8 @@ export function SmartInputBar({
                   className={cn(
                     "w-14 h-14 rounded-2xl flex items-center justify-center transition-all flex-shrink-0",
                     value.trim() && !isParsing
-                      ? "bg-stone-900 text-white active:scale-95"
-                      : "bg-stone-200 text-stone-400"
+                      ? "bg-neutral-900 text-white active:scale-95"
+                      : "bg-neutral-200 text-neutral-400"
                   )}
                 >
                   {isParsing ? (
@@ -317,7 +317,7 @@ export function SmartInputBar({
 
               {/* Quick suggestions for mobile */}
               <div className="mb-4">
-                <p className="text-xs text-stone-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <p className="text-xs text-neutral-400 uppercase tracking-wider mb-2 flex items-center gap-1">
                   <Lightbulb className="w-3 h-3" /> Quick add
                 </p>
                 <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
@@ -325,11 +325,11 @@ export function SmartInputBar({
                     <button
                       key={item.label}
                       onClick={() => handleQuickAdd(item.label, item.amount)}
-                      className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-100 active:bg-amber-100 transition-colors"
+                      className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-100 active:bg-teal-100 transition-colors"
                     >
                       <span className="text-lg">{item.icon}</span>
-                      <span className="text-sm font-medium text-stone-700">{item.label}</span>
-                      <span className="text-xs text-stone-400">{CURRENCY}{item.amount}</span>
+                      <span className="text-sm font-medium text-neutral-700">{item.label}</span>
+                      <span className="text-xs text-neutral-400">{CURRENCY}{item.amount}</span>
                     </button>
                   ))}
                 </div>
@@ -338,7 +338,7 @@ export function SmartInputBar({
               {/* Help toggle for mobile */}
               <button
                 onClick={() => setShowHelp(!showHelp)}
-                className="flex items-center gap-2 text-xs text-stone-400 mb-3"
+                className="flex items-center gap-2 text-xs text-neutral-400 mb-3"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
                 {showHelp ? "Hide tips" : "Show tips for faster input"}
@@ -347,8 +347,8 @@ export function SmartInputBar({
 
               {/* Syntax help */}
               {showHelp && (
-                <div className="bg-stone-50 rounded-xl p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">Examples</p>
+                <div className="bg-neutral-50 rounded-xl p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider">Examples</p>
                   <div className="grid grid-cols-2 gap-2">
                     {SYNTAX_EXAMPLES.map((item) => (
                       <button
@@ -357,10 +357,10 @@ export function SmartInputBar({
                           setValue(item.example);
                           onInputChange(item.example);
                         }}
-                        className="text-left p-2 rounded-lg bg-white border border-stone-200 active:bg-amber-50 transition-colors"
+                        className="text-left p-2 rounded-lg bg-white border border-neutral-200 active:bg-teal-50 transition-colors"
                       >
-                        <code className="text-xs font-mono text-amber-600">{item.example}</code>
-                        <p className="text-[10px] text-stone-400 mt-0.5">{item.desc}</p>
+                        <code className="text-xs font-mono text-teal-600">{item.example}</code>
+                        <p className="text-[10px] text-neutral-400 mt-0.5">{item.desc}</p>
                       </button>
                     ))}
                   </div>
@@ -389,15 +389,15 @@ export function SmartInputBar({
                 <div
                   className={cn(
                     "flex-1 relative",
-                    "bg-stone-50",
-                    "border-2 border-stone-200",
+                    "bg-neutral-50",
+                    "border-2 border-neutral-200",
                     "rounded-xl",
                     "transition-all duration-300",
-                    isFocused && "border-amber-400 bg-white"
+                    isFocused && "border-teal-400 bg-white"
                   )}
                 >
                   <div className="flex items-center gap-3 p-3">
-                    <Sparkles className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                    <Sparkles className="w-5 h-5 text-teal-500 flex-shrink-0" />
                     <input
                       ref={desktopInputRef}
                       type="text"
@@ -408,12 +408,12 @@ export function SmartInputBar({
                       onFocus={() => setIsFocused(true)}
                       onBlur={() => setIsFocused(false)}
                       placeholder="coffee 120, grab and lunch, @starbucks..."
-                      className="flex-1 min-w-0 bg-transparent text-stone-800 text-base outline-none placeholder:text-stone-400"
+                      className="flex-1 min-w-0 bg-transparent text-neutral-800 text-base outline-none placeholder:text-neutral-400"
                     />
                     {/* Inline reactive preview */}
                     {preview.length > 0 && preview[0] && (
                       <div className="flex items-center gap-1.5 flex-shrink-0 animate-in fade-in duration-150">
-                        <span className="text-sm font-medium text-amber-600">
+                        <span className="text-sm font-medium text-teal-600">
                           {CURRENCY}{preview[0].amount.toLocaleString()}
                         </span>
                         {buckets.length > 0 && (
@@ -441,14 +441,14 @@ export function SmartInputBar({
                           />
                         )}
                         {preview.length > 1 && (
-                          <span className="text-xs text-stone-400">
+                          <span className="text-xs text-neutral-400">
                             +{preview.length - 1}
                           </span>
                         )}
                       </div>
                     )}
                     {value && (
-                      <button onClick={clearInput} className="p-1 text-stone-400 hover:text-stone-600 flex-shrink-0">
+                      <button onClick={clearInput} className="p-1 text-neutral-400 hover:text-neutral-600 flex-shrink-0">
                         <X className="w-5 h-5" />
                       </button>
                     )}
@@ -460,8 +460,8 @@ export function SmartInputBar({
                   className={cn(
                     "w-12 h-12 rounded-xl flex items-center justify-center transition-all flex-shrink-0",
                     value.trim() && !isParsing
-                      ? "bg-stone-900 text-white hover:bg-stone-800 active:scale-95"
-                      : "bg-stone-200 text-stone-400"
+                      ? "bg-neutral-900 text-white hover:bg-neutral-800 active:scale-95"
+                      : "bg-neutral-200 text-neutral-400"
                   )}
                 >
                   {isParsing ? (
@@ -474,7 +474,7 @@ export function SmartInputBar({
 
               {/* Quick suggestions */}
               <div className="mb-4">
-                <p className="text-xs text-stone-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <p className="text-xs text-neutral-400 uppercase tracking-wider mb-2 flex items-center gap-1">
                   <Lightbulb className="w-3 h-3" /> Quick add
                 </p>
                 <div className="flex gap-2 flex-wrap">
@@ -482,11 +482,11 @@ export function SmartInputBar({
                     <button
                       key={item.label}
                       onClick={() => handleQuickAdd(item.label, item.amount)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-stone-100 hover:bg-amber-100 transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-100 hover:bg-teal-100 transition-colors"
                     >
                       <span className="text-lg">{item.icon}</span>
-                      <span className="text-sm font-medium text-stone-700">{item.label}</span>
-                      <span className="text-xs text-stone-400">{CURRENCY}{item.amount}</span>
+                      <span className="text-sm font-medium text-neutral-700">{item.label}</span>
+                      <span className="text-xs text-neutral-400">{CURRENCY}{item.amount}</span>
                     </button>
                   ))}
                 </div>
@@ -495,7 +495,7 @@ export function SmartInputBar({
               {/* Help toggle */}
               <button
                 onClick={() => setShowHelp(!showHelp)}
-                className="flex items-center gap-2 text-xs text-stone-400 hover:text-stone-600 mb-3"
+                className="flex items-center gap-2 text-xs text-neutral-400 hover:text-neutral-600 mb-3"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
                 {showHelp ? "Hide tips" : "Show tips for faster input"}
@@ -504,8 +504,8 @@ export function SmartInputBar({
 
               {/* Syntax help */}
               {showHelp && (
-                <div className="bg-stone-50 rounded-xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">Examples</p>
+                <div className="bg-neutral-50 rounded-xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider">Examples</p>
                   <div className="grid grid-cols-2 gap-2">
                     {SYNTAX_EXAMPLES.map((item) => (
                       <button
@@ -515,10 +515,10 @@ export function SmartInputBar({
                           onInputChange(item.example);
                           desktopInputRef.current?.focus();
                         }}
-                        className="text-left p-3 rounded-lg bg-white border border-stone-200 hover:bg-amber-50 hover:border-amber-200 transition-colors"
+                        className="text-left p-3 rounded-lg bg-white border border-neutral-200 hover:bg-teal-50 hover:border-teal-200 transition-colors"
                       >
-                        <code className="text-sm font-mono text-amber-600">{item.example}</code>
-                        <p className="text-xs text-stone-400 mt-1">{item.desc}</p>
+                        <code className="text-sm font-mono text-teal-600">{item.example}</code>
+                        <p className="text-xs text-neutral-400 mt-1">{item.desc}</p>
                       </button>
                     ))}
                   </div>
@@ -526,15 +526,15 @@ export function SmartInputBar({
               )}
 
               {/* Keyboard hints */}
-              <div className="flex items-center justify-center gap-4 mt-4 text-xs text-stone-400">
+              <div className="flex items-center justify-center gap-4 mt-4 text-xs text-neutral-400">
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded bg-stone-100 font-mono text-stone-500">
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 font-mono text-neutral-500">
                     ↵
                   </kbd>
                   to add
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded bg-stone-100 font-mono text-stone-500">
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 font-mono text-neutral-500">
                     esc
                   </kbd>
                   to close

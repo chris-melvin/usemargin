@@ -21,9 +21,9 @@ function getStatusStyle(spent: number, limit: number, isPast: boolean): {
 } {
   if (!isPast || spent === 0) {
     return {
-      bg: "bg-stone-50/30",
-      fill: "bg-stone-200",
-      text: "text-stone-500",
+      bg: "bg-neutral-50/30",
+      fill: "bg-neutral-200",
+      text: "text-neutral-500",
       status: "none",
     };
   }
@@ -82,15 +82,15 @@ export function CalendarDayCell({ day, onClick, compact = false, isSelected = fa
       onClick={onClick}
       {...(isTodayCell ? { "data-onboarding-target": "calendar-today" } : {})}
       className={cn(
-        "relative cursor-pointer transition-all duration-200 border-r border-b border-stone-100/50",
+        "relative cursor-pointer transition-all duration-200 border-r border-b border-neutral-100/50",
         "active:scale-95 sm:hover:z-10 sm:hover:shadow-md sm:hover:scale-[1.02]",
         // Square aspect ratio on all screens
         compact ? "h-14 p-1.5" : "aspect-square p-1.5 sm:p-2",
         // Background color based on status
         isPast && day.spent > 0 && style.bg,
-        !isPast && !isTodayCell && !isSelected && "bg-white sm:hover:bg-stone-50/50",
-        // Today highlight - prominent ring
-        isTodayCell && !isSelected && "ring-2 ring-amber-400 ring-inset bg-amber-50/60 z-10",
+        !isPast && !isTodayCell && !isSelected && "bg-white sm:hover:bg-neutral-50/50",
+        // Today highlight - prominent ring (teal for brand)
+        isTodayCell && !isSelected && "ring-2 ring-teal-400 ring-inset bg-teal-50/60 z-10",
         // Selected state - blue ring (takes priority over today on desktop)
         isSelected && "ring-2 ring-blue-500 ring-inset bg-blue-50/60 z-20"
       )}
@@ -103,7 +103,7 @@ export function CalendarDayCell({ day, onClick, compact = false, isSelected = fa
             compact ? "text-[11px]" : "text-[11px] sm:text-xs",
             isTodayCell && "text-amber-600",
             !isTodayCell && isPast && style.text,
-            !isTodayCell && !isPast && "text-stone-400"
+            !isTodayCell && !isPast && "text-neutral-400"
           )}
         >
           {day.day}

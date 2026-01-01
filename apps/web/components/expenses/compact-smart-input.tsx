@@ -101,7 +101,7 @@ export function CompactSmartInput({
           setIsExpanded(true);
           setTimeout(() => inputRef.current?.focus(), 50);
         }}
-        className="w-full px-4 py-2.5 border-2 border-dashed border-stone-200 rounded-xl flex items-center justify-center gap-2 text-stone-400 hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50/50 transition-all"
+        className="w-full px-4 py-2.5 border-2 border-dashed border-neutral-200 rounded-xl flex items-center justify-center gap-2 text-neutral-400 hover:text-teal-600 hover:border-teal-300 hover:bg-teal-50/50 transition-all"
       >
         <Plus className="h-4 w-4" />
         <span className="text-sm font-medium">Add Expense</span>
@@ -120,13 +120,13 @@ export function CompactSmartInput({
               key={`${expense.label}-${index}`}
               className={cn(
                 "flex items-center gap-1.5 p-1.5 rounded-lg",
-                "bg-amber-50/70 border border-amber-200/40",
+                "bg-teal-50/70 border border-teal-200/40",
                 "animate-in fade-in zoom-in-95 duration-200"
               )}
             >
               <div className="flex-1 flex items-center gap-1 min-w-0">
-                <span className="text-amber-700 font-medium text-xs truncate">{expense.label}</span>
-                <span className="text-amber-500/80 text-[10px] flex-shrink-0">
+                <span className="text-teal-700 font-medium text-xs truncate">{expense.label}</span>
+                <span className="text-teal-500/80 text-[10px] flex-shrink-0">
                   {CURRENCY}{expense.amount.toLocaleString()}
                 </span>
               </div>
@@ -157,7 +157,7 @@ export function CompactSmartInput({
             </div>
           ))}
           {preview.length > 1 && (
-            <div className="inline-flex items-center px-2 py-1 rounded-full bg-stone-100 text-[10px] font-semibold text-stone-500">
+            <div className="inline-flex items-center px-2 py-1 rounded-full bg-neutral-100 text-[10px] font-semibold text-neutral-500">
               = {CURRENCY}{totalPreview.toLocaleString()}
             </div>
           )}
@@ -171,7 +171,7 @@ export function CompactSmartInput({
           "bg-white/80 backdrop-blur-sm",
           "border rounded-xl",
           "transition-all duration-200",
-          isFocused ? "border-amber-300 shadow-sm shadow-amber-100" : "border-stone-200"
+          isFocused ? "border-teal-300 shadow-sm shadow-teal-100" : "border-neutral-200"
         )}
       >
         <div
@@ -180,8 +180,8 @@ export function CompactSmartInput({
             "flex items-center justify-center",
             "transition-all duration-200",
             isFocused
-              ? "bg-amber-100 text-amber-600"
-              : "bg-stone-100 text-stone-400"
+              ? "bg-teal-100 text-teal-600"
+              : "bg-neutral-100 text-neutral-400"
           )}
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -199,17 +199,17 @@ export function CompactSmartInput({
           className={cn(
             "flex-1 min-w-0",
             "bg-transparent",
-            "text-stone-800 text-sm",
-            "placeholder:text-stone-400/70",
+            "text-neutral-800 text-sm",
+            "placeholder:text-neutral-400/70",
             "outline-none",
-            "caret-amber-500"
+            "caret-teal-500"
           )}
         />
 
         {value && (
           <button
             onClick={clearInput}
-            className="flex-shrink-0 p-1 text-stone-400 hover:text-stone-600 transition-colors"
+            className="flex-shrink-0 p-1 text-neutral-400 hover:text-neutral-600 transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -224,8 +224,8 @@ export function CompactSmartInput({
             "transition-all duration-200",
             "disabled:opacity-40 disabled:cursor-not-allowed",
             value.trim() && !isParsing
-              ? "bg-stone-900 text-white hover:bg-stone-800 active:scale-95"
-              : "bg-stone-100 text-stone-400"
+              ? "bg-neutral-900 text-white hover:bg-neutral-800 active:scale-95"
+              : "bg-neutral-100 text-neutral-400"
           )}
         >
           {isParsing ? (
@@ -243,13 +243,13 @@ export function CompactSmartInput({
           onInputChange("");
           setIsExpanded(false);
         }}
-        className="w-full text-xs text-stone-400 hover:text-stone-600 py-1"
+        className="w-full text-xs text-neutral-400 hover:text-neutral-600 py-1"
       >
         Cancel
       </button>
 
       {/* Hint */}
-      <p className="text-[10px] text-stone-400 text-center">
+      <p className="text-[10px] text-neutral-400 text-center">
         Try: &quot;coffee 120&quot; • &quot;:flex&quot; for bucket • &quot;#travel&quot; for category
       </p>
     </div>

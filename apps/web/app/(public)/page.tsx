@@ -33,7 +33,7 @@ function ScribbleUnderline({ className = "" }: { className?: string }) {
     >
       <path
         d="M3 9C20 3 40 7 60 5C80 3 100 8 120 6C140 4 160 7 180 5C190 4 197 6 197 6"
-        stroke="#f59e0b"
+        stroke="#1A9E9E"
         strokeWidth="2.5"
         strokeLinecap="round"
         className="animate-draw-line"
@@ -59,7 +59,7 @@ function HandDrawnCircle({ children, className = "" }: { children: React.ReactNo
           cy="30"
           rx="45"
           ry="25"
-          stroke="#f59e0b"
+          stroke="#1A9E9E"
           strokeWidth="2"
           strokeDasharray="4 3"
           fill="none"
@@ -85,10 +85,10 @@ function MarginNote({
       className={`absolute ${position === "right" ? "left-full ml-4" : "right-full mr-4"} top-1/2 hidden lg:block pointer-events-none`}
       style={{ transform: `translateY(-50%) rotate(${rotate}deg)` }}
     >
-      <div className="flex items-center gap-1 text-stone-400 text-sm whitespace-nowrap font-handwriting">
-        {position === "right" && <span className="text-amber-500">→</span>}
+      <div className="flex items-center gap-1 text-neutral-400 text-sm whitespace-nowrap font-handwriting">
+        {position === "right" && <span className="text-teal-500">→</span>}
         {children}
-        {position === "left" && <span className="text-amber-500">←</span>}
+        {position === "left" && <span className="text-teal-500">←</span>}
       </div>
     </div>
   );
@@ -107,20 +107,20 @@ function DailyBudgetMockup() {
 
   return (
     <div className="relative">
-      <div className="absolute -left-8 -top-8 h-32 w-32 rounded-full bg-amber-200/20 blur-3xl" />
+      <div className="absolute -left-8 -top-8 h-32 w-32 rounded-full bg-teal-200/20 blur-3xl" />
       <div className="absolute -bottom-8 -right-8 h-40 w-40 rounded-full bg-emerald-200/20 blur-3xl" />
 
-      <div className="relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-6 shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl">
         {/* Paper texture overlay */}
         <div className="absolute inset-0 opacity-30 pointer-events-none bg-paper-texture" />
 
         <div className="relative">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-stone-400">
+              <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">
                 Today&apos;s Limit
               </p>
-              <p className="text-sm text-stone-500">December 29, 2025</p>
+              <p className="text-sm text-neutral-500">December 29, 2025</p>
             </div>
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50">
               <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
@@ -129,7 +129,7 @@ function DailyBudgetMockup() {
 
           <div className="relative mx-auto mb-4 flex h-40 w-40 items-center justify-center">
             <svg className="absolute h-full w-full -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="45" fill="none" stroke="#f5f5f4" strokeWidth="6" />
+              <circle cx="50" cy="50" r="45" fill="none" stroke="#E7E7E4" strokeWidth="6" />
               <circle
                 cx="50"
                 cy="50"
@@ -150,10 +150,10 @@ function DailyBudgetMockup() {
               </defs>
             </svg>
             <div className="text-center">
-              <p className="text-3xl font-light tabular-nums text-stone-900">
-                <span className="text-lg text-stone-400">₱</span>{remaining}
+              <p className="text-3xl font-light tabular-nums text-neutral-900">
+                <span className="text-lg text-neutral-400">₱</span>{remaining}
               </p>
-              <p className="text-xs text-stone-500">remaining</p>
+              <p className="text-xs text-neutral-500">remaining</p>
             </div>
           </div>
 
@@ -172,14 +172,14 @@ function DailyBudgetMockup() {
             ].map((expense, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between rounded-lg bg-stone-50 px-3 py-2 text-sm animate-fade-in-up"
+                className="flex items-center justify-between rounded-lg bg-neutral-50 px-3 py-2 text-sm animate-fade-in-up"
                 style={{ animationDelay: `${0.5 + i * 0.1}s` }}
               >
                 <div className="flex items-center gap-2">
                   <span>{expense.icon}</span>
-                  <span className="text-stone-600">{expense.label}</span>
+                  <span className="text-neutral-600">{expense.label}</span>
                 </div>
-                <span className="font-medium tabular-nums text-stone-800">
+                <span className="font-medium tabular-nums text-neutral-800">
                   -₱{expense.amount}
                 </span>
               </div>
@@ -202,10 +202,10 @@ function ComparisonSection() {
 
       <div className="relative mx-auto max-w-6xl px-6">
         <div className="text-center mb-16">
-          <p className="text-sm font-medium uppercase tracking-wider text-amber-600 mb-3">
+          <p className="text-sm font-medium uppercase tracking-wider text-teal-600 mb-3">
             The difference
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold text-stone-900">
+          <h2 className="text-3xl md:text-4xl font-bold text-neutral-900">
             Two ways to budget
           </h2>
         </div>
@@ -213,16 +213,16 @@ function ComparisonSection() {
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
           {/* The Old Way */}
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-br from-rose-200/50 to-stone-300/50 rounded-2xl blur-sm opacity-75" />
-            <div className="relative bg-stone-800 rounded-2xl p-6 md:p-8 border border-stone-700">
+            <div className="absolute -inset-1 bg-gradient-to-br from-rose-200/50 to-neutral-300/50 rounded-2xl blur-sm opacity-75" />
+            <div className="relative bg-neutral-800 rounded-2xl p-6 md:p-8 border border-neutral-700">
               <div className="flex items-center gap-2 mb-6">
                 <X className="h-5 w-5 text-rose-400" />
-                <h3 className="text-lg font-semibold text-stone-300">The Old Way</h3>
+                <h3 className="text-lg font-semibold text-neutral-300">The Old Way</h3>
               </div>
 
               {/* Fake spreadsheet */}
-              <div className="bg-stone-900/80 rounded-lg p-3 font-mono text-xs mb-4 border border-stone-700">
-                <div className="grid grid-cols-4 gap-1 text-stone-500 mb-2 pb-2 border-b border-stone-700">
+              <div className="bg-neutral-900/80 rounded-lg p-3 font-mono text-xs mb-4 border border-neutral-700">
+                <div className="grid grid-cols-4 gap-1 text-neutral-500 mb-2 pb-2 border-b border-neutral-700">
                   <span>Category</span>
                   <span>Budget</span>
                   <span>Spent</span>
@@ -233,7 +233,7 @@ function ComparisonSection() {
                   { cat: "Transport", budget: 3000, spent: 2800, left: 200 },
                   { cat: "Entertainment", budget: 2000, spent: 3500, left: -1500 },
                 ].map((row, i) => (
-                  <div key={i} className="grid grid-cols-4 gap-1 py-1.5 text-stone-400">
+                  <div key={i} className="grid grid-cols-4 gap-1 py-1.5 text-neutral-400">
                     <span>{row.cat}</span>
                     <span>₱{row.budget}</span>
                     <span className={row.spent > row.budget ? "text-rose-400" : ""}>₱{row.spent}</span>
@@ -245,15 +245,15 @@ function ComparisonSection() {
               </div>
 
               <div className="space-y-3 text-sm">
-                <div className="flex items-start gap-2 text-stone-400">
+                <div className="flex items-start gap-2 text-neutral-400">
                   <HelpCircle className="h-4 w-4 text-rose-400 mt-0.5 shrink-0" />
                   <span>&quot;Can I afford lunch today?&quot;</span>
                 </div>
-                <div className="flex items-start gap-2 text-stone-400">
+                <div className="flex items-start gap-2 text-neutral-400">
                   <TrendingDown className="h-4 w-4 text-rose-400 mt-0.5 shrink-0" />
                   <span>Overspend once, feel guilty all month</span>
                 </div>
-                <div className="flex items-start gap-2 text-stone-400">
+                <div className="flex items-start gap-2 text-neutral-400">
                   <AlertTriangle className="h-4 w-4 text-rose-400 mt-0.5 shrink-0" />
                   <span>Complex categories to manage</span>
                 </div>
@@ -263,21 +263,21 @@ function ComparisonSection() {
 
           {/* The useMargin Way */}
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-br from-emerald-200/50 to-amber-200/50 rounded-2xl blur-sm opacity-75" />
-            <div className="relative bg-white rounded-2xl p-6 md:p-8 border border-stone-200">
+            <div className="absolute -inset-1 bg-gradient-to-br from-emerald-200/50 to-teal-200/50 rounded-2xl blur-sm opacity-75" />
+            <div className="relative bg-white rounded-2xl p-6 md:p-8 border border-neutral-200">
               <div className="absolute inset-0 bg-paper-texture opacity-20 rounded-2xl pointer-events-none" />
 
               <div className="relative">
                 <div className="flex items-center gap-2 mb-6">
                   <Check className="h-5 w-5 text-emerald-600" />
-                  <h3 className="text-lg font-semibold text-stone-800">The useMargin Way</h3>
+                  <h3 className="text-lg font-semibold text-neutral-800">The useMargin Way</h3>
                 </div>
 
                 {/* Simple daily view */}
-                <div className="bg-stone-50 rounded-xl p-4 mb-4 text-center">
-                  <p className="text-xs text-stone-500 uppercase tracking-wider mb-1">Today you can spend</p>
-                  <p className="text-4xl font-light text-stone-900 tabular-nums">
-                    <span className="text-xl text-emerald-600">₱</span>470
+                <div className="bg-neutral-50 rounded-xl p-4 mb-4 text-center">
+                  <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Today you can spend</p>
+                  <p className="text-4xl font-light text-neutral-900 tabular-nums">
+                    <span className="text-xl text-teal-600">₱</span>470
                   </p>
                   <div className="inline-flex items-center gap-1 mt-2 bg-emerald-50 rounded-full px-2 py-0.5">
                     <Check className="h-3 w-3 text-emerald-600" />
@@ -286,15 +286,15 @@ function ComparisonSection() {
                 </div>
 
                 <div className="space-y-3 text-sm">
-                  <div className="flex items-start gap-2 text-stone-600">
+                  <div className="flex items-start gap-2 text-neutral-600">
                     <Check className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
                     <span>One number. Your daily answer.</span>
                   </div>
-                  <div className="flex items-start gap-2 text-stone-600">
+                  <div className="flex items-start gap-2 text-neutral-600">
                     <Check className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
                     <span>Overspend? Tomorrow auto-adjusts.</span>
                   </div>
-                  <div className="flex items-start gap-2 text-stone-600">
+                  <div className="flex items-start gap-2 text-neutral-600">
                     <Check className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
                     <span>No categories. No guilt. Just clarity.</span>
                   </div>
@@ -404,18 +404,18 @@ function InteractiveDemo() {
 
   return (
     <section id="how-it-works" className="py-24 relative overflow-hidden">
-      <div className="absolute inset-0 bg-stone-50" />
+      <div className="absolute inset-0 bg-neutral-50" />
       <div className="absolute inset-0 bg-grid-pattern opacity-30" />
 
       <div className="relative mx-auto max-w-6xl px-6">
         <div className="text-center mb-12">
-          <p className="text-sm font-medium uppercase tracking-wider text-amber-600 mb-3">
+          <p className="text-sm font-medium uppercase tracking-wider text-teal-600 mb-3">
             See it in action
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold text-stone-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
             How useMargin works
           </h2>
-          <p className="text-lg text-stone-600 max-w-xl mx-auto">
+          <p className="text-lg text-neutral-600 max-w-xl mx-auto">
             Set it up once. Get your answer every day.
           </p>
         </div>
@@ -429,7 +429,7 @@ function InteractiveDemo() {
           {/* Annotation */}
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-10">
             <div
-              className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-sm text-amber-800 font-handwriting transform -rotate-1 shadow-sm transition-all duration-300"
+              className="bg-teal-50 border border-teal-200 rounded-lg px-4 py-2 text-sm text-teal-800 font-handwriting transform -rotate-1 shadow-sm transition-all duration-300"
               key={scenario?.id}
             >
               {scenario?.annotation}
@@ -437,17 +437,17 @@ function InteractiveDemo() {
           </div>
 
           {/* Demo Card */}
-          <div className="bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden">
+          <div className="bg-white rounded-2xl border border-neutral-200 shadow-xl overflow-hidden">
             <div className="bg-paper-texture opacity-20 absolute inset-0 pointer-events-none" />
 
             {/* Demo Header */}
-            <div className="border-b border-stone-100 px-6 py-4 flex items-center justify-between bg-stone-50/50">
+            <div className="border-b border-neutral-100 px-6 py-4 flex items-center justify-between bg-neutral-50/50">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-rose-400" />
-                <div className="w-3 h-3 rounded-full bg-amber-400" />
+                <div className="w-3 h-3 rounded-full bg-teal-400" />
                 <div className="w-3 h-3 rounded-full bg-emerald-400" />
               </div>
-              <p className="text-xs text-stone-400 font-medium">
+              <p className="text-xs text-neutral-400 font-medium">
                 {showNextDay ? "Tomorrow" : "Today"} • {scenario?.title}
               </p>
             </div>
@@ -457,10 +457,10 @@ function InteractiveDemo() {
               {/* Scenario 1: Morning Check */}
               {currentScenario === 0 && (
                 <div className="text-center animate-fade-in">
-                  <p className="text-xs text-stone-500 uppercase tracking-wider mb-2">
+                  <p className="text-xs text-neutral-500 uppercase tracking-wider mb-2">
                     Today you can spend
                   </p>
-                  <p className="text-6xl font-light text-stone-900 tabular-nums animate-count-up">
+                  <p className="text-6xl font-light text-neutral-900 tabular-nums animate-count-up">
                     <span className="text-3xl text-emerald-600">₱</span>500
                   </p>
                   <div className="inline-flex items-center gap-1.5 mt-4 bg-emerald-50 rounded-full px-4 py-1.5 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
@@ -474,20 +474,20 @@ function InteractiveDemo() {
               {currentScenario === 1 && (
                 <div className="space-y-6 animate-fade-in">
                   {/* Input */}
-                  <div className="bg-stone-50 rounded-xl px-4 py-3 border border-stone-200">
+                  <div className="bg-neutral-50 rounded-xl px-4 py-3 border border-neutral-200">
                     <div className="flex items-center gap-2">
-                      <span className="text-stone-400">+</span>
-                      <span className="text-stone-800">{typedText}</span>
-                      <span className="w-0.5 h-5 bg-amber-500 animate-blink" />
+                      <span className="text-neutral-400">+</span>
+                      <span className="text-neutral-800">{typedText}</span>
+                      <span className="w-0.5 h-5 bg-teal-500 animate-blink" />
                     </div>
                   </div>
 
                   {/* Budget display */}
                   <div className="text-center">
-                    <p className="text-xs text-stone-500 uppercase tracking-wider mb-1">
+                    <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">
                       Remaining today
                     </p>
-                    <p className="text-4xl font-light text-stone-900 tabular-nums transition-all duration-500">
+                    <p className="text-4xl font-light text-neutral-900 tabular-nums transition-all duration-500">
                       <span className="text-xl text-emerald-600">₱</span>
                       {budgetAmount}
                     </p>
@@ -495,12 +495,12 @@ function InteractiveDemo() {
 
                   {/* New expense */}
                   {showExpense && (
-                    <div className="flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3 animate-slide-in-right border border-amber-200">
+                    <div className="flex items-center justify-between rounded-xl bg-teal-50 px-4 py-3 animate-slide-in-right border border-teal-200">
                       <div className="flex items-center gap-3">
                         <span className="text-lg">☕</span>
-                        <span className="text-sm text-stone-700">Coffee</span>
+                        <span className="text-sm text-neutral-700">Coffee</span>
                       </div>
-                      <span className="text-sm font-medium tabular-nums text-stone-900">
+                      <span className="text-sm font-medium tabular-nums text-neutral-900">
                         -₱150
                       </span>
                     </div>
@@ -512,11 +512,11 @@ function InteractiveDemo() {
               {currentScenario === 2 && (
                 <div className="space-y-4 animate-fade-in">
                   <div className="text-center">
-                    <p className="text-xs text-stone-500 uppercase tracking-wider mb-2">
+                    <p className="text-xs text-neutral-500 uppercase tracking-wider mb-2">
                       {showNextDay ? "Tomorrow you can spend" : "Today's budget"}
                     </p>
                     <p className={`text-5xl font-light tabular-nums transition-all duration-500 ${
-                      isOverBudget && !showNextDay ? "text-rose-500" : "text-stone-900"
+                      isOverBudget && !showNextDay ? "text-rose-500" : "text-neutral-900"
                     }`}>
                       {isOverBudget && !showNextDay ? (
                         <>-<span className="text-3xl">₱</span>23</>
@@ -543,7 +543,7 @@ function InteractiveDemo() {
                   </div>
 
                   {showNextDay && (
-                    <p className="text-center text-sm text-stone-500 animate-fade-in font-handwriting text-base">
+                    <p className="text-center text-sm text-neutral-500 animate-fade-in font-handwriting text-base">
                       &quot;No guilt. Just math.&quot;
                     </p>
                   )}
@@ -559,12 +559,12 @@ function InteractiveDemo() {
                 key={s.id}
                 onClick={() => handleDotClick(i)}
                 className={`relative h-2 rounded-full transition-all duration-300 ${
-                  i === currentScenario ? "w-8 bg-amber-500" : "w-2 bg-stone-300 hover:bg-stone-400"
+                  i === currentScenario ? "w-8 bg-teal-500" : "w-2 bg-neutral-300 hover:bg-neutral-400"
                 }`}
                 aria-label={`Go to scenario ${i + 1}`}
               >
                 {i === currentScenario && !isPaused && (
-                  <span className="absolute inset-0 bg-amber-400 rounded-full animate-progress-bar" />
+                  <span className="absolute inset-0 bg-teal-400 rounded-full animate-progress-bar" />
                 )}
               </button>
             ))}
@@ -577,7 +577,7 @@ function InteractiveDemo() {
                 key={s.id}
                 onClick={() => handleDotClick(i)}
                 className={`text-xs transition-colors ${
-                  i === currentScenario ? "text-amber-600 font-medium" : "text-stone-400"
+                  i === currentScenario ? "text-teal-600 font-medium" : "text-neutral-400"
                 }`}
               >
                 {s.title}
@@ -601,10 +601,10 @@ function BentoGrid() {
 
       <div className="relative mx-auto max-w-6xl px-6">
         <div className="text-center mb-16">
-          <p className="text-sm font-medium uppercase tracking-wider text-amber-600 mb-3">
+          <p className="text-sm font-medium uppercase tracking-wider text-teal-600 mb-3">
             Features
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold text-stone-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
             Everything you need.{" "}
             <span className="relative inline-block">
               Nothing you don&apos;t.
@@ -617,16 +617,16 @@ function BentoGrid() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-5 overflow-visible">
           {/* Daily Limit - Large */}
           <div className="md:col-span-2 md:row-span-2 group relative">
-            <div className="h-full bg-white rounded-2xl border border-stone-200 p-6 lg:p-8 hover:border-amber-200 hover:shadow-lg transition-all duration-300 overflow-hidden">
+            <div className="h-full bg-white rounded-2xl border border-neutral-200 p-6 lg:p-8 hover:border-teal-200 hover:shadow-lg transition-all duration-300 overflow-hidden">
               <div className="absolute inset-0 bg-paper-texture opacity-10 pointer-events-none" />
 
               <div className="relative h-full flex flex-col">
                 <div className="mb-4">
-                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-amber-100 text-amber-600 mb-3">
+                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-teal-100 text-teal-600 mb-3">
                     <Calendar className="h-5 w-5" />
                   </div>
-                  <h3 className="text-lg font-semibold text-stone-900">Daily Limit</h3>
-                  <p className="text-sm text-stone-500 mt-1">One number. Your daily answer.</p>
+                  <h3 className="text-lg font-semibold text-neutral-900">Daily Limit</h3>
+                  <p className="text-sm text-neutral-500 mt-1">One number. Your daily answer.</p>
                 </div>
 
                 {/* Animated ring */}
@@ -656,10 +656,10 @@ function BentoGrid() {
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
-                        <p className="text-2xl lg:text-3xl font-light tabular-nums text-stone-900">
+                        <p className="text-2xl lg:text-3xl font-light tabular-nums text-neutral-900">
                           <span className="text-lg text-emerald-600">₱</span>847
                         </p>
-                        <p className="text-xs text-stone-500">today</p>
+                        <p className="text-xs text-neutral-500">today</p>
                       </div>
                     </div>
                   </div>
@@ -669,8 +669,8 @@ function BentoGrid() {
 
             {/* Margin note - positioned at bottom right of card */}
             <div className="absolute bottom-4 right-4 hidden lg:block pointer-events-none" style={{ transform: "rotate(-2deg)" }}>
-              <div className="flex items-center gap-1 text-stone-400 text-sm whitespace-nowrap font-handwriting">
-                <span className="text-amber-500">→</span>
+              <div className="flex items-center gap-1 text-neutral-400 text-sm whitespace-nowrap font-handwriting">
+                <span className="text-teal-500">→</span>
                 my favorite feature
               </div>
             </div>
@@ -678,19 +678,19 @@ function BentoGrid() {
 
           {/* Auto-Rebalance - Medium */}
           <div className="group relative">
-            <div className="h-full bg-white rounded-2xl border border-stone-200 p-5 hover:border-amber-200 hover:shadow-lg transition-all duration-300">
+            <div className="h-full bg-white rounded-2xl border border-neutral-200 p-5 hover:border-teal-200 hover:shadow-lg transition-all duration-300">
               <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-blue-100 text-blue-600 mb-3">
                 <RefreshCw className="h-4 w-4" />
               </div>
-              <h3 className="font-semibold text-stone-900 text-sm">Auto-Rebalance</h3>
-              <p className="text-xs text-stone-500 mt-1 mb-4">Zero guilt when you overspend.</p>
+              <h3 className="font-semibold text-neutral-900 text-sm">Auto-Rebalance</h3>
+              <p className="text-xs text-neutral-500 mt-1 mb-4">Zero guilt when you overspend.</p>
 
               {/* Animation: numbers shifting */}
               <div className="flex items-center justify-center gap-2 text-sm">
                 <div className="bg-rose-50 rounded px-2 py-1 text-rose-600 group-hover:animate-bounce-subtle">
                   -₱500
                 </div>
-                <span className="text-stone-400">→</span>
+                <span className="text-neutral-400">→</span>
                 <div className="bg-emerald-50 rounded px-2 py-1 text-emerald-600 group-hover:animate-bounce-subtle" style={{ animationDelay: "0.1s" }}>
                   +₱500
                 </div>
@@ -700,19 +700,19 @@ function BentoGrid() {
 
           {/* Flex Bucket - Medium */}
           <div className="group relative">
-            <div className="h-full bg-white rounded-2xl border border-stone-200 p-5 hover:border-amber-200 hover:shadow-lg transition-all duration-300">
+            <div className="h-full bg-white rounded-2xl border border-neutral-200 p-5 hover:border-teal-200 hover:shadow-lg transition-all duration-300">
               <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-violet-100 text-violet-600 mb-3 relative">
                 <Gift className="h-4 w-4" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-400 rounded-full group-hover:animate-ping" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-teal-400 rounded-full group-hover:animate-ping" />
               </div>
-              <h3 className="font-semibold text-stone-900 text-sm">Flex Bucket</h3>
-              <p className="text-xs text-stone-500 mt-1 mb-4">Guilt-free splurge fund.</p>
+              <h3 className="font-semibold text-neutral-900 text-sm">Flex Bucket</h3>
+              <p className="text-xs text-neutral-500 mt-1 mb-4">Guilt-free splurge fund.</p>
 
               {/* Sparkle effect */}
               <div className="flex justify-center">
                 <div className="relative">
                   <span className="text-2xl">🎁</span>
-                  <Sparkles className="absolute -top-1 -right-2 h-3 w-3 text-amber-400 group-hover:animate-spin-slow" />
+                  <Sparkles className="absolute -top-1 -right-2 h-3 w-3 text-teal-400 group-hover:animate-spin-slow" />
                 </div>
               </div>
             </div>
@@ -720,16 +720,16 @@ function BentoGrid() {
 
           {/* 3-Second Log - Small */}
           <div className="group">
-            <div className="h-full bg-white rounded-2xl border border-stone-200 p-5 hover:border-amber-200 hover:shadow-lg transition-all duration-300">
-              <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-amber-100 text-amber-600 mb-3">
+            <div className="h-full bg-white rounded-2xl border border-neutral-200 p-5 hover:border-teal-200 hover:shadow-lg transition-all duration-300">
+              <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-teal-100 text-teal-600 mb-3">
                 <Zap className="h-4 w-4" />
               </div>
-              <h3 className="font-semibold text-stone-900 text-sm">3-Second Log</h3>
-              <p className="text-xs text-stone-500 mt-1 mb-3">Type naturally.</p>
+              <h3 className="font-semibold text-neutral-900 text-sm">3-Second Log</h3>
+              <p className="text-xs text-neutral-500 mt-1 mb-3">Type naturally.</p>
 
               {/* Typing animation */}
-              <div className="bg-stone-50 rounded-lg px-3 py-2 text-xs">
-                <span className="text-stone-600 font-mono group-hover:animate-typing overflow-hidden whitespace-nowrap inline-block" style={{ width: "0ch" }}>
+              <div className="bg-neutral-50 rounded-lg px-3 py-2 text-xs">
+                <span className="text-neutral-600 font-mono group-hover:animate-typing overflow-hidden whitespace-nowrap inline-block" style={{ width: "0ch" }}>
                   coffee 150
                 </span>
                 <span className="animate-blink">|</span>
@@ -739,12 +739,12 @@ function BentoGrid() {
 
           {/* Smart Sort - Small */}
           <div className="group">
-            <div className="h-full bg-white rounded-2xl border border-stone-200 p-5 hover:border-amber-200 hover:shadow-lg transition-all duration-300">
+            <div className="h-full bg-white rounded-2xl border border-neutral-200 p-5 hover:border-teal-200 hover:shadow-lg transition-all duration-300">
               <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 mb-3">
                 <Sparkles className="h-4 w-4" />
               </div>
-              <h3 className="font-semibold text-stone-900 text-sm">Smart Sort</h3>
-              <p className="text-xs text-stone-500 mt-1 mb-3">AI categorization.</p>
+              <h3 className="font-semibold text-neutral-900 text-sm">Smart Sort</h3>
+              <p className="text-xs text-neutral-500 mt-1 mb-3">AI categorization.</p>
 
               {/* Icons shuffling */}
               <div className="flex justify-center gap-1">
@@ -763,21 +763,21 @@ function BentoGrid() {
 
           {/* Calendar View - Wide */}
           <div className="md:col-span-2 group">
-            <div className="h-full bg-white rounded-2xl border border-stone-200 p-5 hover:border-amber-200 hover:shadow-lg transition-all duration-300">
+            <div className="h-full bg-white rounded-2xl border border-neutral-200 p-5 hover:border-teal-200 hover:shadow-lg transition-all duration-300">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-rose-100 text-rose-600 mb-3">
                     <LayoutGrid className="h-4 w-4" />
                   </div>
-                  <h3 className="font-semibold text-stone-900 text-sm">Calendar View</h3>
-                  <p className="text-xs text-stone-500 mt-1">Your money month at a glance.</p>
+                  <h3 className="font-semibold text-neutral-900 text-sm">Calendar View</h3>
+                  <p className="text-xs text-neutral-500 mt-1">Your money month at a glance.</p>
                 </div>
               </div>
 
               {/* Mini calendar */}
               <div className="grid grid-cols-7 gap-1">
                 {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-                  <div key={i} className="text-[10px] text-stone-400 text-center pb-1">
+                  <div key={i} className="text-[10px] text-neutral-400 text-center pb-1">
                     {day}
                   </div>
                 ))}
@@ -788,7 +788,7 @@ function BentoGrid() {
                       key={i}
                       className={`aspect-square rounded text-[10px] flex items-center justify-center transition-transform group-hover:scale-105 ${
                         status === "under" ? "bg-emerald-100 text-emerald-700" :
-                        status === "near" ? "bg-amber-100 text-amber-700" :
+                        status === "near" ? "bg-teal-100 text-teal-700" :
                         "bg-rose-100 text-rose-700"
                       }`}
                       style={{ transitionDelay: `${i * 10}ms` }}
@@ -813,20 +813,20 @@ function BentoGrid() {
 function SocialProof() {
   return (
     <section className="py-24 relative overflow-hidden">
-      <div className="absolute inset-0 bg-stone-50" />
+      <div className="absolute inset-0 bg-neutral-50" />
       <div className="absolute inset-0 bg-grid-pattern opacity-30" />
 
       <div className="relative mx-auto max-w-5xl px-6">
         {/* Before/After */}
         <div className="grid md:grid-cols-2 gap-8 mb-16">
-          <div className="text-center p-8 rounded-2xl bg-white border border-stone-200">
-            <p className="text-sm text-stone-500 uppercase tracking-wider mb-4">Before useMargin</p>
+          <div className="text-center p-8 rounded-2xl bg-white border border-neutral-200">
+            <p className="text-sm text-neutral-500 uppercase tracking-wider mb-4">Before useMargin</p>
             <div className="flex justify-center gap-4 text-4xl mb-4">
               <span className="animate-bounce-subtle">😰</span>
               <span className="animate-bounce-subtle" style={{ animationDelay: "0.1s" }}>❓</span>
               <span className="animate-bounce-subtle" style={{ animationDelay: "0.2s" }}>📊</span>
             </div>
-            <p className="text-stone-600">&quot;Can I afford this...?&quot;</p>
+            <p className="text-neutral-600">&quot;Can I afford this...?&quot;</p>
           </div>
 
           <div className="text-center p-8 rounded-2xl bg-white border border-emerald-200">
@@ -837,17 +837,17 @@ function SocialProof() {
               <span className="animate-bounce-subtle" style={{ animationDelay: "0.1s" }}>✅</span>
               <span className="animate-bounce-subtle" style={{ animationDelay: "0.2s" }}>💚</span>
             </div>
-            <p className="text-stone-600 relative">&quot;I know I&apos;m good.&quot;</p>
+            <p className="text-neutral-600 relative">&quot;I know I&apos;m good.&quot;</p>
           </div>
         </div>
 
         {/* Testimonial */}
-        <div className="relative bg-white rounded-3xl border border-stone-200 p-8 md:p-12 text-center shadow-lg">
+        <div className="relative bg-white rounded-3xl border border-neutral-200 p-8 md:p-12 text-center shadow-lg">
           <div className="absolute inset-0 bg-paper-texture opacity-20 rounded-3xl pointer-events-none" />
 
           <div className="relative">
-            <div className="text-5xl mb-6 text-amber-200">&ldquo;</div>
-            <blockquote className="text-2xl md:text-3xl font-light text-stone-700 leading-relaxed mb-6">
+            <div className="text-5xl mb-6 text-teal-200">&ldquo;</div>
+            <blockquote className="text-2xl md:text-3xl font-light text-neutral-700 leading-relaxed mb-6">
               Finally, a budget that doesn&apos;t make me feel{" "}
               <span className="relative inline-block">
                 terrible.
@@ -855,10 +855,10 @@ function SocialProof() {
               </span>
             </blockquote>
             <footer className="flex items-center justify-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-500" />
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-teal-500" />
               <div className="text-left">
-                <p className="font-medium text-stone-900">Early User</p>
-                <p className="text-sm text-stone-500">Beta Tester, Philippines</p>
+                <p className="font-medium text-neutral-900">Early User</p>
+                <p className="text-sm text-neutral-500">Beta Tester, Philippines</p>
               </div>
             </footer>
           </div>
@@ -873,9 +873,9 @@ function SocialProof() {
           ].map((stat, i) => (
             <div key={i} className="relative">
               <HandDrawnCircle>
-                <p className="text-3xl md:text-4xl font-bold text-stone-900">{stat.value}</p>
+                <p className="text-3xl md:text-4xl font-bold text-neutral-900">{stat.value}</p>
               </HandDrawnCircle>
-              <p className="text-sm text-stone-500 mt-2">{stat.label}</p>
+              <p className="text-sm text-neutral-500 mt-2">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -905,12 +905,12 @@ function FinalCTA() {
       />
 
       <div className="relative mx-auto max-w-3xl px-6 text-center">
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-stone-200 p-8 md:p-12 shadow-xl">
-          <p className="text-sm font-medium uppercase tracking-wider text-amber-600 mb-4">
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-neutral-200 p-8 md:p-12 shadow-xl">
+          <p className="text-sm font-medium uppercase tracking-wider text-teal-600 mb-4">
             Your daily page awaits
           </p>
 
-          <h2 className="text-3xl md:text-5xl font-bold text-stone-900 mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold text-neutral-900 mb-4">
             Start your{" "}
             <span className="relative inline-block">
               first day.
@@ -918,13 +918,13 @@ function FinalCTA() {
             </span>
           </h2>
 
-          <p className="text-lg text-stone-600 mb-8 max-w-md mx-auto">
+          <p className="text-lg text-neutral-600 mb-8 max-w-md mx-auto">
             Get your daily spending answer in under 2 minutes.
           </p>
 
           <div className="relative inline-block">
             {/* Highlight effect like marker */}
-            <div className="absolute -inset-1 bg-amber-200/50 rounded-xl -rotate-1" />
+            <div className="absolute -inset-1 bg-teal-200/50 rounded-xl -rotate-1" />
             <Button
               asChild
               size="lg"
@@ -937,14 +937,14 @@ function FinalCTA() {
             </Button>
           </div>
 
-          <p className="mt-6 text-sm text-stone-500">
+          <p className="mt-6 text-sm text-neutral-500">
             No credit card required. Free forever for core features.
           </p>
         </div>
 
         {/* Decorative margin note */}
         <div className="absolute bottom-8 right-8 hidden lg:block transform rotate-3">
-          <div className="font-handwriting text-stone-400 text-sm">
+          <div className="font-handwriting text-neutral-400 text-sm">
             ← you&apos;ll love it!
           </div>
         </div>
@@ -1091,7 +1091,7 @@ export default function LandingPage() {
       <section className="relative px-6 pb-20 pt-16 md:pb-28 md:pt-20">
         <div className="absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-grid-pattern opacity-40" />
-          <div className="absolute left-1/4 top-0 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-amber-100/40 to-transparent blur-3xl" />
+          <div className="absolute left-1/4 top-0 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-teal-100/40 to-transparent blur-3xl" />
           <div className="absolute right-0 top-1/3 h-[400px] w-[400px] translate-x-1/2 rounded-full bg-gradient-to-bl from-emerald-100/30 to-transparent blur-3xl" />
         </div>
 
@@ -1099,22 +1099,22 @@ export default function LandingPage() {
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Left column - Copy */}
             <div className="text-center lg:text-left">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700">
                 <Sparkles className="h-4 w-4" />
                 <span>Calendar-first budgeting</span>
               </div>
 
-              <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-stone-900 md:text-5xl lg:text-6xl">
+              <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-neutral-900 md:text-5xl lg:text-6xl">
                 Know exactly what you can spend{" "}
                 <span className="relative inline-block">
-                  <span className="relative z-10 bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">
+                  <span className="relative z-10 bg-gradient-to-r from-teal-500 to-teal-600 bg-clip-text text-transparent">
                     today.
                   </span>
                   <ScribbleUnderline />
                 </span>
               </h1>
 
-              <p className="mb-8 text-lg leading-relaxed text-stone-600 md:text-xl">
+              <p className="mb-8 text-lg leading-relaxed text-neutral-600 md:text-xl">
                 The budget that auto-adjusts when life happens.
                 <br className="hidden md:block" />
                 No guilt. No math. Just daily clarity.
@@ -1135,13 +1135,13 @@ export default function LandingPage() {
                   asChild
                   variant="ghost"
                   size="lg"
-                  className="h-14 px-8 text-base text-stone-600 hover:text-stone-900"
+                  className="h-14 px-8 text-base text-neutral-600 hover:text-neutral-900"
                 >
                   <a href="#how-it-works">See How It Works</a>
                 </Button>
               </div>
 
-              <p className="mt-6 text-sm text-stone-400">
+              <p className="mt-6 text-sm text-neutral-400">
                 Free forever. No credit card required.
               </p>
             </div>

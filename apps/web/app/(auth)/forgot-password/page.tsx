@@ -38,8 +38,8 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-stone-900">Check your email</h1>
-          <p className="text-sm text-stone-500">
+          <h1 className="text-2xl font-bold text-neutral-900">Check your email</h1>
+          <p className="text-sm text-neutral-500">
             If an account exists with that email, we&apos;ve sent you a password reset link.
           </p>
         </div>
@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
         <div className="pt-2">
           <Link
             href="/login"
-            className="text-sm text-amber-600 hover:text-amber-700 font-medium hover:underline underline-offset-4"
+            className="text-sm text-teal-600 hover:text-teal-700 font-medium hover:underline underline-offset-4"
           >
             Back to sign in
           </Link>
@@ -59,15 +59,15 @@ export default function ForgotPasswordPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold text-stone-900">Forgot password?</h1>
-        <p className="text-sm text-stone-500">
+        <h1 className="text-2xl font-bold text-neutral-900">Forgot password?</h1>
+        <p className="text-sm text-neutral-500">
           Enter your email and we&apos;ll send you a reset link
         </p>
       </div>
 
       <form action={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-stone-700">
+          <Label htmlFor="email" className="text-neutral-700">
             Email
           </Label>
           <Input
@@ -77,7 +77,7 @@ export default function ForgotPasswordPage() {
             placeholder="you@example.com"
             required
             autoComplete="email"
-            className="bg-stone-50 border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-amber-500 focus:ring-amber-500"
+            className="bg-neutral-50 border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:border-teal-500 focus:ring-teal-500"
           />
         </div>
 
@@ -89,18 +89,18 @@ export default function ForgotPasswordPage() {
 
         <Button
           type="submit"
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+          className="w-full bg-teal-600 hover:bg-teal-700 text-white shadow-sm"
           disabled={isLoading}
         >
           {isLoading ? "Sending..." : "Send reset link"}
         </Button>
       </form>
 
-      <div className="text-center text-sm text-stone-500">
+      <div className="text-center text-sm text-neutral-500">
         Remember your password?{" "}
         <Link
           href="/login"
-          className="text-amber-600 hover:text-amber-700 font-medium hover:underline underline-offset-4"
+          className="text-teal-600 hover:text-teal-700 font-medium hover:underline underline-offset-4"
         >
           Sign in
         </Link>
