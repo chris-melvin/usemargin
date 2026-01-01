@@ -85,6 +85,7 @@ export function DayDetailSheet({
             <button
               onClick={onClose}
               className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors"
+              aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>

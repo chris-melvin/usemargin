@@ -22,15 +22,17 @@ import {
 } from "@/components/ui/select";
 import { createIncome, updateIncome } from "@/actions/income";
 import type { Income } from "@repo/database";
+import type { CreateIncomeInput } from "@/lib/validations/income.schema";
 
 interface IncomeFormProps {
   open: boolean;
   onClose: () => void;
   income?: Income | null;
   currency: string;
+  onSave?: (data: CreateIncomeInput) => Promise<void>;
 }
 
-export function IncomeForm({ open, onClose, income, currency }: IncomeFormProps) {
+export function IncomeForm({ open, onClose, income, currency, onSave }: IncomeFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -47,7 +49,7 @@ export function IncomeForm({ open, onClose, income, currency }: IncomeFormProps)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const data = {
+    const data: CreateIncomeInput = {
       label: label.trim(),
       amount: parseFloat(amount),
       frequency: frequency as "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly" | "once",
@@ -56,6 +58,13 @@ export function IncomeForm({ open, onClose, income, currency }: IncomeFormProps)
     };
 
     startTransition(async () => {
+      // If onSave is provided, use it (optimistic mode)
+      if (onSave) {
+        await onSave(data);
+        return;
+      }
+
+      // Fallback to direct server action (legacy mode)
       const result = isEditing
         ? await updateIncome(income.id, data)
         : await createIncome(data);

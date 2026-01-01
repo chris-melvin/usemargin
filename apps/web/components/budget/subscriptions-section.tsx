@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
-import { RefreshCw, Calendar, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { RefreshCw, Calendar, MoreHorizontal, Pencil, Trash2, Check, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,8 +31,8 @@ import {
 import { BentoCard, BentoCardEmpty } from "./bento-card";
 import { BillForm } from "./bill-form";
 import { formatCurrency, cn } from "@/lib/utils";
-import { deleteBill } from "@/actions/bills";
-import type { Debt } from "@repo/database";
+import type { CreateBillInput, UpdateBillInput } from "@/lib/validations/bill.schema";
+import type { OptimisticDebt } from "@/hooks/use-server-budget";
 
 const MAX_VISIBLE_ITEMS = 3;
 
@@ -41,42 +41,65 @@ const MAX_VISIBLE_ITEMS = 3;
 // ============================================
 
 interface SubscriptionsSectionProps {
-  subscriptions: Debt[];
+  subscriptions: OptimisticDebt[];
   currency: string;
-  onUpdate: () => void;
+  isPending?: boolean;
+  onAdd: (data: CreateBillInput) => Promise<{ success: boolean; error?: string }>;
+  onUpdate: (id: string, data: UpdateBillInput) => Promise<{ success: boolean; error?: string }>;
+  onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
+  onMarkPaid: (id: string, paidDate?: string) => Promise<{ success: boolean; error?: string }>;
+  onResetStatus: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export function SubscriptionsSection({
   subscriptions,
   currency,
+  isPending = false,
+  onAdd,
   onUpdate,
+  onDelete,
+  onMarkPaid,
+  onResetStatus,
 }: SubscriptionsSectionProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Debt | null>(null);
+  const [editingItem, setEditingItem] = useState<OptimisticDebt | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const total = subscriptions.reduce((sum, s) => sum + s.amount, 0);
   const visibleItems = subscriptions.slice(0, MAX_VISIBLE_ITEMS);
   const hasMore = subscriptions.length > MAX_VISIBLE_ITEMS;
 
-  const handleDelete = () => {
-    if (!deleteId) return;
-    startTransition(async () => {
-      const result = await deleteBill(deleteId);
-      if (result.success) {
-        toast.success("Subscription deleted");
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Failed to delete");
-      }
-      setDeleteId(null);
-    });
+  const handleMarkPaid = async (sub: OptimisticDebt) => {
+    const result = await onMarkPaid(sub.id);
+    if (result.success) {
+      toast.success(`${sub.label} marked as paid`);
+    } else {
+      toast.error(result.error ?? "Failed to update");
+    }
   };
 
-  const handleEdit = (item: Debt) => {
+  const handleResetStatus = async (sub: OptimisticDebt) => {
+    const result = await onResetStatus(sub.id);
+    if (result.success) {
+      toast.success(`${sub.label} status reset`);
+    } else {
+      toast.error(result.error ?? "Failed to reset status");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    const result = await onDelete(deleteId);
+    if (result.success) {
+      toast.success("Subscription deleted");
+    } else {
+      toast.error(result.error ?? "Failed to delete");
+    }
+    setDeleteId(null);
+  };
+
+  const handleEdit = (item: OptimisticDebt) => {
     setEditingItem(item);
     setIsFormOpen(true);
   };
@@ -84,6 +107,26 @@ export function SubscriptionsSection({
   const handleFormClose = () => {
     setIsFormOpen(false);
     setEditingItem(null);
+  };
+
+  const handleFormSave = async (data: CreateBillInput) => {
+    if (editingItem) {
+      const result = await onUpdate(editingItem.id, data);
+      if (result.success) {
+        toast.success("Subscription updated");
+        handleFormClose();
+      } else {
+        toast.error(result.error ?? "Failed to update subscription");
+      }
+    } else {
+      const result = await onAdd(data);
+      if (result.success) {
+        toast.success("Subscription added");
+        handleFormClose();
+      } else {
+        toast.error(result.error ?? "Failed to add subscription");
+      }
+    }
   };
 
   return (
@@ -114,6 +157,8 @@ export function SubscriptionsSection({
                 item={sub}
                 currency={currency}
                 isPending={isPending}
+                onMarkPaid={() => handleMarkPaid(sub)}
+                onResetStatus={() => handleResetStatus(sub)}
                 onEdit={() => handleEdit(sub)}
                 onDelete={() => setDeleteId(sub.id)}
               />
@@ -140,6 +185,8 @@ export function SubscriptionsSection({
                 item={sub}
                 currency={currency}
                 isPending={isPending}
+                onMarkPaid={() => handleMarkPaid(sub)}
+                onResetStatus={() => handleResetStatus(sub)}
                 onEdit={() => handleEdit(sub)}
                 onDelete={() => setDeleteId(sub.id)}
               />
@@ -169,6 +216,7 @@ export function SubscriptionsSection({
         bill={editingItem}
         currency={currency}
         isDebt={false}
+        onSave={handleFormSave}
       />
 
       {/* Delete Confirmation */}
@@ -198,15 +246,21 @@ function SubscriptionCardCompact({
   item,
   currency,
   isPending,
+  onMarkPaid,
+  onResetStatus,
   onEdit,
   onDelete,
 }: {
-  item: Debt;
+  item: OptimisticDebt;
   currency: string;
   isPending: boolean;
+  onMarkPaid: () => void;
+  onResetStatus: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const isPaid = item.status === "paid";
+  const isOptimistic = item.pending;
   const frequencyLabel = {
     weekly: "/wk",
     biweekly: "/2wk",
@@ -219,7 +273,7 @@ function SubscriptionCardCompact({
     <div
       className={cn(
         "flex items-center justify-between py-2 px-2 rounded-lg hover:bg-stone-50 transition-colors group",
-        isPending && "opacity-60"
+        (isPending || isOptimistic) && "opacity-60"
       )}
     >
       <div className="flex items-center gap-2 min-w-0">
@@ -237,11 +291,24 @@ function SubscriptionCardCompact({
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="More options"
             >
               <MoreHorizontal className="w-3 h-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {isPaid ? (
+              <DropdownMenuItem onClick={onResetStatus}>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Mark as Pending
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={onMarkPaid}>
+                <Check className="w-4 h-4 mr-2" />
+                Mark as Paid
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="w-4 h-4 mr-2" />
               Edit
@@ -263,15 +330,21 @@ function SubscriptionCardFull({
   item,
   currency,
   isPending,
+  onMarkPaid,
+  onResetStatus,
   onEdit,
   onDelete,
 }: {
-  item: Debt;
+  item: OptimisticDebt;
   currency: string;
   isPending: boolean;
+  onMarkPaid: () => void;
+  onResetStatus: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const isPaid = item.status === "paid";
+  const isOptimistic = item.pending;
   const frequencyLabel = {
     weekly: "/wk",
     biweekly: "/2wk",
@@ -284,16 +357,27 @@ function SubscriptionCardFull({
     <div
       className={cn(
         "p-3 rounded-xl border border-stone-200 hover:border-violet-200 transition-colors",
-        isPending && "opacity-60"
+        (isPending || isOptimistic) && "opacity-60"
       )}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <div className="text-xl">{item.icon || "🔄"}</div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-stone-900 truncate">
-              {item.label}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-stone-900 truncate">
+                {item.label}
+              </p>
+              <Badge
+                variant={isPaid ? "default" : "secondary"}
+                className={cn(
+                  "text-[10px] px-1.5 py-0",
+                  isPaid && "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                )}
+              >
+                {isPaid ? "Paid" : "Pending"}
+              </Badge>
+            </div>
             {item.due_date && (
               <p className="text-xs text-stone-500">
                 Renews {item.due_date}{getOrdinalSuffix(item.due_date)}
@@ -310,11 +394,23 @@ function SubscriptionCardFull({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="More options">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {isPaid ? (
+                <DropdownMenuItem onClick={onResetStatus}>
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Mark as Pending
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={onMarkPaid}>
+                  <Check className="w-4 h-4 mr-2" />
+                  Mark as Paid
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onEdit}>
                 <Pencil className="w-4 h-4 mr-2" />
                 Edit
@@ -337,42 +433,65 @@ function SubscriptionCardFull({
 // ============================================
 
 interface PlannedExpensesSectionProps {
-  expenses: Debt[];
+  expenses: OptimisticDebt[];
   currency: string;
-  onUpdate: () => void;
+  isPending?: boolean;
+  onAdd: (data: CreateBillInput) => Promise<{ success: boolean; error?: string }>;
+  onUpdate: (id: string, data: UpdateBillInput) => Promise<{ success: boolean; error?: string }>;
+  onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
+  onMarkPaid: (id: string, paidDate?: string) => Promise<{ success: boolean; error?: string }>;
+  onResetStatus: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export function PlannedExpensesSection({
   expenses,
   currency,
+  isPending = false,
+  onAdd,
   onUpdate,
+  onDelete,
+  onMarkPaid,
+  onResetStatus,
 }: PlannedExpensesSectionProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Debt | null>(null);
+  const [editingItem, setEditingItem] = useState<OptimisticDebt | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
   const visibleItems = expenses.slice(0, MAX_VISIBLE_ITEMS);
   const hasMore = expenses.length > MAX_VISIBLE_ITEMS;
 
-  const handleDelete = () => {
-    if (!deleteId) return;
-    startTransition(async () => {
-      const result = await deleteBill(deleteId);
-      if (result.success) {
-        toast.success("Planned expense deleted");
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Failed to delete");
-      }
-      setDeleteId(null);
-    });
+  const handleMarkPaid = async (expense: OptimisticDebt) => {
+    const result = await onMarkPaid(expense.id);
+    if (result.success) {
+      toast.success(`${expense.label} marked as paid`);
+    } else {
+      toast.error(result.error ?? "Failed to update");
+    }
   };
 
-  const handleEdit = (item: Debt) => {
+  const handleResetStatus = async (expense: OptimisticDebt) => {
+    const result = await onResetStatus(expense.id);
+    if (result.success) {
+      toast.success(`${expense.label} status reset`);
+    } else {
+      toast.error(result.error ?? "Failed to reset status");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    const result = await onDelete(deleteId);
+    if (result.success) {
+      toast.success("Planned expense deleted");
+    } else {
+      toast.error(result.error ?? "Failed to delete");
+    }
+    setDeleteId(null);
+  };
+
+  const handleEdit = (item: OptimisticDebt) => {
     setEditingItem(item);
     setIsFormOpen(true);
   };
@@ -380,6 +499,26 @@ export function PlannedExpensesSection({
   const handleFormClose = () => {
     setIsFormOpen(false);
     setEditingItem(null);
+  };
+
+  const handleFormSave = async (data: CreateBillInput) => {
+    if (editingItem) {
+      const result = await onUpdate(editingItem.id, data);
+      if (result.success) {
+        toast.success("Planned expense updated");
+        handleFormClose();
+      } else {
+        toast.error(result.error ?? "Failed to update expense");
+      }
+    } else {
+      const result = await onAdd(data);
+      if (result.success) {
+        toast.success("Planned expense added");
+        handleFormClose();
+      } else {
+        toast.error(result.error ?? "Failed to add expense");
+      }
+    }
   };
 
   return (
@@ -410,6 +549,8 @@ export function PlannedExpensesSection({
                 item={expense}
                 currency={currency}
                 isPending={isPending}
+                onMarkPaid={() => handleMarkPaid(expense)}
+                onResetStatus={() => handleResetStatus(expense)}
                 onEdit={() => handleEdit(expense)}
                 onDelete={() => setDeleteId(expense.id)}
               />
@@ -436,6 +577,8 @@ export function PlannedExpensesSection({
                 item={expense}
                 currency={currency}
                 isPending={isPending}
+                onMarkPaid={() => handleMarkPaid(expense)}
+                onResetStatus={() => handleResetStatus(expense)}
                 onEdit={() => handleEdit(expense)}
                 onDelete={() => setDeleteId(expense.id)}
               />
@@ -465,6 +608,7 @@ export function PlannedExpensesSection({
         bill={editingItem}
         currency={currency}
         isDebt={false}
+        onSave={handleFormSave}
       />
 
       {/* Delete Confirmation */}
@@ -494,20 +638,27 @@ function PlannedCardCompact({
   item,
   currency,
   isPending,
+  onMarkPaid,
+  onResetStatus,
   onEdit,
   onDelete,
 }: {
-  item: Debt;
+  item: OptimisticDebt;
   currency: string;
   isPending: boolean;
+  onMarkPaid: () => void;
+  onResetStatus: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const isPaid = item.status === "paid";
+  const isOptimistic = item.pending;
+
   return (
     <div
       className={cn(
         "flex items-center justify-between py-2 px-2 rounded-lg hover:bg-stone-50 transition-colors group",
-        isPending && "opacity-60"
+        (isPending || isOptimistic) && "opacity-60"
       )}
     >
       <div className="flex items-center gap-2 min-w-0">
@@ -524,11 +675,24 @@ function PlannedCardCompact({
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="More options"
             >
               <MoreHorizontal className="w-3 h-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {isPaid ? (
+              <DropdownMenuItem onClick={onResetStatus}>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Mark as Pending
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={onMarkPaid}>
+                <Check className="w-4 h-4 mr-2" />
+                Mark as Paid
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="w-4 h-4 mr-2" />
               Edit
@@ -550,29 +714,47 @@ function PlannedCardFull({
   item,
   currency,
   isPending,
+  onMarkPaid,
+  onResetStatus,
   onEdit,
   onDelete,
 }: {
-  item: Debt;
+  item: OptimisticDebt;
   currency: string;
   isPending: boolean;
+  onMarkPaid: () => void;
+  onResetStatus: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const isPaid = item.status === "paid";
+  const isOptimistic = item.pending;
+
   return (
     <div
       className={cn(
         "p-3 rounded-xl border border-stone-200 hover:border-blue-200 transition-colors",
-        isPending && "opacity-60"
+        (isPending || isOptimistic) && "opacity-60"
       )}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <div className="text-xl">{item.icon || "📅"}</div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-stone-900 truncate">
-              {item.label}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-stone-900 truncate">
+                {item.label}
+              </p>
+              <Badge
+                variant={isPaid ? "default" : "secondary"}
+                className={cn(
+                  "text-[10px] px-1.5 py-0",
+                  isPaid && "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                )}
+              >
+                {isPaid ? "Paid" : "Planned"}
+              </Badge>
+            </div>
             {item.due_date && (
               <p className="text-xs text-stone-500">
                 Planned for {item.due_date}{getOrdinalSuffix(item.due_date)}
@@ -588,11 +770,23 @@ function PlannedCardFull({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="More options">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {isPaid ? (
+                <DropdownMenuItem onClick={onResetStatus}>
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Mark as Planned
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={onMarkPaid}>
+                  <Check className="w-4 h-4 mr-2" />
+                  Mark as Paid
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onEdit}>
                 <Pencil className="w-4 h-4 mr-2" />
                 Edit

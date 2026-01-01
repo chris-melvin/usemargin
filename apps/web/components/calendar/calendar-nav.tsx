@@ -28,6 +28,7 @@ export function CalendarNav({
           size="icon"
           onClick={onPrevMonth}
           className="rounded-full hover:bg-stone-50"
+          aria-label="Previous month"
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
@@ -36,6 +37,7 @@ export function CalendarNav({
           size="icon"
           onClick={onNextMonth}
           className="rounded-full hover:bg-stone-50"
+          aria-label="Next month"
         >
           <ChevronRight className="h-5 w-5" />
         </Button>

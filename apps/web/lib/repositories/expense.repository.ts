@@ -213,6 +213,59 @@ class ExpenseRepository extends BaseRepository<
     if (error) throw error;
     return (data ?? []) as Expense[];
   }
+
+  /**
+   * Soft delete an expense by setting deleted_at timestamp
+   * Returns the deleted expense for undo functionality
+   */
+  async softDelete(
+    supabase: SupabaseClient,
+    id: string,
+    userId: string
+  ): Promise<Expense | null> {
+    const { data, error } = await supabase
+      .rpc("soft_delete_expense", { expense_id: id });
+
+    if (error) throw error;
+    return data as Expense | null;
+  }
+
+  /**
+   * Restore a soft-deleted expense by clearing deleted_at
+   * Returns the restored expense
+   */
+  async restore(
+    supabase: SupabaseClient,
+    id: string,
+    userId: string
+  ): Promise<Expense | null> {
+    const { data, error } = await supabase
+      .rpc("restore_expense", { expense_id: id });
+
+    if (error) throw error;
+    return data as Expense | null;
+  }
+
+  /**
+   * Find deleted expenses for a user (for restore functionality)
+   */
+  async findDeleted(
+    supabase: SupabaseClient,
+    userId: string,
+    limit = 20
+  ): Promise<Expense[]> {
+    // This query uses the "Users can view their own deleted expenses" RLS policy
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .select("*")
+      .eq("user_id", userId)
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return (data ?? []) as Expense[];
+  }
 }
 
 // Export singleton instance

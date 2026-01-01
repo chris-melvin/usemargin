@@ -260,11 +260,13 @@ export function DayDetailPanel({
   if (!selectedDate) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-16 h-16 mb-4 rounded-2xl bg-stone-100 flex items-center justify-center">
-          <CalendarDays className="w-8 h-8 text-stone-300" />
+        <div className="w-16 h-16 mb-4 rounded-2xl bg-teal-50 flex items-center justify-center">
+          <CalendarDays className="w-8 h-8 text-teal-400" />
         </div>
-        <p className="text-stone-500 text-sm font-medium">No date selected</p>
-        <p className="text-stone-400 text-xs mt-1">Click on a day to view details</p>
+        <p className="text-neutral-600 text-sm font-medium">Select a day</p>
+        <p className="text-neutral-400 text-xs mt-1">
+          Click on any date in the calendar to view and add expenses
+        </p>
       </div>
     );
   }
@@ -413,7 +415,7 @@ export function DayDetailPanel({
                           onDeleteExpense(expense!.id);
                         }}
                         className="p-1.5 text-stone-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
-                        title="Delete expense"
+                        aria-label="Delete expense"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -425,7 +427,7 @@ export function DayDetailPanel({
                           onMarkBillPaid(bill.id);
                         }}
                         className="p-1.5 text-emerald-500 hover:bg-emerald-100 rounded-lg transition-colors flex-shrink-0"
-                        title="Mark as paid"
+                        aria-label="Mark as paid"
                       >
                         <Check className="h-4 w-4" />
                       </button>

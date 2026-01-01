@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { toast } from "sonner";
 import { LogOut, Crown, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,15 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { signOut } from "@/actions/auth";
 import { getPortalUrl } from "@/actions/subscriptions";
 import type { SubscriptionInfo } from "@/actions/subscriptions/get-subscription";
@@ -30,10 +20,7 @@ interface AccountSettingsProps {
 }
 
 export function AccountSettings({ userEmail, subscription }: AccountSettingsProps) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   const handleSignOut = () => {
     startTransition(async () => {
@@ -50,17 +37,6 @@ export function AccountSettings({ userEmail, subscription }: AccountSettingsProp
         toast.error("Failed to open subscription portal");
       }
     });
-  };
-
-  const handleDeleteAccount = () => {
-    if (deleteConfirmation !== "DELETE") {
-      toast.error('Please type "DELETE" to confirm');
-      return;
-    }
-    // Account deletion would be implemented here
-    toast.error("Account deletion is not yet implemented");
-    setIsDeleteDialogOpen(false);
-    setDeleteConfirmation("");
   };
 
   const userInitial = userEmail.charAt(0).toUpperCase();
@@ -165,54 +141,16 @@ export function AccountSettings({ userEmail, subscription }: AccountSettingsProp
 
           <Separator />
 
-          {/* Danger Zone */}
-          <div className="space-y-3">
+          {/* Danger Zone - Coming Soon */}
+          <div className="space-y-3 opacity-60">
             <div className="flex items-center gap-2 text-rose-600">
               <AlertTriangle className="w-4 h-4" />
               <p className="text-sm font-medium">Danger Zone</p>
+              <Badge variant="outline" className="text-xs font-normal">Coming Soon</Badge>
             </div>
-            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="destructive" className="w-full">
-                  Delete Account
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Delete Account</DialogTitle>
-                  <DialogDescription>
-                    This action cannot be undone. All your data will be permanently
-                    deleted, including expenses, settings, and subscription.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-2 py-4">
-                  <Label htmlFor="delete-confirm">
-                    Type <span className="font-mono font-bold">DELETE</span> to confirm
-                  </Label>
-                  <Input
-                    id="delete-confirm"
-                    value={deleteConfirmation}
-                    onChange={(e) => setDeleteConfirmation(e.target.value)}
-                    placeholder="DELETE"
-                  />
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsDeleteDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={handleDeleteAccount}
-                    disabled={deleteConfirmation !== "DELETE"}
-                  >
-                    Delete Account
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button variant="destructive" className="w-full" disabled>
+              Delete Account
+            </Button>
           </div>
         </CardContent>
       </Card>

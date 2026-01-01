@@ -45,7 +45,7 @@ function formatDueDate(day: number | null): string {
 
 function getStatusBadge(status: string) {
   const styles: Record<string, string> = {
-    pending: "bg-amber-100 text-teal-700",
+    pending: "bg-amber-100 text-amber-700",
     paid: "bg-green-100 text-green-700",
     overdue: "bg-red-100 text-red-700",
     partially_paid: "bg-blue-100 text-blue-700",

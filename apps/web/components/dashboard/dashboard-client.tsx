@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
-  BarChart3,
   Calendar,
   PieChart,
   List,
@@ -29,13 +28,22 @@ import { useWeeklyPatterns } from "@/hooks/use-weekly-patterns";
 import { useShortcuts } from "@/hooks/use-shortcuts";
 import { useMicroInteractions } from "@/hooks/use-micro-interactions";
 import { useOnboarding } from "@/components/onboarding";
+import { useBudgetProgress } from "@/hooks/use-budget-progress";
 import { WeeklyPatternCard } from "@/components/dashboard/weekly-pattern-card";
 import { IncomeAllocationCard } from "@/components/dashboard/income-allocation-card";
+import { SavingsCelebration } from "@/components/dashboard/savings-celebration";
+import { UpcomingBillsWidget } from "@/components/dashboard/upcoming-bills-widget";
+import { WeeklyProgressCard } from "@/components/dashboard/weekly-progress-card";
+import { RolloverDisplay } from "@/components/dashboard/rollover-display";
+import { showExpenseDeletedToast } from "@/components/ui/undo-toast";
+import { restoreExpense } from "@/actions/expenses/restore";
 import { formatKey, formatCurrency, cn } from "@/lib/utils";
 import { DEFAULT_DAILY_LIMIT, CURRENCY } from "@/lib/constants";
 import type { Expense, BudgetBucket, Income, Debt } from "@repo/database";
 import type { LocalIncome, LocalBill } from "@/lib/types";
 import { useBuckets } from "@/hooks/use-buckets";
+import { useQuickTemplates, type QuickTemplate } from "@/hooks/use-quick-templates";
+import { QuickTemplateEditor } from "@/components/dashboard/quick-template-editor";
 
 // Helper to transform database Income to LocalIncome
 function toLocalIncome(income: Income): LocalIncome {
@@ -80,76 +88,6 @@ function toLocalBill(bill: Debt): LocalBill {
   };
 }
 
-// Demo data for income and bills
-const DEMO_INCOMES: LocalIncome[] = [
-  {
-    id: "i1",
-    label: "Salary",
-    amount: 25000,
-    dayOfMonth: 15,
-    isRecurring: true,
-    recurringPattern: { frequency: "monthly" },
-    status: "expected",
-  },
-  {
-    id: "i2",
-    label: "Freelance",
-    amount: 5000,
-    dayOfMonth: 28,
-    isRecurring: true,
-    recurringPattern: { frequency: "monthly" },
-    status: "expected",
-  },
-];
-
-const DEMO_BILLS: LocalBill[] = [
-  {
-    id: "b1",
-    label: "Credit Card",
-    amount: 5000,
-    dueDate: "2024-12-05",
-    dueDayOfMonth: 5,
-    icon: "💳",
-    isRecurring: true,
-    recurringPattern: { frequency: "monthly", dayOfMonth: 5 },
-    status: "pending",
-  },
-  {
-    id: "b2",
-    label: "Rent",
-    amount: 8000,
-    dueDate: "2024-12-01",
-    dueDayOfMonth: 1,
-    icon: "🏠",
-    isRecurring: true,
-    recurringPattern: { frequency: "monthly", dayOfMonth: 1 },
-    status: "pending",
-  },
-  {
-    id: "b3",
-    label: "Internet",
-    amount: 1500,
-    dueDate: "2024-12-10",
-    dueDayOfMonth: 10,
-    icon: "📶",
-    isRecurring: true,
-    recurringPattern: { frequency: "monthly", dayOfMonth: 10 },
-    status: "pending",
-  },
-];
-
-// Quick add templates
-const QUICK_TEMPLATES = [
-  { icon: "☕", label: "Coffee", amount: 120 },
-  { icon: "🚌", label: "Commute", amount: 45 },
-  { icon: "🍱", label: "Lunch", amount: 180 },
-  { icon: "🍽️", label: "Dinner", amount: 250 },
-  { icon: "🍿", label: "Snack", amount: 60 },
-  { icon: "🛵", label: "Grab", amount: 180 },
-  { icon: "🛒", label: "Groceries", amount: 500 },
-  { icon: "🛍️", label: "Shopping", amount: 300 },
-];
-
 type TabType = "calendar" | "insights" | "transactions";
 
 interface DashboardClientProps {
@@ -165,35 +103,34 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
   const [isShortcutModalOpen, setIsShortcutModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isMobileDaySheetOpen, setIsMobileDaySheetOpen] = useState(false);
-  const [flexBucket] = useState(5000);
   const [pendingShortcutData, setPendingShortcutData] = useState<UnknownShortcut | null>(null);
 
-  // Transform database types to local types, fall back to demo data if empty
-  const incomes = useMemo(() => {
-    if (initialIncomes.length > 0) {
-      return initialIncomes.map(toLocalIncome);
-    }
-    return DEMO_INCOMES;
-  }, [initialIncomes]);
+  // Transform database types to local types
+  const incomes = useMemo(() =>
+    initialIncomes.map(toLocalIncome),
+    [initialIncomes]
+  );
 
-  const bills = useMemo(() => {
-    if (initialBills.length > 0) {
-      return initialBills.map(toLocalBill);
-    }
-    return DEMO_BILLS;
-  }, [initialBills]);
+  const bills = useMemo(() =>
+    initialBills.map(toLocalBill),
+    [initialBills]
+  );
   const [hideSavings, setHideSavings] = useState(false);
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
   const [showSuccessFlash, setShowSuccessFlash] = useState(false);
   const [successMessage, setSuccessMessage] = useState("Added!");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
-  // Demo allocation values
+  // Quick templates state
+  const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<QuickTemplate | null>(null);
+  const [templateEditorMode, setTemplateEditorMode] = useState<"add" | "edit" | "manage">("add");
+
+  // Allocation values calculated from real data
   const totalIncome = useMemo(() => incomes.reduce((sum, inc) => sum + inc.amount, 0), [incomes]);
   const totalBills = useMemo(() => bills.reduce((sum, bill) => sum + bill.amount, 0), [bills]);
   const actualDailyLimit = dailyLimit ?? DEFAULT_DAILY_LIMIT;
   const dailyBudgetAllocation = actualDailyLimit * 30;
-  const savingsAllocation = 5000;
 
   // Server-backed expenses with optimistic updates
   const { expenses, addExpense, addExpenses, updateExpense, removeExpense, isPending } = useServerExpenses(initialExpenses);
@@ -221,7 +158,26 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
   const { todayStatus } = useCalendar(localExpenses, { dailyLimit });
   const weeklyPatterns = useWeeklyPatterns(localExpenses);
   const { shortcuts, addShortcut, updateShortcut, deleteShortcut } = useShortcuts();
-  const { buckets, defaultBucket } = useBuckets({ initialBuckets });
+  const { buckets, defaultBucket, findBySlug } = useBuckets({ initialBuckets });
+
+  // Quick templates from localStorage
+  const {
+    templates: quickTemplates,
+    addTemplate,
+    updateTemplate,
+    deleteTemplate,
+    resetToDefaults: resetTemplatesToDefaults,
+  } = useQuickTemplates();
+
+  // Calculate flex bucket and savings from actual bucket data
+  const flexBucket = findBySlug("flex")?.allocated_amount ?? 0;
+  const savingsAllocation = findBySlug("savings")?.allocated_amount ?? 0;
+
+  // Budget progress calculations (weekly, monthly, rollover)
+  const budgetProgress = useBudgetProgress(localExpenses, {
+    dailyLimit: actualDailyLimit,
+    weekStartsOn: 1, // Monday
+  });
 
   // Debug: log buckets
   if (process.env.NODE_ENV === "development") {
@@ -332,7 +288,17 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
   };
 
   const handleDeleteExpense = async (id: string) => {
+    // Find the expense to get its label for the toast
+    const expense = expenses.find(e => e.id === id);
+    const expenseLabel = expense?.label || "Expense";
+
     await removeExpense(id);
+
+    // Show undo toast
+    showExpenseDeletedToast(expenseLabel, async () => {
+      await restoreExpense(id);
+      // The page will revalidate and show the restored expense
+    });
   };
 
   const handleOpenCreateShortcut = () => {
@@ -355,6 +321,25 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
     setIsShortcutModalOpen(false);
     setPendingShortcutData(null);
     clearPendingShortcut();
+  };
+
+  // Template editor handlers
+  const handleOpenAddTemplate = () => {
+    setSelectedTemplate(null);
+    setTemplateEditorMode("add");
+    setTemplateEditorOpen(true);
+  };
+
+  const handleEditTemplate = (template: QuickTemplate) => {
+    setSelectedTemplate(template);
+    setTemplateEditorMode("edit");
+    setTemplateEditorOpen(true);
+  };
+
+  const handleManageTemplates = () => {
+    setSelectedTemplate(null);
+    setTemplateEditorMode("manage");
+    setTemplateEditorOpen(true);
   };
 
   // Calculate budget status
@@ -432,15 +417,10 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
             <Receipt className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             <span className="hidden sm:inline sm:ml-1">Budget</span>
           </Link>
-          <Link
-            href="/analytics"
-            className="flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1.5 rounded-lg text-neutral-500 hover:text-amber-600 hover:bg-amber-50 text-xs font-medium transition-colors"
-          >
-            <BarChart3 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-            <span className="hidden sm:inline sm:ml-1">Analytics</span>
-          </Link>
+          {/* Analytics link hidden for MVP - to be polished later */}
           <Link
             href="/dashboard/settings"
+            aria-label="Settings"
             className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
           >
             <Settings className="w-4 h-4" />
@@ -514,6 +494,24 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                 )}
               </div>
             )}
+
+            {/* Savings celebration message */}
+            <div className="mt-3">
+              <SavingsCelebration
+                amount={todayStatus.remaining}
+                currency={CURRENCY}
+              />
+            </div>
+
+            {/* Rollover from previous days */}
+            {budgetProgress.rolloverAmount > 0 && (
+              <div className="mt-3">
+                <RolloverDisplay
+                  amount={budgetProgress.rolloverAmount}
+                  currency={CURRENCY}
+                />
+              </div>
+            )}
           </div>
 
           {/* Flex Bucket */}
@@ -534,31 +532,58 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
             </div>
           </div>
 
+          {/* Weekly Progress */}
+          <WeeklyProgressCard
+            spent={budgetProgress.weeklyProgress.totalSpent}
+            budget={budgetProgress.weeklyProgress.totalBudget}
+            percentUsed={budgetProgress.weeklyProgress.percentUsed}
+            daysTracked={budgetProgress.weeklyProgress.daysTracked}
+            currency={CURRENCY}
+          />
+
+          {/* Upcoming Bills */}
+          <UpcomingBillsWidget
+            bills={initialBills}
+            currency={CURRENCY}
+            maxItems={4}
+          />
+
           {/* Quick Add Grid */}
           <div data-onboarding-target="quick-add-grid" className="p-4 flex-1">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[10px] text-neutral-400 uppercase tracking-wider font-medium">
                 Quick Add
               </p>
-              <button
-                onClick={handleOpenCreateShortcut}
-                className="p-1 rounded text-neutral-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleManageTemplates}
+                  className="p-1 rounded text-neutral-400 hover:text-teal-600 hover:bg-teal-50 transition-colors text-[9px]"
+                  title="Manage templates"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={handleOpenAddTemplate}
+                  className="p-1 rounded text-neutral-400 hover:text-teal-600 hover:bg-teal-50 transition-colors"
+                  title="Add template"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-4 gap-2">
-              {QUICK_TEMPLATES.map((template) => (
+              {quickTemplates.map((template) => (
                 <button
-                  key={template.label}
+                  key={template.id}
                   onClick={() => handleQuickAdd(template.amount, template.label)}
-                  className="flex flex-col items-center gap-1 p-2 rounded-xl bg-neutral-50 hover:bg-amber-50 border border-transparent hover:border-amber-200 transition-all group"
-                  title={`${template.label}: ${formatCurrency(template.amount, CURRENCY)}`}
+                  onDoubleClick={() => handleEditTemplate(template)}
+                  className="flex flex-col items-center gap-1 p-2 rounded-xl bg-neutral-50 hover:bg-teal-50 border border-transparent hover:border-teal-200 transition-all group"
+                  title={`${template.label}: ${formatCurrency(template.amount, CURRENCY)} (double-click to edit)`}
                 >
                   <span className="text-lg group-hover:scale-110 transition-transform">
                     {template.icon}
                   </span>
-                  <span className="text-[9px] text-neutral-500 group-hover:text-amber-700 truncate w-full text-center">
+                  <span className="text-[9px] text-neutral-500 group-hover:text-teal-700 truncate w-full text-center">
                     {template.label}
                   </span>
                 </button>
@@ -797,25 +822,40 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                 <p className="text-xs text-neutral-500 uppercase tracking-wider font-medium">
                   Quick Add
                 </p>
-                <button
-                  onClick={() => {
-                    setIsQuickActionsOpen(false);
-                    handleOpenCreateShortcut();
-                  }}
-                  className="p-1.5 rounded-lg text-neutral-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setIsQuickActionsOpen(false);
+                      handleManageTemplates();
+                    }}
+                    className="px-2 py-1 rounded-lg text-neutral-400 hover:text-teal-600 hover:bg-teal-50 transition-colors text-xs"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsQuickActionsOpen(false);
+                      handleOpenAddTemplate();
+                    }}
+                    className="p-1.5 rounded-lg text-neutral-400 hover:text-teal-600 hover:bg-teal-50 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-4 gap-3">
-                {QUICK_TEMPLATES.map((template) => (
+                {quickTemplates.map((template) => (
                   <button
-                    key={template.label}
+                    key={template.id}
                     onClick={() => {
                       handleQuickAdd(template.amount, template.label);
                       setIsQuickActionsOpen(false);
                     }}
-                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-neutral-50 active:bg-amber-100 active:scale-95 border border-neutral-100 transition-all"
+                    onDoubleClick={() => {
+                      setIsQuickActionsOpen(false);
+                      handleEditTemplate(template);
+                    }}
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-neutral-50 active:bg-teal-100 active:scale-95 border border-neutral-100 transition-all"
                   >
                     <span className="text-2xl">{template.icon}</span>
                     <span className="text-[10px] text-neutral-600 truncate w-full text-center">
@@ -882,6 +922,18 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
         amount={pendingShortcutData?.amount || 0}
         onSave={handleSaveShortcut}
         onSaveAndLog={handleSaveAndLogShortcut}
+      />
+
+      {/* Quick Template Editor Modal */}
+      <QuickTemplateEditor
+        open={templateEditorOpen}
+        onOpenChange={setTemplateEditorOpen}
+        template={selectedTemplate}
+        onSave={addTemplate}
+        onUpdate={updateTemplate}
+        onDelete={deleteTemplate}
+        onResetToDefaults={resetTemplatesToDefaults}
+        mode={templateEditorMode}
       />
 
       {/* Smart Input Bar */}

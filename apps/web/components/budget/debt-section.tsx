@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { CreditCard, MoreHorizontal, Pencil, Trash2, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,24 +32,35 @@ import { BentoCard, BentoCardEmpty } from "./bento-card";
 import { BillForm } from "./bill-form";
 import { DebtQuickForm } from "./debt-quick-form";
 import { formatCurrency, cn } from "@/lib/utils";
-import { markBillPaid, deleteBill } from "@/actions/bills";
 import type { Debt } from "@repo/database";
+import type { CreateBillInput, UpdateBillInput } from "@/lib/validations/bill.schema";
+import type { OptimisticDebt } from "@/hooks/use-server-budget";
 
 const MAX_VISIBLE_ITEMS = 3;
 
 interface DebtSectionProps {
-  debts: Debt[];
+  debts: OptimisticDebt[];
   currency: string;
-  onUpdate: () => void;
+  isPending?: boolean;
+  onAdd: (data: CreateBillInput) => Promise<{ success: boolean; error?: string }>;
+  onUpdate: (id: string, data: UpdateBillInput) => Promise<{ success: boolean; error?: string }>;
+  onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
+  onMakePayment: (id: string, paymentAmount: number, paidDate?: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function DebtSection({ debts, currency, onUpdate }: DebtSectionProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+export function DebtSection({
+  debts,
+  currency,
+  isPending = false,
+  onAdd,
+  onUpdate,
+  onDelete,
+  onMakePayment,
+}: DebtSectionProps) {
   const [isQuickFormOpen, setIsQuickFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
+  const [editingDebt, setEditingDebt] = useState<OptimisticDebt | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const totalBalance = debts.reduce(
@@ -60,33 +70,28 @@ export function DebtSection({ debts, currency, onUpdate }: DebtSectionProps) {
   const visibleDebts = debts.slice(0, MAX_VISIBLE_ITEMS);
   const hasMore = debts.length > MAX_VISIBLE_ITEMS;
 
-  const handleMarkPaid = (debt: Debt) => {
-    startTransition(async () => {
-      const result = await markBillPaid(debt.id);
-      if (result.success) {
-        toast.success(`${debt.label} payment marked`);
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Failed to update");
-      }
-    });
+  const handleMakePayment = async (debt: OptimisticDebt) => {
+    const paymentAmount = debt.minimum_payment ?? debt.amount;
+    const result = await onMakePayment(debt.id, paymentAmount);
+    if (result.success) {
+      toast.success(`${debt.label} payment marked`);
+    } else {
+      toast.error(result.error ?? "Failed to update");
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteId) return;
-    startTransition(async () => {
-      const result = await deleteBill(deleteId);
-      if (result.success) {
-        toast.success("Debt deleted");
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Failed to delete");
-      }
-      setDeleteId(null);
-    });
+    const result = await onDelete(deleteId);
+    if (result.success) {
+      toast.success("Debt deleted");
+    } else {
+      toast.error(result.error ?? "Failed to delete");
+    }
+    setDeleteId(null);
   };
 
-  const handleEdit = (debt: Debt) => {
+  const handleEdit = (debt: OptimisticDebt) => {
     setEditingDebt(debt);
     setIsEditFormOpen(true);
   };
@@ -94,6 +99,26 @@ export function DebtSection({ debts, currency, onUpdate }: DebtSectionProps) {
   const handleEditFormClose = () => {
     setIsEditFormOpen(false);
     setEditingDebt(null);
+  };
+
+  const handleFormSave = async (data: CreateBillInput) => {
+    if (editingDebt) {
+      const result = await onUpdate(editingDebt.id, data);
+      if (result.success) {
+        toast.success("Debt updated");
+        handleEditFormClose();
+      } else {
+        toast.error(result.error ?? "Failed to update debt");
+      }
+    } else {
+      const result = await onAdd(data);
+      if (result.success) {
+        toast.success("Debt added");
+        setIsQuickFormOpen(false);
+      } else {
+        toast.error(result.error ?? "Failed to add debt");
+      }
+    }
   };
 
   return (
@@ -124,7 +149,7 @@ export function DebtSection({ debts, currency, onUpdate }: DebtSectionProps) {
                 debt={debt}
                 currency={currency}
                 isPending={isPending}
-                onMarkPaid={() => handleMarkPaid(debt)}
+                onMakePayment={() => handleMakePayment(debt)}
                 onEdit={() => handleEdit(debt)}
                 onDelete={() => setDeleteId(debt.id)}
               />
@@ -151,7 +176,7 @@ export function DebtSection({ debts, currency, onUpdate }: DebtSectionProps) {
                 debt={debt}
                 currency={currency}
                 isPending={isPending}
-                onMarkPaid={() => handleMarkPaid(debt)}
+                onMakePayment={() => handleMakePayment(debt)}
                 onEdit={() => handleEdit(debt)}
                 onDelete={() => setDeleteId(debt.id)}
               />
@@ -179,6 +204,7 @@ export function DebtSection({ debts, currency, onUpdate }: DebtSectionProps) {
         open={isQuickFormOpen}
         onClose={() => setIsQuickFormOpen(false)}
         currency={currency}
+        onSave={handleFormSave}
       />
 
       {/* Edit Form (Full) */}
@@ -188,6 +214,7 @@ export function DebtSection({ debts, currency, onUpdate }: DebtSectionProps) {
         bill={editingDebt}
         currency={currency}
         isDebt={true}
+        onSave={handleFormSave}
       />
 
       {/* Delete Confirmation */}
@@ -217,14 +244,14 @@ function DebtCardCompact({
   debt,
   currency,
   isPending,
-  onMarkPaid,
+  onMakePayment,
   onEdit,
   onDelete,
 }: {
-  debt: Debt;
+  debt: OptimisticDebt;
   currency: string;
   isPending: boolean;
-  onMarkPaid: () => void;
+  onMakePayment: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -232,12 +259,13 @@ function DebtCardCompact({
   const remainingBalance = debt.remaining_balance ?? totalAmount;
   const paidAmount = totalAmount - remainingBalance;
   const progressPercent = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
+  const isOptimistic = debt.pending;
 
   return (
     <div
       className={cn(
         "p-2 rounded-lg hover:bg-stone-50 transition-colors group",
-        isPending && "opacity-60"
+        (isPending || isOptimistic) && "opacity-60"
       )}
     >
       <div className="flex items-center justify-between mb-1.5">
@@ -255,12 +283,13 @@ function DebtCardCompact({
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="More options"
               >
                 <MoreHorizontal className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onMarkPaid}>
+              <DropdownMenuItem onClick={onMakePayment}>
                 <DollarSign className="w-4 h-4 mr-2" />
                 Make Payment
               </DropdownMenuItem>
@@ -294,14 +323,14 @@ function DebtCardFull({
   debt,
   currency,
   isPending,
-  onMarkPaid,
+  onMakePayment,
   onEdit,
   onDelete,
 }: {
-  debt: Debt;
+  debt: OptimisticDebt;
   currency: string;
   isPending: boolean;
-  onMarkPaid: () => void;
+  onMakePayment: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -310,12 +339,13 @@ function DebtCardFull({
   const paidAmount = totalAmount - remainingBalance;
   const progressPercent = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
   const interestRate = debt.interest_rate ? debt.interest_rate * 100 : null;
+  const isOptimistic = debt.pending;
 
   return (
     <div
       className={cn(
         "p-3 rounded-xl border border-stone-200 hover:border-rose-200 transition-colors",
-        isPending && "opacity-60"
+        (isPending || isOptimistic) && "opacity-60"
       )}
     >
       {/* Header Row */}
@@ -343,12 +373,12 @@ function DebtCardFull({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="More options">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onMarkPaid}>
+              <DropdownMenuItem onClick={onMakePayment}>
                 <DollarSign className="w-4 h-4 mr-2" />
                 Make Payment
               </DropdownMenuItem>

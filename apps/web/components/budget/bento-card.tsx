@@ -81,6 +81,7 @@ export function BentoCard({
               size="sm"
               onClick={onAdd}
               className="h-8 w-8 p-0 text-neutral-400 hover:text-teal-600 hover:bg-teal-50"
+              aria-label={`Add ${title}`}
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -110,22 +111,29 @@ export function BentoCardEmpty({
   message,
   actionLabel,
   onAction,
+  icon: Icon,
 }: {
   message: string;
   actionLabel?: string;
   onAction?: () => void;
+  icon?: LucideIcon;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-4 text-center">
-      <p className="text-xs text-neutral-400 mb-2">{message}</p>
+    <div className="flex flex-col items-center justify-center py-6 text-center">
+      {Icon && (
+        <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center mb-3">
+          <Icon className="w-5 h-5 text-neutral-400" />
+        </div>
+      )}
+      <p className="text-sm text-neutral-500 mb-3">{message}</p>
       {actionLabel && onAction && (
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={onAction}
-          className="text-xs text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+          className="text-sm text-teal-600 border-teal-200 hover:bg-teal-50 hover:text-teal-700"
         >
-          <Plus className="w-3 h-3 mr-1" />
+          <Plus className="w-4 h-4 mr-1.5" />
           {actionLabel}
         </Button>
       )}

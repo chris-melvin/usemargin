@@ -11,6 +11,7 @@ import { BillsSection } from "@/components/budget/bills-section";
 import { DebtSection } from "@/components/budget/debt-section";
 import { SubscriptionsSection, PlannedExpensesSection } from "@/components/budget/subscriptions-section";
 import { BudgetListView } from "@/components/budget/budget-list-view";
+import { useServerBudget } from "@/hooks/use-server-budget";
 import type { Income, Debt, UserSettings } from "@repo/database";
 
 interface BudgetClientProps {
@@ -24,9 +25,25 @@ export function BudgetClient({
   initialBills,
   userSettings,
 }: BudgetClientProps) {
-  const [incomes, setIncomes] = useState(initialIncomes);
-  const [bills, setBills] = useState(initialBills);
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
+
+  // Use the optimistic budget hook
+  const {
+    incomes,
+    bills,
+    isPending,
+    addIncome,
+    updateIncome,
+    deleteIncome,
+    markIncomeReceived,
+    resetIncomeStatus,
+    addBill,
+    updateBill,
+    deleteBill,
+    markBillPaid,
+    resetBillStatus,
+    makeDebtPayment,
+  } = useServerBudget({ incomes: initialIncomes, bills: initialBills });
 
   const currency = userSettings.currency;
 
@@ -130,16 +147,24 @@ export function BudgetClient({
             <IncomeSection
               incomes={incomes}
               currency={currency}
-              onUpdate={() => {
-                // Trigger refresh - will be handled by revalidatePath
-              }}
+              isPending={isPending}
+              onAdd={addIncome}
+              onUpdate={updateIncome}
+              onDelete={deleteIncome}
+              onMarkReceived={markIncomeReceived}
+              onResetStatus={resetIncomeStatus}
             />
 
             {/* Bills - 1x1 */}
             <BillsSection
               bills={totals.regularBills}
               currency={currency}
-              onUpdate={() => {}}
+              isPending={isPending}
+              onAdd={addBill}
+              onUpdate={updateBill}
+              onDelete={deleteBill}
+              onMarkPaid={markBillPaid}
+              onResetStatus={resetBillStatus}
             />
 
             {/* Debt - 2x1 */}
@@ -147,7 +172,11 @@ export function BudgetClient({
               <DebtSection
                 debts={totals.debts}
                 currency={currency}
-                onUpdate={() => {}}
+                isPending={isPending}
+                onAdd={addBill}
+                onUpdate={updateBill}
+                onDelete={deleteBill}
+                onMakePayment={makeDebtPayment}
               />
             </div>
 
@@ -156,7 +185,12 @@ export function BudgetClient({
               <SubscriptionsSection
                 subscriptions={totals.subscriptions}
                 currency={currency}
-                onUpdate={() => {}}
+                isPending={isPending}
+                onAdd={addBill}
+                onUpdate={updateBill}
+                onDelete={deleteBill}
+                onMarkPaid={markBillPaid}
+                onResetStatus={resetBillStatus}
               />
             </div>
 
@@ -165,7 +199,12 @@ export function BudgetClient({
               <PlannedExpensesSection
                 expenses={totals.plannedExpenses}
                 currency={currency}
-                onUpdate={() => {}}
+                isPending={isPending}
+                onAdd={addBill}
+                onUpdate={updateBill}
+                onDelete={deleteBill}
+                onMarkPaid={markBillPaid}
+                onResetStatus={resetBillStatus}
               />
             </div>
           </div>

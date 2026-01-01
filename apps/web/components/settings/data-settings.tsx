@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Download, Upload, RefreshCw, Trash2, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -57,10 +58,13 @@ export function DataSettings() {
 
   return (
     <div className="space-y-6">
-      {/* Export Section */}
-      <Card>
+      {/* Export Section - Coming Soon */}
+      <Card className="opacity-60">
         <CardHeader>
-          <CardTitle>Export Data</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Export Data</CardTitle>
+            <Badge variant="outline" className="text-xs font-normal">Coming Soon</Badge>
+          </div>
           <CardDescription>
             Download your expense data in various formats
           </CardDescription>
@@ -70,8 +74,7 @@ export function DataSettings() {
             <Button
               variant="outline"
               className="justify-start gap-2"
-              onClick={handleExportCSV}
-              disabled={isPending}
+              disabled
             >
               <Download className="w-4 h-4" />
               Export as CSV
@@ -79,23 +82,22 @@ export function DataSettings() {
             <Button
               variant="outline"
               className="justify-start gap-2"
-              onClick={handleExportJSON}
-              disabled={isPending}
+              disabled
             >
               <Download className="w-4 h-4" />
               Export as JSON
             </Button>
           </div>
-          <p className="text-xs text-stone-500">
-            Your exported data includes all expenses, categories, and settings
-          </p>
         </CardContent>
       </Card>
 
-      {/* Import Section */}
-      <Card>
+      {/* Import Section - Coming Soon */}
+      <Card className="opacity-60">
         <CardHeader>
-          <CardTitle>Import Data</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Import Data</CardTitle>
+            <Badge variant="outline" className="text-xs font-normal">Coming Soon</Badge>
+          </div>
           <CardDescription>
             Import expenses from a file
           </CardDescription>
@@ -109,9 +111,6 @@ export function DataSettings() {
             <Upload className="w-4 h-4" />
             Import from CSV
           </Button>
-          <p className="text-xs text-stone-500 mt-2">
-            Coming soon - import your expense history from other apps
-          </p>
         </CardContent>
       </Card>
 
@@ -146,11 +145,12 @@ export function DataSettings() {
 
           <Separator />
 
-          {/* Danger Zone */}
-          <div className="space-y-3">
+          {/* Danger Zone - Coming Soon */}
+          <div className="space-y-3 opacity-60">
             <div className="flex items-center gap-2 text-rose-600">
               <AlertTriangle className="w-4 h-4" />
               <p className="text-sm font-medium">Danger Zone</p>
+              <Badge variant="outline" className="text-xs font-normal">Coming Soon</Badge>
             </div>
             <div className="flex items-center justify-between p-4 rounded-lg border border-rose-200 bg-rose-50/50">
               <div>
@@ -159,34 +159,10 @@ export function DataSettings() {
                   Permanently delete all your expense records
                 </p>
               </div>
-              <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="gap-2">
-                    <Trash2 className="w-4 h-4" />
-                    Clear
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Clear All Expenses</DialogTitle>
-                    <DialogDescription>
-                      This will permanently delete all your expense records. This action
-                      cannot be undone. Your settings and shortcuts will be preserved.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsClearDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button variant="destructive" onClick={handleClearExpenses}>
-                      Clear All Expenses
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              <Button variant="destructive" size="sm" className="gap-2" disabled>
+                <Trash2 className="w-4 h-4" />
+                Clear
+              </Button>
             </div>
           </div>
         </CardContent>

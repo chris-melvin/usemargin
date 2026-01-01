@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createBill } from "@/actions/bills";
+import type { CreateBillInput } from "@/lib/validations/bill.schema";
 
 const DEBT_ICONS = ["💳", "💰", "🏠", "🚗", "🏦", "📱", "💸", "🎓"];
 
@@ -29,6 +30,7 @@ interface DebtQuickFormProps {
   open: boolean;
   onClose: () => void;
   currency: string;
+  onSave?: (data: CreateBillInput) => Promise<void>;
 }
 
 // Auto-detect debt type and icon from name
@@ -74,7 +76,7 @@ function parseFormattedNumber(value: string): string {
   return value.replace(/,/g, "");
 }
 
-export function DebtQuickForm({ open, onClose, currency }: DebtQuickFormProps) {
+export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -146,7 +148,7 @@ export function DebtQuickForm({ open, onClose, currency }: DebtQuickFormProps) {
     const endDate = parsedMonths && parsedMonths > 0 ? calculateEndDate(parsedMonths) : null;
     const today = new Date().toISOString().split("T")[0] ?? null;
 
-    const data = {
+    const data: CreateBillInput = {
       label: name.trim(),
       amount: parsedAmount,
       due_date: dueDate ? parseInt(dueDate, 10) : null,
@@ -164,6 +166,13 @@ export function DebtQuickForm({ open, onClose, currency }: DebtQuickFormProps) {
     };
 
     startTransition(async () => {
+      // If onSave is provided, use it (optimistic mode)
+      if (onSave) {
+        await onSave(data);
+        return;
+      }
+
+      // Fallback to direct server action (legacy mode)
       const result = await createBill(data);
 
       if (result.success) {

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Receipt, Check, MoreHorizontal, Pencil, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,68 +31,72 @@ import {
 import { BentoCard, BentoCardEmpty } from "./bento-card";
 import { BillForm } from "./bill-form";
 import { formatCurrency, cn } from "@/lib/utils";
-import { markBillPaid, resetBillStatus, deleteBill } from "@/actions/bills";
 import type { Debt } from "@repo/database";
+import type { CreateBillInput, UpdateBillInput } from "@/lib/validations/bill.schema";
+import type { OptimisticDebt } from "@/hooks/use-server-budget";
 
 const MAX_VISIBLE_ITEMS = 4;
 
 interface BillsSectionProps {
-  bills: Debt[];
+  bills: OptimisticDebt[];
   currency: string;
-  onUpdate: () => void;
+  isPending?: boolean;
+  onAdd: (data: CreateBillInput) => Promise<{ success: boolean; error?: string }>;
+  onUpdate: (id: string, data: UpdateBillInput) => Promise<{ success: boolean; error?: string }>;
+  onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
+  onMarkPaid: (id: string, paidDate?: string) => Promise<{ success: boolean; error?: string }>;
+  onResetStatus: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function BillsSection({ bills, currency, onUpdate }: BillsSectionProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+export function BillsSection({
+  bills,
+  currency,
+  isPending = false,
+  onAdd,
+  onUpdate,
+  onDelete,
+  onMarkPaid,
+  onResetStatus,
+}: BillsSectionProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [editingBill, setEditingBill] = useState<Debt | null>(null);
+  const [editingBill, setEditingBill] = useState<OptimisticDebt | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const total = bills.reduce((sum, b) => sum + b.amount, 0);
   const visibleBills = bills.slice(0, MAX_VISIBLE_ITEMS);
   const hasMore = bills.length > MAX_VISIBLE_ITEMS;
 
-  const handleMarkPaid = (bill: Debt) => {
-    startTransition(async () => {
-      const result = await markBillPaid(bill.id);
-      if (result.success) {
-        toast.success(`${bill.label} marked as paid`);
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Failed to update bill");
-      }
-    });
+  const handleMarkPaid = async (bill: OptimisticDebt) => {
+    const result = await onMarkPaid(bill.id);
+    if (result.success) {
+      toast.success(`${bill.label} marked as paid`);
+    } else {
+      toast.error(result.error ?? "Failed to update bill");
+    }
   };
 
-  const handleResetStatus = (bill: Debt) => {
-    startTransition(async () => {
-      const result = await resetBillStatus(bill.id);
-      if (result.success) {
-        toast.success(`${bill.label} status reset`);
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Failed to reset status");
-      }
-    });
+  const handleResetStatus = async (bill: OptimisticDebt) => {
+    const result = await onResetStatus(bill.id);
+    if (result.success) {
+      toast.success(`${bill.label} status reset`);
+    } else {
+      toast.error(result.error ?? "Failed to reset status");
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteId) return;
-    startTransition(async () => {
-      const result = await deleteBill(deleteId);
-      if (result.success) {
-        toast.success("Bill deleted");
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Failed to delete bill");
-      }
-      setDeleteId(null);
-    });
+    const result = await onDelete(deleteId);
+    if (result.success) {
+      toast.success("Bill deleted");
+    } else {
+      toast.error(result.error ?? "Failed to delete bill");
+    }
+    setDeleteId(null);
   };
 
-  const handleEdit = (bill: Debt) => {
+  const handleEdit = (bill: OptimisticDebt) => {
     setEditingBill(bill);
     setIsFormOpen(true);
   };
@@ -101,6 +104,26 @@ export function BillsSection({ bills, currency, onUpdate }: BillsSectionProps) {
   const handleFormClose = () => {
     setIsFormOpen(false);
     setEditingBill(null);
+  };
+
+  const handleFormSave = async (data: CreateBillInput) => {
+    if (editingBill) {
+      const result = await onUpdate(editingBill.id, data);
+      if (result.success) {
+        toast.success("Bill updated");
+        handleFormClose();
+      } else {
+        toast.error(result.error ?? "Failed to update bill");
+      }
+    } else {
+      const result = await onAdd(data);
+      if (result.success) {
+        toast.success("Bill added");
+        handleFormClose();
+      } else {
+        toast.error(result.error ?? "Failed to add bill");
+      }
+    }
   };
 
   return (
@@ -176,6 +199,7 @@ export function BillsSection({ bills, currency, onUpdate }: BillsSectionProps) {
         bill={editingBill}
         currency={currency}
         isDebt={false}
+        onSave={handleFormSave}
       />
 
       {/* Delete Confirmation */}
@@ -210,7 +234,7 @@ function BillCardCompact({
   onEdit,
   onDelete,
 }: {
-  bill: Debt;
+  bill: OptimisticDebt;
   currency: string;
   isPending: boolean;
   onMarkPaid: () => void;
@@ -220,12 +244,13 @@ function BillCardCompact({
 }) {
   const isPaid = bill.status === "paid";
   const isOverdue = bill.status === "overdue";
+  const isOptimistic = bill.pending;
 
   return (
     <div
       className={cn(
         "flex items-center justify-between py-2 px-2 rounded-lg hover:bg-neutral-50 transition-colors group",
-        isPending && "opacity-60"
+        (isPending || isOptimistic) && "opacity-60"
       )}
     >
       <div className="flex items-center gap-2 min-w-0">
@@ -245,6 +270,7 @@ function BillCardCompact({
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="More options"
             >
               <MoreHorizontal className="w-3 h-3" />
             </Button>
@@ -287,7 +313,7 @@ function BillCardFull({
   onEdit,
   onDelete,
 }: {
-  bill: Debt;
+  bill: OptimisticDebt;
   currency: string;
   isPending: boolean;
   onMarkPaid: () => void;
@@ -297,12 +323,13 @@ function BillCardFull({
 }) {
   const isPaid = bill.status === "paid";
   const isOverdue = bill.status === "overdue";
+  const isOptimistic = bill.pending;
 
   return (
     <div
       className={cn(
         "p-3 rounded-xl border border-neutral-200 hover:border-teal-200 transition-colors",
-        isPending && "opacity-60"
+        (isPending || isOptimistic) && "opacity-60"
       )}
     >
       <div className="flex items-start justify-between">
@@ -337,7 +364,7 @@ function BillCardFull({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="More options">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>

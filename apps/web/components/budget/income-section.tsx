@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Banknote, Check, MoreHorizontal, Pencil, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,68 +31,72 @@ import {
 import { BentoCard, BentoCardEmpty } from "./bento-card";
 import { IncomeForm } from "./income-form";
 import { formatCurrency, cn } from "@/lib/utils";
-import { markIncomeReceived, resetIncomeStatus, deleteIncome } from "@/actions/income";
 import type { Income } from "@repo/database";
+import type { CreateIncomeInput, UpdateIncomeInput } from "@/lib/validations/income.schema";
+import type { OptimisticIncome } from "@/hooks/use-server-budget";
 
 const MAX_VISIBLE_ITEMS = 4;
 
 interface IncomeSectionProps {
-  incomes: Income[];
+  incomes: OptimisticIncome[];
   currency: string;
-  onUpdate: () => void;
+  isPending?: boolean;
+  onAdd: (data: CreateIncomeInput) => Promise<{ success: boolean; error?: string }>;
+  onUpdate: (id: string, data: UpdateIncomeInput) => Promise<{ success: boolean; error?: string }>;
+  onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
+  onMarkReceived: (id: string, receivedDate?: string) => Promise<{ success: boolean; error?: string }>;
+  onResetStatus: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function IncomeSection({ incomes, currency, onUpdate }: IncomeSectionProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+export function IncomeSection({
+  incomes,
+  currency,
+  isPending = false,
+  onAdd,
+  onUpdate,
+  onDelete,
+  onMarkReceived,
+  onResetStatus,
+}: IncomeSectionProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [editingIncome, setEditingIncome] = useState<Income | null>(null);
+  const [editingIncome, setEditingIncome] = useState<OptimisticIncome | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const total = incomes.reduce((sum, i) => sum + i.amount, 0);
   const visibleIncomes = incomes.slice(0, MAX_VISIBLE_ITEMS);
   const hasMore = incomes.length > MAX_VISIBLE_ITEMS;
 
-  const handleMarkReceived = (income: Income) => {
-    startTransition(async () => {
-      const result = await markIncomeReceived(income.id);
-      if (result.success) {
-        toast.success(`${income.label} marked as received`);
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Failed to update income");
-      }
-    });
+  const handleMarkReceived = async (income: OptimisticIncome) => {
+    const result = await onMarkReceived(income.id);
+    if (result.success) {
+      toast.success(`${income.label} marked as received`);
+    } else {
+      toast.error(result.error ?? "Failed to update income");
+    }
   };
 
-  const handleResetStatus = (income: Income) => {
-    startTransition(async () => {
-      const result = await resetIncomeStatus(income.id);
-      if (result.success) {
-        toast.success(`${income.label} status reset`);
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Failed to reset status");
-      }
-    });
+  const handleResetStatus = async (income: OptimisticIncome) => {
+    const result = await onResetStatus(income.id);
+    if (result.success) {
+      toast.success(`${income.label} status reset`);
+    } else {
+      toast.error(result.error ?? "Failed to reset status");
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteId) return;
-    startTransition(async () => {
-      const result = await deleteIncome(deleteId);
-      if (result.success) {
-        toast.success("Income deleted");
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Failed to delete income");
-      }
-      setDeleteId(null);
-    });
+    const result = await onDelete(deleteId);
+    if (result.success) {
+      toast.success("Income deleted");
+    } else {
+      toast.error(result.error ?? "Failed to delete income");
+    }
+    setDeleteId(null);
   };
 
-  const handleEdit = (income: Income) => {
+  const handleEdit = (income: OptimisticIncome) => {
     setEditingIncome(income);
     setIsFormOpen(true);
   };
@@ -101,6 +104,26 @@ export function IncomeSection({ incomes, currency, onUpdate }: IncomeSectionProp
   const handleFormClose = () => {
     setIsFormOpen(false);
     setEditingIncome(null);
+  };
+
+  const handleFormSave = async (data: CreateIncomeInput) => {
+    if (editingIncome) {
+      const result = await onUpdate(editingIncome.id, data);
+      if (result.success) {
+        toast.success("Income updated");
+        handleFormClose();
+      } else {
+        toast.error(result.error ?? "Failed to update income");
+      }
+    } else {
+      const result = await onAdd(data);
+      if (result.success) {
+        toast.success("Income added");
+        handleFormClose();
+      } else {
+        toast.error(result.error ?? "Failed to add income");
+      }
+    }
   };
 
   return (
@@ -175,6 +198,7 @@ export function IncomeSection({ incomes, currency, onUpdate }: IncomeSectionProp
         onClose={handleFormClose}
         income={editingIncome}
         currency={currency}
+        onSave={handleFormSave}
       />
 
       {/* Delete Confirmation */}
@@ -209,7 +233,7 @@ function IncomeCardCompact({
   onEdit,
   onDelete,
 }: {
-  income: Income;
+  income: OptimisticIncome;
   currency: string;
   isPending: boolean;
   onMarkReceived: () => void;
@@ -218,12 +242,13 @@ function IncomeCardCompact({
   onDelete: () => void;
 }) {
   const isReceived = income.status === "received";
+  const isOptimistic = income.pending;
 
   return (
     <div
       className={cn(
         "flex items-center justify-between py-2 px-2 rounded-lg hover:bg-stone-50 transition-colors group",
-        isPending && "opacity-60"
+        (isPending || isOptimistic) && "opacity-60"
       )}
     >
       <div className="flex items-center gap-2 min-w-0">
@@ -243,6 +268,7 @@ function IncomeCardCompact({
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="More options"
             >
               <MoreHorizontal className="w-3 h-3" />
             </Button>
@@ -285,7 +311,7 @@ function IncomeCardFull({
   onEdit,
   onDelete,
 }: {
-  income: Income;
+  income: OptimisticIncome;
   currency: string;
   isPending: boolean;
   onMarkReceived: () => void;
@@ -294,6 +320,7 @@ function IncomeCardFull({
   onDelete: () => void;
 }) {
   const isReceived = income.status === "received";
+  const isOptimistic = income.pending;
 
   const frequencyLabel = {
     weekly: "/wk",
@@ -308,7 +335,7 @@ function IncomeCardFull({
     <div
       className={cn(
         "p-3 rounded-xl border border-stone-200 hover:border-emerald-200 transition-colors",
-        isPending && "opacity-60"
+        (isPending || isOptimistic) && "opacity-60"
       )}
     >
       <div className="flex items-start justify-between">
@@ -344,7 +371,7 @@ function IncomeCardFull({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="More options">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>

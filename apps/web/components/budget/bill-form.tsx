@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { createBill, updateBill } from "@/actions/bills";
 import type { Debt } from "@repo/database";
+import type { CreateBillInput } from "@/lib/validations/bill.schema";
 
 const BILL_ICONS = ["📋", "🏠", "💡", "📶", "💳", "🚗", "📺", "🎮", "💪", "📱"];
 
@@ -31,9 +32,10 @@ interface BillFormProps {
   bill?: Debt | null;
   currency: string;
   isDebt?: boolean;
+  onSave?: (data: CreateBillInput) => Promise<void>;
 }
 
-export function BillForm({ open, onClose, bill, currency, isDebt = false }: BillFormProps) {
+export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave }: BillFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -80,7 +82,7 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false }: Bill
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const data = {
+    const data: CreateBillInput = {
       label: label.trim(),
       amount: parseFloat(amount),
       due_date: dueDate ? parseInt(dueDate, 10) : null,
@@ -96,6 +98,13 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false }: Bill
     };
 
     startTransition(async () => {
+      // If onSave is provided, use it (optimistic mode)
+      if (onSave) {
+        await onSave(data);
+        return;
+      }
+
+      // Fallback to direct server action (legacy mode)
       const result = isEditing
         ? await updateBill(bill.id, data)
         : await createBill(data);
