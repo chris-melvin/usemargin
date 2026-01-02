@@ -10,15 +10,17 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { BucketsSettings } from "./buckets-settings";
 import { updateSettings } from "@/actions/settings";
 import { formatCurrency } from "@/lib/utils";
-import type { UserSettings } from "@repo/database";
+import type { UserSettings, BudgetBucket } from "@repo/database";
 
 interface BudgetSettingsProps {
   userSettings: UserSettings;
+  buckets?: BudgetBucket[];
 }
 
-export function BudgetSettings({ userSettings }: BudgetSettingsProps) {
+export function BudgetSettings({ userSettings, buckets = [] }: BudgetSettingsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -167,6 +169,15 @@ export function BudgetSettings({ userSettings }: BudgetSettingsProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Spending Buckets */}
+      <BucketsSettings
+        buckets={buckets}
+        currency={userSettings.currency}
+        availableAmount={
+          (userSettings.total_monthly_income ?? 0) - (userSettings.total_fixed_expenses ?? 0)
+        }
+      />
 
       {/* Budget Setup Link */}
       <Card>

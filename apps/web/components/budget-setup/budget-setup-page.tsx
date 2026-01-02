@@ -63,7 +63,8 @@ export function BudgetSetupPage() {
   const isValid = useMemo(() => {
     const hasBalance = summary.startingBalance > 0;
     const hasIncome = incomes.length > 0;
-    const bucketsValid = Math.abs(buckets.reduce((sum, b) => sum + b.percentage, 0) - 100) < 0.01;
+    const totalPercent = buckets.reduce((sum, b) => sum + (b.percentage ?? 0), 0);
+    const bucketsValid = buckets.length > 0 && Math.abs(totalPercent - 100) < 0.01;
     return hasBalance && hasIncome && bucketsValid;
   }, [summary.startingBalance, incomes.length, buckets]);
 

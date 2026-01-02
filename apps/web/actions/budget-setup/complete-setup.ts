@@ -50,9 +50,11 @@ export async function completeBudgetSetup(params: CompleteBudgetSetupParams) {
     name: bucket.name,
     slug: bucket.slug,
     percentage: bucket.percentage,
+    targetAmount: bucket.targetAmount ?? null,
     allocatedAmount: bucket.allocatedAmount,
     color: bucket.color,
     icon: bucket.icon,
+    description: bucket.description ?? null,
     isDefault: bucket.isDefault,
     isSystem: bucket.isSystem,
   }));

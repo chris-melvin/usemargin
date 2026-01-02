@@ -9,15 +9,18 @@ import type { BudgetBucketInsert } from "@repo/database";
 interface CreateBucketParams {
   name: string;
   slug?: string;
-  percentage?: number;
-  allocatedAmount?: number;
+  percentage?: number | null;
+  targetAmount?: number | null; // Fixed monthly amount, alternative to percentage
+  allocatedAmount?: number | null;
   color?: string;
   icon?: string;
+  description?: string | null;
   isDefault?: boolean;
 }
 
 /**
  * Create a single bucket
+ * Supports both percentage-based and fixed target_amount allocations
  */
 export async function createBucket(params: CreateBucketParams) {
   const supabase = await createClient();
@@ -30,7 +33,22 @@ export async function createBucket(params: CreateBucketParams) {
     throw new Error("Not authenticated");
   }
 
-  const { name, slug, percentage = 0, allocatedAmount, color, icon, isDefault = false } = params;
+  const {
+    name,
+    slug,
+    percentage,
+    targetAmount,
+    allocatedAmount,
+    color,
+    icon,
+    description,
+    isDefault = false,
+  } = params;
+
+  // Validate: bucket should have either percentage or targetAmount (or neither for manual allocation)
+  if (percentage != null && targetAmount != null && percentage > 0 && targetAmount > 0) {
+    throw new Error("Bucket cannot have both percentage and target amount. Choose one allocation method.");
+  }
 
   // Generate slug from name if not provided
   const bucketSlug = slug ?? name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
@@ -49,8 +67,10 @@ export async function createBucket(params: CreateBucketParams) {
     user_id: user.id,
     name,
     slug: bucketSlug,
-    percentage,
+    percentage: percentage ?? null,
+    target_amount: targetAmount ?? null,
     allocated_amount: allocatedAmount ?? null,
+    description: description ?? null,
     color: color ?? "#6b7280", // gray-500 default
     icon: icon ?? "Wallet",
     is_default: isDefault,
@@ -98,8 +118,11 @@ export async function createDefaultBucketsWithFlex(totalMonthlyBudget?: number) 
     user_id: user.id,
     name: bucket.name,
     slug: bucket.slug,
-    percentage: bucket.percentage,
-    allocated_amount: budget > 0 ? Math.round((budget * bucket.percentage) / 100) : null,
+    percentage: bucket.percentage ?? null,
+    target_amount: bucket.targetAmount ?? null,
+    allocated_amount: budget > 0 && bucket.percentage != null
+      ? Math.round((budget * bucket.percentage) / 100)
+      : null,
     color: bucket.color,
     icon: bucket.icon,
     is_default: bucket.isDefault,
@@ -160,7 +183,8 @@ export async function addBucketBySlug(
     user_id: user.id,
     name: definition.name,
     slug: definition.slug,
-    percentage: options?.percentage ?? definition.percentage,
+    percentage: options?.percentage ?? definition.percentage ?? null,
+    target_amount: definition.targetAmount ?? null,
     allocated_amount: options?.allocatedAmount ?? null,
     color: definition.color,
     icon: definition.icon,
@@ -224,4 +248,169 @@ export async function deleteAllBuckets() {
   revalidatePath("/");
 
   return { success: true };
+}
+
+/**
+ * Update a bucket
+ */
+export async function updateBucket(
+  bucketId: string,
+  params: Partial<Omit<CreateBucketParams, "slug">>
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  // Validate: bucket should have either percentage or targetAmount (or neither)
+  if (
+    params.percentage != null &&
+    params.targetAmount != null &&
+    params.percentage > 0 &&
+    params.targetAmount > 0
+  ) {
+    throw new Error("Bucket cannot have both percentage and target amount. Choose one allocation method.");
+  }
+
+  const updateData: Record<string, unknown> = {};
+  if (params.name !== undefined) updateData.name = params.name;
+  if (params.percentage !== undefined) updateData.percentage = params.percentage;
+  if (params.targetAmount !== undefined) updateData.target_amount = params.targetAmount;
+  if (params.allocatedAmount !== undefined) updateData.allocated_amount = params.allocatedAmount;
+  if (params.color !== undefined) updateData.color = params.color;
+  if (params.icon !== undefined) updateData.icon = params.icon;
+  if (params.description !== undefined) updateData.description = params.description;
+
+  const { data, error } = await supabase
+    .from("budget_buckets")
+    .update(updateData)
+    .eq("id", bucketId)
+    .eq("user_id", user.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating bucket:", error);
+    throw error;
+  }
+
+  // If this bucket is set as default, update others
+  if (params.isDefault) {
+    await budgetBucketRepository.setDefault(supabase, user.id, bucketId);
+  }
+
+  revalidatePath("/");
+
+  return { success: true, bucket: data };
+}
+
+/**
+ * Set a bucket as the default (where expenses are deducted from)
+ */
+export async function setDefaultBucket(bucketId: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  await budgetBucketRepository.setDefault(supabase, user.id, bucketId);
+
+  revalidatePath("/");
+
+  return { success: true };
+}
+
+/**
+ * Reorder buckets
+ */
+export async function reorderBuckets(bucketIds: string[]) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  await budgetBucketRepository.reorder(supabase, user.id, bucketIds);
+
+  revalidatePath("/");
+
+  return { success: true };
+}
+
+/**
+ * Bulk create buckets (for setup wizard)
+ */
+export async function createBucketsFromWizard(
+  buckets: Array<{
+    name: string;
+    slug: string;
+    percentage?: number | null;
+    targetAmount?: number | null;
+    allocatedAmount?: number | null;
+    description?: string | null;
+    color: string;
+    icon: string;
+    isDefault?: boolean;
+  }>
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  // Validate buckets
+  for (const bucket of buckets) {
+    if (
+      bucket.percentage != null &&
+      bucket.targetAmount != null &&
+      bucket.percentage > 0 &&
+      bucket.targetAmount > 0
+    ) {
+      throw new Error(`Bucket "${bucket.name}" cannot have both percentage and target amount.`);
+    }
+  }
+
+  const created = await budgetBucketRepository.createBulk(supabase, user.id, buckets);
+
+  revalidatePath("/");
+
+  return { success: true, buckets: created };
+}
+
+/**
+ * Get all buckets for current user
+ */
+export async function getBuckets() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  const buckets = await budgetBucketRepository.findAllOrdered(supabase, user.id);
+
+  return { success: true, buckets };
 }

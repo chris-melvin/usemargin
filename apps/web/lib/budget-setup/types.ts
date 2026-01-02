@@ -34,12 +34,27 @@ export interface WizardBucket {
   id: string;
   name: string;
   slug: string;
-  percentage: number;
+  percentage: number | null; // Percentage of remaining budget (0-100), null for fixed-amount buckets
+  targetAmount: number | null; // Fixed monthly amount, alternative to percentage
   allocatedAmount: number;
   color: string;
   icon: string;
+  description?: string; // User-facing description for tooltips
   isDefault: boolean;
   isSystem: boolean;
+}
+
+/**
+ * Suggested bucket templates for the setup wizard
+ * These are suggestions, not defaults - users create their own buckets
+ */
+export interface BucketSuggestion {
+  name: string;
+  slug: string;
+  description: string;
+  icon: string;
+  color: string;
+  suggestedPercentage?: number; // Optional hint for percentage
 }
 
 export interface BudgetSetupState {

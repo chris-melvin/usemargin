@@ -91,7 +91,7 @@ export function BucketsStep({
       const newBucket: WizardBucket = {
         ...bucket,
         id: crypto.randomUUID(),
-        allocatedAmount: Math.floor((availableAmount * bucket.percentage) / 100),
+        allocatedAmount: Math.floor((availableAmount * (bucket.percentage ?? 0)) / 100),
       };
       onBucketsChange([...buckets, newBucket]);
       setShowAddForm(false);
@@ -129,18 +129,21 @@ export function BucketsStep({
       {/* Allocation chart */}
       <div className="space-y-2">
         <div className="flex h-8 overflow-hidden rounded-lg">
-          {buckets.map((bucket) => (
-            <div
-              key={bucket.id}
-              style={{
-                width: `${bucket.percentage}%`,
-                backgroundColor: bucket.color,
-              }}
-              className="flex items-center justify-center text-xs font-medium text-white transition-all"
-            >
-              {bucket.percentage >= 10 && `${bucket.percentage}%`}
-            </div>
-          ))}
+          {buckets.map((bucket) => {
+            const pct = bucket.percentage ?? 0;
+            return (
+              <div
+                key={bucket.id}
+                style={{
+                  width: `${pct}%`,
+                  backgroundColor: bucket.color,
+                }}
+                className="flex items-center justify-center text-xs font-medium text-white transition-all"
+              >
+                {pct >= 10 && `${pct}%`}
+              </div>
+            );
+          })}
           {validation.total < 100 && (
             <div
               style={{ width: `${100 - validation.total}%` }}
@@ -215,7 +218,8 @@ function BucketSlider({
   // Get icon component
   const IconComponent = ICON_MAP[bucket.icon] || Wallet;
 
-  const allocatedAmount = Math.floor((availableAmount * bucket.percentage) / 100);
+  const pct = bucket.percentage ?? 0;
+  const allocatedAmount = Math.floor((availableAmount * pct) / 100);
 
   return (
     <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
@@ -246,7 +250,7 @@ function BucketSlider({
           <div className="flex items-center gap-2">
             <input
               type="number"
-              value={bucket.percentage}
+              value={pct}
               onChange={(e) => {
                 const val = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
                 onPercentageChange(val);
@@ -271,7 +275,7 @@ function BucketSlider({
         type="range"
         min="0"
         max="100"
-        value={bucket.percentage}
+        value={pct}
         onChange={(e) => onPercentageChange(parseInt(e.target.value))}
         className="w-full accent-amber-500"
         style={{
@@ -307,6 +311,7 @@ function AddBucketForm({
       name: name.trim(),
       slug,
       percentage,
+      targetAmount: null,
       color,
       icon,
       isDefault: false,

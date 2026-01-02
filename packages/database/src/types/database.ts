@@ -564,10 +564,12 @@ export interface BudgetBucket {
   user_id: string;
   name: string;
   slug: string;
-  percentage: number;
+  percentage: number | null; // Percentage of remaining budget (0-100), nullable for fixed-amount buckets
+  target_amount: number | null; // Fixed monthly amount, alternative to percentage
   allocated_amount: number | null;
   color: string | null;
   icon: string | null;
+  description: string | null; // User-facing description for tooltips
   is_default: boolean;
   is_system: boolean;
   sort_order: number;
@@ -590,10 +592,12 @@ export type BudgetBucketInsert = {
   name: string;
   slug: string;
   id?: string;
-  percentage?: number;
+  percentage?: number | null;
+  target_amount?: number | null;
   allocated_amount?: number | null;
   color?: string | null;
   icon?: string | null;
+  description?: string | null;
   is_default?: boolean;
   is_system?: boolean;
   sort_order?: number;

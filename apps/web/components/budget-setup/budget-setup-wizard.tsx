@@ -240,8 +240,8 @@ export function BudgetSetupWizard() {
       case 2:
         return true; // Bills are optional
       case 3:
-        const totalPercent = buckets.reduce((sum, b) => sum + b.percentage, 0);
-        return Math.abs(totalPercent - 100) < 0.01;
+        const totalPercent = buckets.reduce((sum, b) => sum + (b.percentage ?? 0), 0);
+        return buckets.length > 0 && Math.abs(totalPercent - 100) < 0.01;
       case 4:
         return true;
       default:

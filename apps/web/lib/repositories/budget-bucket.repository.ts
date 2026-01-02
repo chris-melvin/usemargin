@@ -102,6 +102,7 @@ class BudgetBucketRepository extends BaseRepository<
 
   /**
    * Update bucket percentages (batch update)
+   * @deprecated Use updateAllocations for better support of both percentage and target_amount
    */
   async updatePercentages(
     supabase: SupabaseClient,
@@ -124,7 +125,91 @@ class BudgetBucketRepository extends BaseRepository<
   }
 
   /**
+   * Update bucket allocations (batch update)
+   * Supports both percentage-based and fixed target_amount allocations
+   */
+  async updateAllocations(
+    supabase: SupabaseClient,
+    userId: string,
+    updates: Array<{
+      id: string;
+      percentage?: number | null;
+      target_amount?: number | null;
+      allocated_amount?: number | null;
+      description?: string | null;
+    }>
+  ): Promise<void> {
+    for (const update of updates) {
+      const updateData: Record<string, unknown> = {};
+
+      if (update.percentage !== undefined) {
+        updateData.percentage = update.percentage;
+      }
+      if (update.target_amount !== undefined) {
+        updateData.target_amount = update.target_amount;
+      }
+      if (update.allocated_amount !== undefined) {
+        updateData.allocated_amount = update.allocated_amount;
+      }
+      if (update.description !== undefined) {
+        updateData.description = update.description;
+      }
+
+      const { error } = await supabase
+        .from(this.tableName)
+        .update(updateData)
+        .eq("id", update.id)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+    }
+  }
+
+  /**
+   * Calculate allocated amounts for all buckets based on remaining budget
+   * Handles both percentage-based and fixed target_amount buckets
+   */
+  calculateAllocations(
+    buckets: BudgetBucket[],
+    remainingBudget: number
+  ): Array<{ id: string; allocated_amount: number }> {
+    // First, calculate fixed amounts (target_amount buckets)
+    let fixedTotal = 0;
+    const results: Array<{ id: string; allocated_amount: number }> = [];
+
+    // Process fixed-amount buckets first
+    for (const bucket of buckets) {
+      if (bucket.target_amount != null && bucket.target_amount > 0) {
+        const amount = Math.min(bucket.target_amount, remainingBudget - fixedTotal);
+        fixedTotal += amount;
+        results.push({ id: bucket.id, allocated_amount: amount });
+      }
+    }
+
+    // Calculate remaining budget after fixed allocations
+    const remainingAfterFixed = Math.max(0, remainingBudget - fixedTotal);
+
+    // Process percentage-based buckets
+    const percentageBuckets = buckets.filter(
+      (b) => b.percentage != null && b.percentage > 0 && (b.target_amount == null || b.target_amount === 0)
+    );
+    const totalPercentage = percentageBuckets.reduce((sum, b) => sum + (b.percentage ?? 0), 0);
+
+    for (const bucket of percentageBuckets) {
+      const percentage = bucket.percentage ?? 0;
+      // Normalize percentage if total != 100
+      const normalizedPercentage = totalPercentage > 0 ? percentage / totalPercentage : 0;
+      const amount = Math.round(remainingAfterFixed * normalizedPercentage);
+      results.push({ id: bucket.id, allocated_amount: amount });
+    }
+
+    return results;
+  }
+
+  /**
    * Create default buckets for a new user
+   * @deprecated New users should create custom buckets via the setup wizard
+   * This method is kept for backward compatibility with older setups
    */
   async createDefaultBuckets(
     supabase: SupabaseClient,
@@ -136,6 +221,7 @@ class BudgetBucketRepository extends BaseRepository<
         name: "Savings",
         slug: "savings",
         percentage: 20,
+        target_amount: null,
         color: "#22c55e",
         icon: "PiggyBank",
         is_default: false,
@@ -147,6 +233,7 @@ class BudgetBucketRepository extends BaseRepository<
         name: "Daily Spending",
         slug: "daily-spending",
         percentage: 80,
+        target_amount: null,
         color: "#3b82f6",
         icon: "Wallet",
         is_default: true, // Default bucket for expenses
@@ -156,6 +243,95 @@ class BudgetBucketRepository extends BaseRepository<
     ];
 
     return this.createMany(supabase, defaultBuckets);
+  }
+
+  /**
+   * Create a single bucket from a suggestion template
+   */
+  async createFromSuggestion(
+    supabase: SupabaseClient,
+    userId: string,
+    suggestion: {
+      name: string;
+      slug: string;
+      description?: string;
+      icon: string;
+      color: string;
+      percentage?: number | null;
+      targetAmount?: number | null;
+      isDefault?: boolean;
+    }
+  ): Promise<BudgetBucket> {
+    // Get current bucket count for sort order
+    const existingBuckets = await this.findAll(supabase, userId);
+    const sortOrder = existingBuckets.length;
+
+    const bucketInsert: BudgetBucketInsert = {
+      user_id: userId,
+      name: suggestion.name,
+      slug: suggestion.slug,
+      percentage: suggestion.percentage ?? null,
+      target_amount: suggestion.targetAmount ?? null,
+      description: suggestion.description ?? null,
+      color: suggestion.color,
+      icon: suggestion.icon,
+      is_default: suggestion.isDefault ?? false,
+      is_system: false, // Custom buckets are not system buckets
+      sort_order: sortOrder,
+    };
+
+    const created = await this.create(supabase, bucketInsert);
+
+    // If this bucket is set as default, update others
+    if (suggestion.isDefault) {
+      await this.setDefault(supabase, userId, created.id);
+    }
+
+    return created;
+  }
+
+  /**
+   * Bulk create buckets (for setup wizard)
+   */
+  async createBulk(
+    supabase: SupabaseClient,
+    userId: string,
+    buckets: Array<{
+      name: string;
+      slug: string;
+      percentage?: number | null;
+      targetAmount?: number | null;
+      allocatedAmount?: number | null;
+      description?: string | null;
+      color: string;
+      icon: string;
+      isDefault?: boolean;
+    }>
+  ): Promise<BudgetBucket[]> {
+    if (buckets.length === 0) return [];
+
+    // Ensure exactly one bucket is marked as default
+    const hasDefault = buckets.some((b) => b.isDefault);
+    const bucketsToCreate = hasDefault
+      ? buckets
+      : buckets.map((b, i) => ({ ...b, isDefault: i === 0 })); // Default to first bucket
+
+    const bucketInserts: BudgetBucketInsert[] = bucketsToCreate.map((bucket, index) => ({
+      user_id: userId,
+      name: bucket.name,
+      slug: bucket.slug,
+      percentage: bucket.percentage ?? null,
+      target_amount: bucket.targetAmount ?? null,
+      allocated_amount: bucket.allocatedAmount ?? null,
+      description: bucket.description ?? null,
+      color: bucket.color,
+      icon: bucket.icon,
+      is_default: bucket.isDefault ?? false,
+      is_system: false,
+      sort_order: index,
+    }));
+
+    return this.createMany(supabase, bucketInserts);
   }
 
   /**

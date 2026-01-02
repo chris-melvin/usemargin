@@ -10,19 +10,21 @@ import { GeneralSettings } from "@/components/settings/general-settings";
 import { BudgetSettings } from "@/components/settings/budget-settings";
 import { AccountSettings } from "@/components/settings/account-settings";
 import { DataSettings } from "@/components/settings/data-settings";
-import type { UserSettings } from "@repo/database";
+import type { UserSettings, BudgetBucket } from "@repo/database";
 import type { SubscriptionInfo } from "@/actions/subscriptions/get-subscription";
 
 interface SettingsClientProps {
   userSettings: UserSettings;
   userEmail: string;
   subscription: SubscriptionInfo | null;
+  buckets?: BudgetBucket[];
 }
 
 export function SettingsClient({
   userSettings,
   userEmail,
   subscription,
+  buckets = [],
 }: SettingsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -64,7 +66,7 @@ export function SettingsClient({
           </TabsContent>
 
           <TabsContent value="budget" className="mt-0">
-            <BudgetSettings userSettings={userSettings} />
+            <BudgetSettings userSettings={userSettings} buckets={buckets} />
           </TabsContent>
 
           <TabsContent value="account" className="mt-0">

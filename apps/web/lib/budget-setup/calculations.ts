@@ -55,16 +55,37 @@ export function calculateAvailableForBudget(
 }
 
 /**
- * Calculate bucket allocated amounts based on percentages
+ * Calculate bucket allocated amounts based on percentages or target amounts
  */
 export function calculateBucketAllocations(
   buckets: WizardBucket[],
   availableAmount: number
 ): WizardBucket[] {
-  return buckets.map((bucket) => ({
-    ...bucket,
-    allocatedAmount: Math.floor((availableAmount * bucket.percentage) / 100),
-  }));
+  // First pass: calculate fixed amounts (target_amount buckets)
+  let fixedTotal = 0;
+  const fixedBuckets = buckets.filter((b) => b.targetAmount != null && b.targetAmount > 0);
+  for (const bucket of fixedBuckets) {
+    fixedTotal += bucket.targetAmount!;
+  }
+
+  // Remaining budget for percentage-based buckets
+  const remainingAfterFixed = Math.max(0, availableAmount - fixedTotal);
+
+  return buckets.map((bucket) => {
+    if (bucket.targetAmount != null && bucket.targetAmount > 0) {
+      // Fixed amount bucket
+      return {
+        ...bucket,
+        allocatedAmount: Math.min(bucket.targetAmount, availableAmount),
+      };
+    } else {
+      // Percentage-based bucket
+      return {
+        ...bucket,
+        allocatedAmount: Math.floor((remainingAfterFixed * (bucket.percentage ?? 0)) / 100),
+      };
+    }
+  });
 }
 
 /**
@@ -83,8 +104,14 @@ export function calculateDailyLimit(
     return Math.floor((availableAmount * 0.5) / daysInMonth);
   }
 
-  const monthlyDailySpending =
-    (availableAmount * dailySpendingBucket.percentage) / 100;
+  // Support both target amount and percentage
+  let monthlyDailySpending: number;
+  if (dailySpendingBucket.targetAmount != null && dailySpendingBucket.targetAmount > 0) {
+    monthlyDailySpending = dailySpendingBucket.targetAmount;
+  } else {
+    monthlyDailySpending = (availableAmount * (dailySpendingBucket.percentage ?? 0)) / 100;
+  }
+
   return Math.floor(monthlyDailySpending / daysInMonth);
 }
 
@@ -121,17 +148,27 @@ export function calculateBudgetSummary(
     totalFixedExpenses
   );
 
-  // Calculate bucket amounts
+  // Calculate bucket amounts (support both percentage and target amount)
   const savingsBucket = buckets.find((b) => b.slug === "savings");
   const dailySpendingBucket = buckets.find((b) => b.isDefault);
 
-  const savingsAmount = savingsBucket
-    ? Math.floor((availableForBudgeting * savingsBucket.percentage) / 100)
-    : 0;
+  let savingsAmount = 0;
+  if (savingsBucket) {
+    if (savingsBucket.targetAmount != null && savingsBucket.targetAmount > 0) {
+      savingsAmount = savingsBucket.targetAmount;
+    } else {
+      savingsAmount = Math.floor((availableForBudgeting * (savingsBucket.percentage ?? 0)) / 100);
+    }
+  }
 
-  const dailySpendingAmount = dailySpendingBucket
-    ? Math.floor((availableForBudgeting * dailySpendingBucket.percentage) / 100)
-    : availableForBudgeting;
+  let dailySpendingAmount = availableForBudgeting;
+  if (dailySpendingBucket) {
+    if (dailySpendingBucket.targetAmount != null && dailySpendingBucket.targetAmount > 0) {
+      dailySpendingAmount = dailySpendingBucket.targetAmount;
+    } else {
+      dailySpendingAmount = Math.floor((availableForBudgeting * (dailySpendingBucket.percentage ?? 0)) / 100);
+    }
+  }
 
   const calculatedDailyLimit = Math.floor(dailySpendingAmount / daysInMonth);
 
@@ -148,13 +185,34 @@ export function calculateBudgetSummary(
 
 /**
  * Validate bucket percentages sum to 100
+ * Note: Buckets with targetAmount are not counted in percentage validation
  */
 export function validateBucketPercentages(buckets: WizardBucket[]): {
   isValid: boolean;
   total: number;
   message: string;
 } {
-  const total = buckets.reduce((sum, b) => sum + b.percentage, 0);
+  // Only count percentage-based buckets
+  const percentageBuckets = buckets.filter(
+    (b) => b.targetAmount == null || b.targetAmount === 0
+  );
+  const hasFixedBuckets = buckets.some(
+    (b) => b.targetAmount != null && b.targetAmount > 0
+  );
+
+  const total = percentageBuckets.reduce((sum, b) => sum + (b.percentage ?? 0), 0);
+
+  // If there are fixed-amount buckets, percentage doesn't need to be exactly 100
+  if (hasFixedBuckets) {
+    // Just ensure we have some allocation
+    const isValid = buckets.length > 0;
+    return {
+      isValid,
+      total,
+      message: isValid ? "Allocation complete" : "Add at least one bucket",
+    };
+  }
+
   const isValid = Math.abs(total - 100) < 0.01; // Allow for floating point errors
 
   return {
