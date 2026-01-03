@@ -157,6 +157,7 @@ export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickForm
       frequency: "monthly" as const,
       is_recurring: true,
       is_active: true,
+      payment_type: "fixed",
       // Debt-specific fields
       total_amount: parsedTotal,
       remaining_balance: parsedTotal, // Same as total on creation

@@ -4,6 +4,7 @@ export type {
   IncomeStatus,
   BillFrequency,
   BillStatus,
+  DebtPaymentType,
   RecurringFrequency,
   AssetType,
   LiabilityType,
@@ -18,6 +19,7 @@ export type {
   FlexAllocation,
   Income,
   Debt,
+  DebtPayment,
   UserSettings,
 } from "./types/database.js";
 
@@ -41,6 +43,7 @@ export type {
   FlexAllocationInsert,
   IncomeInsert,
   DebtInsert,
+  DebtPaymentInsert,
   UserSettingsInsert,
   CategoryInsert,
   RecurringExpenseInsert,
@@ -60,6 +63,7 @@ export type {
   FlexAllocationUpdate,
   IncomeUpdate,
   DebtUpdate,
+  DebtPaymentUpdate,
   UserSettingsUpdate,
   CategoryUpdate,
   RecurringExpenseUpdate,

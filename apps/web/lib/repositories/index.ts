@@ -3,6 +3,7 @@ export { expenseRepository } from "./expense.repository";
 export { settingsRepository } from "./settings.repository";
 export { billRepository } from "./bill.repository";
 export { incomeRepository } from "./income.repository";
+export { debtPaymentRepository } from "./debt-payment.repository";
 
 // Flex bucket repositories
 export {

@@ -16,6 +16,7 @@ import {
   resetBillStatus as resetBillStatusAction,
   makeDebtPayment as makeDebtPaymentAction,
 } from "@/actions/bills";
+import { recordDebtPayment as recordDebtPaymentAction } from "@/actions/bills/record-payment";
 import type { Income, Debt } from "@repo/database";
 import type { CreateIncomeInput, UpdateIncomeInput } from "@/lib/validations/income.schema";
 import type { CreateBillInput, UpdateBillInput } from "@/lib/validations/bill.schema";
@@ -273,6 +274,7 @@ export function useServerBudget({ incomes: initialIncomes, bills: initialBills }
         interest_rate: data.interest_rate ?? null,
         minimum_payment: data.minimum_payment ?? null,
         frequency: data.frequency ?? "monthly",
+        payment_type: data.payment_type ?? "fixed",
         day_of_week: data.day_of_week ?? null,
         start_date: data.start_date ?? null,
         end_date: data.end_date ?? null,
@@ -461,6 +463,61 @@ export function useServerBudget({ incomes: initialIncomes, bills: initialBills }
     [setOptimisticBills, optimisticBills]
   );
 
+  /**
+   * Record a debt payment with history tracking (for variable debts)
+   * This creates a payment record and updates the debt balance
+   */
+  const recordDebtPayment = useCallback(
+    async (
+      id: string,
+      paymentAmount: number,
+      paidDate?: string,
+      notes?: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      if (id.startsWith("temp-")) {
+        return { success: false, error: "Cannot update pending debt" };
+      }
+
+      // Find current debt to calculate new balance
+      const currentDebt = optimisticBills.find((b) => b.id === id);
+      if (!currentDebt) {
+        return { success: false, error: "Debt not found" };
+      }
+
+      const currentBalance = currentDebt.remaining_balance ?? currentDebt.total_amount ?? 0;
+      const newBalance = Math.max(0, currentBalance - paymentAmount);
+      const paymentDateStr = paidDate ?? new Date().toISOString().split("T")[0];
+
+      let result: { success: boolean; error?: string } = { success: true };
+
+      startTransition(async () => {
+        setOptimisticBills({
+          type: "update",
+          id,
+          data: {
+            remaining_balance: newBalance,
+            status: "paid",
+            paid_date: paymentDateStr,
+          },
+        });
+
+        const serverResult = await recordDebtPaymentAction({
+          debt_id: id,
+          amount: paymentAmount,
+          payment_date: paymentDateStr,
+          notes,
+        });
+        if (!serverResult.success) {
+          result = { success: false, error: serverResult.error };
+          console.error("Failed to record debt payment:", serverResult.error);
+        }
+      });
+
+      return result;
+    },
+    [setOptimisticBills, optimisticBills]
+  );
+
   return {
     // State
     incomes: optimisticIncomes,
@@ -481,5 +538,6 @@ export function useServerBudget({ incomes: initialIncomes, bills: initialBills }
     markBillPaid,
     resetBillStatus,
     makeDebtPayment,
+    recordDebtPayment,
   };
 }

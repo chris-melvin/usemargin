@@ -483,3 +483,204 @@ h1, h2, h3, h4, h5, h6 {
 .bg-status-warning { background-color: var(--color-warning-light); }
 .bg-status-danger { background-color: var(--color-danger-light); }
 .bg-status-info { background-color: var(--color-info-light); }
+
+/* =================================================================
+   Notebook Budget UI Styles
+   ================================================================= */
+
+/* Notebook ruled lines - lighter version for budget page */
+.notebook-ruled {
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 31px,
+      rgba(180, 170, 160, 0.15) 31px,
+      rgba(180, 170, 160, 0.15) 32px
+    );
+  background-size: 100% 32px;
+  background-position: 0 0;
+}
+
+/* Tighter ruled lines for compact sections */
+.notebook-ruled-tight {
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 23px,
+      rgba(180, 170, 160, 0.12) 23px,
+      rgba(180, 170, 160, 0.12) 24px
+    );
+  background-size: 100% 24px;
+}
+
+/* Handwriting font utility */
+.font-handwriting {
+  font-family: var(--font-handwriting);
+  letter-spacing: 0.02em;
+}
+
+/* Notebook row base styles */
+.notebook-row {
+  min-height: 32px;
+  line-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+/* Notebook row hover state */
+.notebook-row:hover {
+  background-color: rgba(251, 191, 36, 0.06);
+}
+
+/* Completed row strikethrough */
+.notebook-row-completed {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+/* Margin annotation styling */
+.margin-annotation {
+  position: absolute;
+  font-family: var(--font-handwriting);
+  font-size: 0.75rem;
+  transform: rotate(-6deg);
+  white-space: nowrap;
+}
+
+/* Circled total (for margin totals) */
+.circled-total {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-family: var(--font-handwriting);
+}
+
+/* Underline annotation style (wavy) */
+.underline-annotation {
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: var(--color-coral-400);
+  text-underline-offset: 4px;
+}
+
+/* Section divider squiggle */
+.notebook-squiggle::after {
+  content: '~~~~~';
+  font-family: var(--font-handwriting);
+  color: var(--color-neutral-300);
+  letter-spacing: 0.5em;
+}
+
+/* Notebook page shadow */
+.notebook-page-shadow {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+/* =================================================================
+   Notebook Animations
+   ================================================================= */
+
+/* Staggered row entrance animation */
+@keyframes notebook-row-enter {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.notebook-row-animate {
+  animation: notebook-row-enter 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+/* Staggered animation delay utility classes */
+.notebook-delay-1 { animation-delay: 0.02s; }
+.notebook-delay-2 { animation-delay: 0.04s; }
+.notebook-delay-3 { animation-delay: 0.06s; }
+.notebook-delay-4 { animation-delay: 0.08s; }
+.notebook-delay-5 { animation-delay: 0.10s; }
+.notebook-delay-6 { animation-delay: 0.12s; }
+.notebook-delay-7 { animation-delay: 0.14s; }
+.notebook-delay-8 { animation-delay: 0.16s; }
+.notebook-delay-9 { animation-delay: 0.18s; }
+.notebook-delay-10 { animation-delay: 0.20s; }
+
+/* Checkbox completion animation */
+@keyframes checkbox-check {
+  0% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.checkbox-animate {
+  animation: checkbox-check 0.25s ease-out;
+}
+
+/* Section fade-in animation */
+@keyframes section-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notebook-section-animate {
+  animation: section-fade-in 0.4s ease-out forwards;
+}
+
+/* Strikethrough animation for completed items */
+@keyframes strikethrough {
+  0% {
+    text-decoration-color: transparent;
+  }
+  100% {
+    text-decoration-color: currentColor;
+  }
+}
+
+.strikethrough-animate {
+  text-decoration: line-through;
+  animation: strikethrough 0.3s ease-out forwards;
+}
+
+/* Amount change pulse */
+@keyframes amount-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.amount-changed {
+  animation: amount-pulse 0.3s ease-out;
+}
+
+/* Subtle hover lift for rows */
+.notebook-row-hover:hover {
+  transform: translateX(2px);
+  transition: transform 0.15s ease-out;
+}

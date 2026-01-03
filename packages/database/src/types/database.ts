@@ -28,6 +28,8 @@ export type BillFrequency =
 
 export type BillStatus = "pending" | "paid" | "overdue" | "partially_paid";
 
+export type DebtPaymentType = "fixed" | "variable";
+
 export type RecurringFrequency =
   | "daily"
   | "weekly"
@@ -142,7 +144,7 @@ export interface Debt {
   id: string;
   user_id: string;
   label: string;
-  amount: number; // Payment amount per period
+  amount: number; // Payment amount per period (for variable debts, this is the default/suggested amount)
   due_date: number | null; // Day of month 1-31, nullable for non-monthly
   icon: string | null;
   total_amount: number | null; // Original debt amount
@@ -154,12 +156,25 @@ export interface Debt {
   start_date: string | null;
   end_date: string | null;
   is_recurring: boolean;
+  payment_type: DebtPaymentType; // 'fixed' = same amount every period, 'variable' = user adjusts each period
   status: BillStatus;
   paid_date: string | null;
   receive_date: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface DebtPayment {
+  id: string;
+  user_id: string;
+  debt_id: string;
+  amount: number;
+  payment_date: string; // YYYY-MM-DD
+  period_start: string; // YYYY-MM-DD
+  period_end: string; // YYYY-MM-DD
+  notes: string | null;
+  created_at: string;
 }
 
 export interface UserSettings {
@@ -372,10 +387,17 @@ export type DebtInsert = Omit<Debt, "id" | "created_at" | "updated_at"> & {
   id?: string;
   frequency?: BillFrequency;
   is_recurring?: boolean;
+  payment_type?: DebtPaymentType;
   status?: BillStatus;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
+};
+
+export type DebtPaymentInsert = Omit<DebtPayment, "id" | "created_at"> & {
+  id?: string;
+  notes?: string | null;
+  created_at?: string;
 };
 
 export type UserSettingsInsert = {
@@ -495,6 +517,7 @@ export type FlexBucketUpdate = Partial<Omit<FlexBucket, "id" | "user_id">>;
 export type FlexAllocationUpdate = Partial<Omit<FlexAllocation, "id" | "user_id">>;
 export type IncomeUpdate = Partial<Omit<Income, "id" | "user_id">>;
 export type DebtUpdate = Partial<Omit<Debt, "id" | "user_id">>;
+export type DebtPaymentUpdate = Partial<Omit<DebtPayment, "id" | "user_id" | "debt_id">>;
 export type UserSettingsUpdate = Partial<Omit<UserSettings, "id" | "user_id">>;
 export type CategoryUpdate = Partial<Omit<Category, "id" | "user_id">>;
 export type RecurringExpenseUpdate = Partial<Omit<RecurringExpense, "id" | "user_id">>;

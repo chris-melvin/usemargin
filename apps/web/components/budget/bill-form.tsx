@@ -51,6 +51,7 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave
   const [remainingBalance, setRemainingBalance] = useState("");
   const [interestRate, setInterestRate] = useState("");
   const [minimumPayment, setMinimumPayment] = useState("");
+  const [paymentType, setPaymentType] = useState<"fixed" | "variable">("fixed");
 
   const isEditing = !!bill;
 
@@ -66,6 +67,7 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave
       setRemainingBalance(bill.remaining_balance?.toString() ?? "");
       setInterestRate(bill.interest_rate ? (bill.interest_rate * 100).toString() : "");
       setMinimumPayment(bill.minimum_payment?.toString() ?? "");
+      setPaymentType(bill.payment_type ?? "fixed");
     } else if (open && !bill) {
       // Reset for new entry
       setLabel("");
@@ -77,6 +79,7 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave
       setRemainingBalance("");
       setInterestRate("");
       setMinimumPayment("");
+      setPaymentType("fixed");
     }
   }, [open, bill]);
 
@@ -96,6 +99,7 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave
       remaining_balance: remainingBalance ? parseFloat(remainingBalance) : null,
       interest_rate: interestRate ? parseFloat(interestRate) / 100 : null,
       minimum_payment: minimumPayment ? parseFloat(minimumPayment) : null,
+      payment_type: paymentType,
     };
 
     startTransition(async () => {
@@ -235,6 +239,25 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave
                     %
                   </span>
                 </div>
+              </div>
+
+              {/* Payment Type */}
+              <div className="space-y-2">
+                <Label htmlFor="paymentType">Payment Type</Label>
+                <Select value={paymentType} onValueChange={(v) => setPaymentType(v as "fixed" | "variable")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Fixed (same amount each period)</SelectItem>
+                    <SelectItem value="variable">Variable (adjust each month)</SelectItem>
+                  </SelectContent>
+                </Select>
+                {paymentType === "variable" && (
+                  <p className="text-xs text-stone-500">
+                    You can adjust the payment amount each month directly from the budget view.
+                  </p>
+                )}
               </div>
             </>
           )}

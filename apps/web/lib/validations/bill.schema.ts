@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const frequencyEnum = z.enum(["weekly", "biweekly", "monthly", "yearly", "once"]);
 const statusEnum = z.enum(["pending", "paid", "overdue", "partially_paid"]);
+const paymentTypeEnum = z.enum(["fixed", "variable"]);
 
 /**
  * Schema for creating a bill/debt
@@ -41,6 +42,7 @@ export const createBillSchema = z.object({
   interest_rate: optionalRate, // APR as decimal
   minimum_payment: optionalNumber,
   frequency: frequencyEnum.default("monthly"),
+  payment_type: paymentTypeEnum.optional().default("fixed"),
   day_of_week: z.preprocess(
     (val) => (val === "" || val === undefined ? null : val),
     z.coerce.number().int().min(0).max(6).optional().nullable()
@@ -70,9 +72,26 @@ export const markBillPaidSchema = z.object({
     .optional(),
 });
 
+/**
+ * Schema for recording a debt payment (for payment history)
+ */
+export const recordDebtPaymentSchema = z.object({
+  debt_id: z.string().uuid("Invalid debt ID"),
+  amount: z.coerce
+    .number()
+    .positive("Amount must be positive")
+    .max(999999999.99, "Amount too large"),
+  payment_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  notes: z.string().max(500).optional().nullable(),
+});
+
 // Export inferred types
 export type CreateBillInput = z.infer<typeof createBillSchema>;
 export type UpdateBillInput = z.infer<typeof updateBillSchema>;
 export type MarkBillPaidInput = z.infer<typeof markBillPaidSchema>;
+export type RecordDebtPaymentInput = z.infer<typeof recordDebtPaymentSchema>;
 export type BillFrequency = z.infer<typeof frequencyEnum>;
 export type BillStatus = z.infer<typeof statusEnum>;
+export type DebtPaymentType = z.infer<typeof paymentTypeEnum>;
