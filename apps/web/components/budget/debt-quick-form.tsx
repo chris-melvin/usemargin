@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { IconPicker } from "@/components/ui/icon-picker";
 import {
   Select,
   SelectContent,
@@ -344,22 +345,12 @@ export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickForm
               {/* Icon Picker */}
               <div className="space-y-2">
                 <Label>Icon</Label>
-                <div className="flex flex-wrap gap-2">
-                  {DEBT_ICONS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setIcon(emoji)}
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all ${
-                        icon === emoji
-                          ? "bg-rose-100 ring-2 ring-rose-500"
-                          : "bg-stone-100 hover:bg-stone-200"
-                      }`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
+                <IconPicker
+                  icons={DEBT_ICONS}
+                  value={icon}
+                  onChange={(emoji) => setIcon(emoji)}
+                  color="rose"
+                />
               </div>
             </div>
           )}

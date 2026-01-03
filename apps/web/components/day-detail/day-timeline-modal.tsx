@@ -5,6 +5,9 @@ import { X, Plus, Calendar, Clock, CreditCard, Banknote, Receipt, Check } from "
 import { cn, formatCurrency } from "@/lib/utils";
 import { CURRENCY } from "@/lib/constants";
 import type { LocalExpense, LocalBill, LocalIncome, TimelineEvent } from "@/lib/types";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface DayTimelineModalProps {
   isOpen: boolean;
@@ -284,18 +287,18 @@ export function DayTimelineModal({
                         <p className="text-[10px] text-stone-400">{event.time}</p>
                       )}
                       {event.status && event.type === "bill_due" && (
-                        <span
-                          className={cn(
-                            "inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded",
+                        <Badge
+                          variant={
                             event.status === "paid"
-                              ? "bg-emerald-100 text-emerald-700"
+                              ? "paid"
                               : event.status === "overdue"
-                              ? "bg-rose-100 text-rose-700"
-                              : "bg-amber-100 text-amber-700"
-                          )}
+                              ? "overdue"
+                              : "pending"
+                          }
+                          className="text-[9px] font-bold uppercase tracking-wider"
                         >
                           {event.status}
-                        </span>
+                        </Badge>
                       )}
                     </div>
 
@@ -332,47 +335,49 @@ export function DayTimelineModal({
           {isAddingExpense ? (
             <div className="space-y-3">
               <div className="flex gap-2">
-                <input
+                <Input
                   type="number"
                   value={newAmount}
                   onChange={(e) => setNewAmount(e.target.value)}
                   placeholder="Amount"
-                  className="flex-1 px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300/50"
+                  className="flex-1"
                   autoFocus
                 />
-                <input
+                <Input
                   type="text"
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
                   placeholder="Label"
-                  className="flex-1 px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300/50"
+                  className="flex-1"
                   onKeyDown={(e) => e.key === "Enter" && handleAddExpense()}
                 />
               </div>
               <div className="flex gap-2">
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => setIsAddingExpense(false)}
-                  className="flex-1 px-3 py-2 text-sm text-stone-600 bg-white border border-stone-200 rounded-lg hover:bg-stone-50"
+                  className="flex-1"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={handleAddExpense}
                   disabled={!newAmount || !newLabel.trim()}
-                  className="flex-1 px-3 py-2 text-sm text-white bg-amber-500 rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1"
                 >
                   Add Expense
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
-            <button
+            <Button
+              variant="outline"
               onClick={() => setIsAddingExpense(true)}
-              className="w-full px-4 py-3 border-2 border-dashed border-stone-200 rounded-xl flex items-center justify-center gap-2 text-stone-400 hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50/50 transition-all"
+              className="w-full py-6 border-2 border-dashed border-stone-200 text-stone-400 hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50/50"
             >
-              <Plus className="h-4 w-4" />
-              <span className="text-sm font-medium">Add Expense</span>
-            </button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Expense
+            </Button>
           )}
         </div>
       </div>

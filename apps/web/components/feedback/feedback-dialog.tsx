@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { submitFeedback } from "@/actions/feedback";
 import { cn } from "@/lib/utils";
@@ -200,14 +201,14 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="feedback-description">Description</Label>
-            <textarea
+            <Textarea
               id="feedback-description"
               placeholder="Provide more details..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={2000}
               rows={4}
-              className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+              className="min-h-[100px] resize-none"
             />
             <p className="text-xs text-muted-foreground text-right">
               {description.length}/2000

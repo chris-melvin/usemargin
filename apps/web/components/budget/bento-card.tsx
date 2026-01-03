@@ -38,7 +38,9 @@ export function BentoCard({
     <div
       className={cn(
         "group relative h-full bg-white rounded-2xl border border-neutral-200 overflow-hidden",
-        "hover:border-teal-200 hover:shadow-lg transition-all duration-300",
+        // Enhanced hover with subtle scale
+        "hover:border-teal-200 hover:shadow-lg hover:scale-[1.005]",
+        "transition-all duration-200 ease-out",
         className
       )}
     >
@@ -52,11 +54,12 @@ export function BentoCard({
             <div
               className={cn(
                 "inline-flex items-center justify-center w-9 h-9 rounded-xl",
+                "transition-transform duration-200 group-hover:scale-105",
                 iconBg,
                 iconColor
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4 transition-transform duration-200 group-hover:rotate-3" />
             </div>
             <div>
               <div className="flex items-center gap-2">

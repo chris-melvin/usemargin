@@ -109,10 +109,10 @@ export function CollapsibleSection({
           </CollapsibleTrigger>
         </CardHeader>
 
-        <CollapsibleContent>
+        <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-top-1 data-[state=open]:slide-in-from-top-1 duration-200">
           <CardContent className="p-0 border-t border-neutral-100">
             {isEmpty ? (
-              <div className="p-8 text-center">
+              <div className="p-8 text-center animate-in fade-in duration-300">
                 <p className="text-sm text-neutral-400">{emptyMessage}</p>
                 {onAdd && (
                   <Button

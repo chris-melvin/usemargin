@@ -14,7 +14,16 @@ import type { RoadmapItem, RoadmapStatus } from "@repo/database";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -315,31 +324,31 @@ export function RoadmapManager({ initialItems }: RoadmapManagerProps) {
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <textarea
+              <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe the feature..."
                 rows={3}
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                className="min-h-[80px] resize-none"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as RoadmapStatus)}
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                >
-                  {statusOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                <Select value={status} onValueChange={(v) => setStatus(v as RoadmapStatus)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -354,12 +363,10 @@ export function RoadmapManager({ initialItems }: RoadmapManagerProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
+              <Switch
                 id="is_public"
                 checked={isPublic}
-                onChange={(e) => setIsPublic(e.target.checked)}
-                className="rounded border-input"
+                onCheckedChange={setIsPublic}
               />
               <Label htmlFor="is_public" className="cursor-pointer">
                 Visible on public roadmap

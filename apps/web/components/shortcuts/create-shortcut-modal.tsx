@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { X, Zap, Sparkles, Check } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { CURRENCY } from "@/lib/constants";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { IconPicker } from "@/components/ui/icon-picker";
 
 interface CreateShortcutModalProps {
   isOpen: boolean;
@@ -102,19 +105,13 @@ export function CreateShortcutModal({
             <label className="block text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2">
               Label for @{trigger}
             </label>
-            <input
+            <Input
               ref={inputRef}
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={`e.g., "Book Purchase", "Movie Ticket"`}
-              className={cn(
-                "w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl",
-                "text-stone-800 placeholder:text-stone-300",
-                "focus:outline-none focus:ring-2 focus:ring-amber-300/50 focus:border-amber-300",
-                "transition-all duration-200"
-              )}
             />
             <p className="mt-1.5 text-[10px] text-stone-400">
               When you type <span className="font-mono font-medium">@{trigger} 500</span>, it will log "{label || "..."}" for {CURRENCY}500
@@ -126,51 +123,34 @@ export function CreateShortcutModal({
             <label className="block text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2">
               Icon (optional)
             </label>
-            <div className="flex flex-wrap gap-1.5">
-              {QUICK_ICONS.map((icon) => (
-                <button
-                  key={icon}
-                  onClick={() => setSelectedIcon(icon === selectedIcon ? undefined : icon)}
-                  className={cn(
-                    "w-9 h-9 flex items-center justify-center rounded-lg text-lg transition-all",
-                    selectedIcon === icon
-                      ? "bg-amber-100 ring-2 ring-amber-400 scale-110"
-                      : "bg-stone-50 hover:bg-stone-100"
-                  )}
-                >
-                  {icon}
-                </button>
-              ))}
-            </div>
+            <IconPicker
+              icons={QUICK_ICONS}
+              value={selectedIcon}
+              onChange={(icon) => setSelectedIcon(icon === selectedIcon ? undefined : icon)}
+              color="amber"
+              size="sm"
+            />
           </div>
         </div>
 
         {/* Actions */}
         <div className="px-5 pb-5 flex gap-2">
-          <button
+          <Button
+            variant="outline"
             onClick={handleSaveOnly}
             disabled={!label.trim() || isSaving}
-            className={cn(
-              "flex-1 px-4 py-3 rounded-xl border-2 border-stone-200 text-stone-600 font-medium text-sm",
-              "hover:bg-stone-50 hover:border-stone-300 transition-all",
-              "disabled:opacity-50 disabled:cursor-not-allowed"
-            )}
+            className="flex-1"
           >
             Save Shortcut
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSaveAndLog}
             disabled={!label.trim() || isSaving}
-            className={cn(
-              "flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-sm",
-              "hover:from-amber-600 hover:to-orange-600 transition-all shadow-md hover:shadow-lg",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-              "flex items-center justify-center gap-2"
-            )}
+            className="flex-1"
           >
-            <Check className="h-4 w-4" />
+            <Check className="h-4 w-4 mr-2" />
             Save & Log
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { IconPicker } from "@/components/ui/icon-picker";
 import {
   Select,
   SelectContent,
@@ -132,22 +133,12 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave
           {/* Icon */}
           <div className="space-y-2">
             <Label>Icon</Label>
-            <div className="flex flex-wrap gap-2">
-              {BILL_ICONS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => setIcon(emoji)}
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all ${
-                    icon === emoji
-                      ? "bg-amber-100 ring-2 ring-amber-500"
-                      : "bg-stone-100 hover:bg-stone-200"
-                  }`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
+            <IconPicker
+              icons={BILL_ICONS}
+              value={icon}
+              onChange={(emoji) => setIcon(emoji)}
+              color="amber"
+            />
           </div>
 
           {/* Label */}

@@ -72,3 +72,42 @@ export const SUCCESS_ANIMATION = {
   // How long to show the success state
   displayDuration: 1000,
 } as const;
+
+// Subtle spring presets for professional, refined animations
+// More subdued than standard presets - "felt, not seen"
+export const SUBTLE_PRESETS = {
+  // Barely perceptible feedback
+  whisper: { tension: 300, friction: 28 },
+
+  // Smooth professional transitions
+  professional: { tension: 220, friction: 26 },
+
+  // Quick acknowledgment without drama
+  acknowledge: { tension: 350, friction: 30 },
+
+  // Gentle entrance for data appearing
+  emerge: { tension: 200, friction: 24 },
+} as const;
+
+// Subtle animation values for micro-interactions
+export const SUBTLE_VALUES = {
+  // Scale amounts (smaller = more subtle)
+  pressScale: 0.98,
+  hoverScale: 1.01,
+  successPulse: 1.02,
+
+  // Movement distances in pixels
+  slideDistance: 8,
+  fadeInY: 4,
+
+  // Timing in ms
+  quickFeedback: 80,
+  normalTransition: 180,
+} as const;
+
+// Milestone thresholds for progress animations
+export const MILESTONES = {
+  warning: 0.8,  // 80% - amber pulse
+  critical: 1.0, // 100% - celebration or alert
+  halfway: 0.5,  // 50% - subtle acknowledgment
+} as const;

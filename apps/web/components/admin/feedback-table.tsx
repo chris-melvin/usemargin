@@ -17,6 +17,7 @@ import {
 import type { Feedback, FeedbackStatus, FeedbackType } from "@repo/database";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,6 @@ import {
   deleteFeedback,
   convertFeedbackToRoadmap,
 } from "@/actions/feedback";
-import { cn } from "@/lib/utils";
 
 interface FeedbackTableProps {
   initialFeedback: Feedback[];
@@ -43,13 +43,6 @@ const typeIcons = {
   other: HelpCircle,
 } as const;
 
-const statusColors: Record<FeedbackStatus, string> = {
-  new: "bg-blue-100 text-blue-700",
-  reviewed: "bg-yellow-100 text-yellow-700",
-  accepted: "bg-green-100 text-green-700",
-  rejected: "bg-red-100 text-red-700",
-  converted: "bg-purple-100 text-purple-700",
-};
 
 export function FeedbackTable({ initialFeedback, counts }: FeedbackTableProps) {
   const [feedback, setFeedback] = useState(initialFeedback);
@@ -164,14 +157,9 @@ export function FeedbackTable({ initialFeedback, counts }: FeedbackTableProps) {
                       <h3 className="font-medium text-sm truncate">
                         {item.title}
                       </h3>
-                      <span
-                        className={cn(
-                          "px-2 py-0.5 rounded-full text-xs font-medium",
-                          statusColors[item.status]
-                        )}
-                      >
+                      <Badge variant={item.status}>
                         {item.status}
-                      </span>
+                      </Badge>
                     </div>
 
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
