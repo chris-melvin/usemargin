@@ -2,23 +2,28 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Wallet } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { NotebookBudgetPage } from "@/components/budget/notebook";
 import { useServerBudget } from "@/hooks/use-server-budget";
-import type { Income, Debt, UserSettings } from "@repo/database";
+import type { Income, Debt, UserSettings, BudgetBucket } from "@repo/database";
 
 interface BudgetClientProps {
   initialIncomes: Income[];
   initialBills: Debt[];
   userSettings: UserSettings;
+  initialBuckets?: BudgetBucket[];
 }
 
 export function BudgetClient({
   initialIncomes,
   initialBills,
   userSettings,
+  initialBuckets = [],
 }: BudgetClientProps) {
+  const router = useRouter();
+
   // Use the optimistic budget hook
   const {
     incomes,
@@ -101,6 +106,7 @@ export function BudgetClient({
           debts={totals.debts}
           subscriptions={totals.subscriptions}
           plannedExpenses={totals.plannedExpenses}
+          buckets={initialBuckets}
           currency={currency}
           isPending={isPending}
           totals={{
@@ -111,6 +117,7 @@ export function BudgetClient({
             totalExpenses: totals.totalExpenses,
             remaining: totals.remaining,
           }}
+          onBucketsChange={() => router.refresh()}
           onAddIncome={addIncome}
           onUpdateIncome={updateIncome}
           onDeleteIncome={deleteIncome}

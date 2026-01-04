@@ -66,7 +66,7 @@ const STATUS_CONFIG = {
     iconColor: "text-orange-500",
   },
   over: {
-    message: "Over budget. Consider FlexBucket?",
+    message: "Over budget. Use your flex bucket?",
     icon: AlertCircle,
     gradientFrom: "from-rose-50/60",
     gradientVia: "via-red-50/30",

@@ -22,8 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createBill, updateBill } from "@/actions/bills";
-import type { Debt } from "@repo/database";
-import type { CreateBillInput } from "@/lib/validations/bill.schema";
+import type { Debt, BudgetBucket } from "@repo/database";
+import type { CreateBillInput, DebtPaymentMode } from "@/lib/validations/bill.schema";
+import { cn } from "@/lib/utils";
 
 const BILL_ICONS = ["📋", "🏠", "💡", "📶", "💳", "🚗", "📺", "🎮", "💪", "📱"];
 
@@ -33,10 +34,11 @@ interface BillFormProps {
   bill?: Debt | null;
   currency: string;
   isDebt?: boolean;
+  buckets?: BudgetBucket[];
   onSave?: (data: CreateBillInput) => Promise<void>;
 }
 
-export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave }: BillFormProps) {
+export function BillForm({ open, onClose, bill, currency, isDebt = false, buckets = [], onSave }: BillFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -52,6 +54,8 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave
   const [interestRate, setInterestRate] = useState("");
   const [minimumPayment, setMinimumPayment] = useState("");
   const [paymentType, setPaymentType] = useState<"fixed" | "variable">("fixed");
+  const [paymentMode, setPaymentMode] = useState<DebtPaymentMode>("manual");
+  const [paymentBucketId, setPaymentBucketId] = useState<string | null>(null);
 
   const isEditing = !!bill;
 
@@ -68,6 +72,8 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave
       setInterestRate(bill.interest_rate ? (bill.interest_rate * 100).toString() : "");
       setMinimumPayment(bill.minimum_payment?.toString() ?? "");
       setPaymentType(bill.payment_type ?? "fixed");
+      setPaymentMode(bill.payment_mode ?? "manual");
+      setPaymentBucketId(bill.payment_bucket_id ?? null);
     } else if (open && !bill) {
       // Reset for new entry
       setLabel("");
@@ -80,6 +86,8 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave
       setInterestRate("");
       setMinimumPayment("");
       setPaymentType("fixed");
+      setPaymentMode("manual");
+      setPaymentBucketId(null);
     }
   }, [open, bill]);
 
@@ -100,6 +108,8 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave
       interest_rate: interestRate ? parseFloat(interestRate) / 100 : null,
       minimum_payment: minimumPayment ? parseFloat(minimumPayment) : null,
       payment_type: paymentType,
+      payment_mode: paymentMode,
+      payment_bucket_id: paymentMode === "auto_deduct" ? paymentBucketId : null,
     };
 
     startTransition(async () => {
@@ -259,6 +269,84 @@ export function BillForm({ open, onClose, bill, currency, isDebt = false, onSave
                   </p>
                 )}
               </div>
+
+              {/* Payment Mode */}
+              <div className="space-y-2">
+                <Label>Payment Mode</Label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentMode("manual");
+                      setPaymentBucketId(null);
+                    }}
+                    className={cn(
+                      "flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors",
+                      paymentMode === "manual"
+                        ? "border-teal-500 bg-teal-50 text-teal-700"
+                        : "border-stone-200 text-stone-600 hover:border-stone-300 hover:bg-stone-50"
+                    )}
+                  >
+                    Manual
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode("auto_deduct")}
+                    className={cn(
+                      "flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors",
+                      paymentMode === "auto_deduct"
+                        ? "border-teal-500 bg-teal-50 text-teal-700"
+                        : "border-stone-200 text-stone-600 hover:border-stone-300 hover:bg-stone-50"
+                    )}
+                  >
+                    Auto-deduct
+                  </button>
+                </div>
+                <p className="text-xs text-stone-500">
+                  {paymentMode === "manual"
+                    ? "You'll record payments manually each time you pay."
+                    : "Payments will automatically deduct from the selected bucket."}
+                </p>
+              </div>
+
+              {/* Bucket Selection (only for auto-deduct) */}
+              {paymentMode === "auto_deduct" && (
+                <div className="space-y-2">
+                  <Label htmlFor="paymentBucket">Deduct From Bucket</Label>
+                  <Select
+                    value={paymentBucketId ?? ""}
+                    onValueChange={(v) => setPaymentBucketId(v || null)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a bucket" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {buckets.length === 0 ? (
+                        <SelectItem value="" disabled>
+                          No buckets available
+                        </SelectItem>
+                      ) : (
+                        buckets.map((bucket) => (
+                          <SelectItem key={bucket.id} value={bucket.id}>
+                            <span className="flex items-center gap-2">
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: bucket.color ?? "#6b7280" }}
+                              />
+                              {bucket.name}
+                            </span>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {buckets.length === 0 && (
+                    <p className="text-xs text-amber-600">
+                      Create buckets first to use auto-deduct.
+                    </p>
+                  )}
+                </div>
+              )}
             </>
           )}
 

@@ -379,6 +379,37 @@ class BudgetBucketRepository extends BaseRepository<
     const count = await this.count(supabase, userId);
     return count > 0;
   }
+
+  /**
+   * Deduct an amount from a bucket's allocated_amount
+   * Used when recording debt payments with auto-deduct mode
+   */
+  async deductFromBucket(
+    supabase: SupabaseClient,
+    bucketId: string,
+    userId: string,
+    amount: number
+  ): Promise<BudgetBucket | null> {
+    // Get current bucket
+    const bucket = await this.findById(supabase, bucketId, userId);
+    if (!bucket) return null;
+
+    // Calculate new allocated amount (cannot go below 0)
+    const currentAllocated = bucket.allocated_amount ?? bucket.target_amount ?? 0;
+    const newAllocated = Math.max(0, currentAllocated - amount);
+
+    // Update bucket
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .update({ allocated_amount: newAllocated })
+      .eq("id", bucketId)
+      .eq("user_id", userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as BudgetBucket;
+  }
 }
 
 /**

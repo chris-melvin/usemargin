@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { incomeRepository, billRepository, settingsRepository } from "@/lib/repositories";
+import { incomeRepository, billRepository, settingsRepository, budgetBucketRepository } from "@/lib/repositories";
 import { BudgetClient } from "./budget-client";
 
 export default async function BudgetPage() {
@@ -15,10 +15,11 @@ export default async function BudgetPage() {
   }
 
   // Fetch all data in parallel
-  const [incomes, bills, userSettings] = await Promise.all([
+  const [incomes, bills, userSettings, buckets] = await Promise.all([
     incomeRepository.findActive(supabase, user.id),
     billRepository.findActive(supabase, user.id),
     settingsRepository.getOrCreate(supabase, user.id),
+    budgetBucketRepository.findAllOrdered(supabase, user.id),
   ]);
 
   return (
@@ -26,6 +27,7 @@ export default async function BudgetPage() {
       initialIncomes={incomes}
       initialBills={bills}
       userSettings={userSettings}
+      initialBuckets={buckets}
     />
   );
 }

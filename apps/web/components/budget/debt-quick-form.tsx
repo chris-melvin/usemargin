@@ -158,6 +158,7 @@ export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickForm
       is_recurring: true,
       is_active: true,
       payment_type: "fixed",
+      payment_mode: "manual", // Quick form defaults to manual
       // Debt-specific fields
       total_amount: parsedTotal,
       remaining_balance: parsedTotal, // Same as total on creation

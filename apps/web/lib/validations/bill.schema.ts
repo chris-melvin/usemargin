@@ -3,6 +3,7 @@ import { z } from "zod";
 const frequencyEnum = z.enum(["weekly", "biweekly", "monthly", "yearly", "once"]);
 const statusEnum = z.enum(["pending", "paid", "overdue", "partially_paid"]);
 const paymentTypeEnum = z.enum(["fixed", "variable"]);
+const paymentModeEnum = z.enum(["manual", "auto_deduct"]);
 
 /**
  * Schema for creating a bill/debt
@@ -51,6 +52,8 @@ export const createBillSchema = z.object({
   end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   is_recurring: z.boolean().default(true),
   is_active: z.boolean().default(true),
+  payment_mode: paymentModeEnum.default("manual"),
+  payment_bucket_id: z.string().uuid().optional().nullable(),
 });
 
 /**
@@ -95,3 +98,4 @@ export type RecordDebtPaymentInput = z.infer<typeof recordDebtPaymentSchema>;
 export type BillFrequency = z.infer<typeof frequencyEnum>;
 export type BillStatus = z.infer<typeof statusEnum>;
 export type DebtPaymentType = z.infer<typeof paymentTypeEnum>;
+export type DebtPaymentMode = z.infer<typeof paymentModeEnum>;

@@ -514,24 +514,6 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
             )}
           </div>
 
-          {/* Flex Bucket */}
-          <div className="p-4 border-b border-neutral-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
-                  <Wallet className="w-4 h-4 text-violet-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-neutral-400 uppercase tracking-wider">Flex Bucket</p>
-                  <p className="text-sm font-semibold text-neutral-800 tabular-nums">
-                    {formatCurrency(flexBucket, CURRENCY)}
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-neutral-300" />
-            </div>
-          </div>
-
           {/* Weekly Progress */}
           <WeeklyProgressCard
             spent={budgetProgress.weeklyProgress.totalSpent}
@@ -800,21 +782,6 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                   ))}
                 </div>
               )}
-            </div>
-
-            <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-                  <Wallet className="w-5 h-5 text-violet-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-neutral-400 uppercase tracking-wider">Flex Bucket</p>
-                  <p className="text-base font-semibold text-neutral-800 tabular-nums">
-                    {formatCurrency(flexBucket, CURRENCY)}
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-neutral-300" />
             </div>
 
             <div className="p-4">

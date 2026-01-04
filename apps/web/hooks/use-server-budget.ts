@@ -275,6 +275,8 @@ export function useServerBudget({ incomes: initialIncomes, bills: initialBills }
         minimum_payment: data.minimum_payment ?? null,
         frequency: data.frequency ?? "monthly",
         payment_type: data.payment_type ?? "fixed",
+        payment_mode: data.payment_mode ?? "manual",
+        payment_bucket_id: data.payment_bucket_id ?? null,
         day_of_week: data.day_of_week ?? null,
         start_date: data.start_date ?? null,
         end_date: data.end_date ?? null,

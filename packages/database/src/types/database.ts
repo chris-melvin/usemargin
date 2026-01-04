@@ -30,6 +30,8 @@ export type BillStatus = "pending" | "paid" | "overdue" | "partially_paid";
 
 export type DebtPaymentType = "fixed" | "variable";
 
+export type DebtPaymentMode = "manual" | "auto_deduct";
+
 export type RecurringFrequency =
   | "daily"
   | "weekly"
@@ -157,6 +159,8 @@ export interface Debt {
   end_date: string | null;
   is_recurring: boolean;
   payment_type: DebtPaymentType; // 'fixed' = same amount every period, 'variable' = user adjusts each period
+  payment_mode: DebtPaymentMode; // 'manual' = user records payment, 'auto_deduct' = deduct from bucket
+  payment_bucket_id: string | null; // Bucket to deduct from when payment_mode is 'auto_deduct'
   status: BillStatus;
   paid_date: string | null;
   receive_date: string | null;
@@ -174,6 +178,7 @@ export interface DebtPayment {
   period_start: string; // YYYY-MM-DD
   period_end: string; // YYYY-MM-DD
   notes: string | null;
+  source_bucket_id: string | null; // Bucket that was deducted when this payment was made (if any)
   created_at: string;
 }
 
@@ -388,6 +393,8 @@ export type DebtInsert = Omit<Debt, "id" | "created_at" | "updated_at"> & {
   frequency?: BillFrequency;
   is_recurring?: boolean;
   payment_type?: DebtPaymentType;
+  payment_mode?: DebtPaymentMode;
+  payment_bucket_id?: string | null;
   status?: BillStatus;
   is_active?: boolean;
   created_at?: string;
@@ -397,6 +404,7 @@ export type DebtInsert = Omit<Debt, "id" | "created_at" | "updated_at"> & {
 export type DebtPaymentInsert = Omit<DebtPayment, "id" | "created_at"> & {
   id?: string;
   notes?: string | null;
+  source_bucket_id?: string | null;
   created_at?: string;
 };
 

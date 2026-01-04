@@ -34,6 +34,8 @@ export async function createBill(
       interest_rate: validation.data.interest_rate ?? null,
       minimum_payment: validation.data.minimum_payment ?? null,
       payment_type: validation.data.payment_type ?? "fixed",
+      payment_mode: validation.data.payment_mode ?? "manual",
+      payment_bucket_id: validation.data.payment_bucket_id ?? null,
       frequency: validation.data.frequency,
       day_of_week: validation.data.day_of_week ?? null,
       start_date: validation.data.start_date ?? null,

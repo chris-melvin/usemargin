@@ -18,10 +18,11 @@ import { NotebookRow, NotebookEmptyRow, NotebookAddRow } from "./notebook-row";
 import { NotebookSection, NotebookSectionContent, NotebookSectionDivider } from "./notebook-section";
 import { NotebookSectionHeader, NotebookSubtotal } from "./notebook-section-header";
 import { NotebookSummaryHeader, NotebookRunningTotal } from "./notebook-summary-header";
+import { NotebookBucketSection } from "./notebook-bucket-section";
 import { BillForm } from "../bill-form";
 import { IncomeForm } from "../income-form";
 import { DebtQuickForm } from "../debt-quick-form";
-import type { Income, Debt } from "@repo/database";
+import type { Income, Debt, BudgetBucket } from "@repo/database";
 import type { CreateIncomeInput, UpdateIncomeInput } from "@/lib/validations/income.schema";
 import type { CreateBillInput, UpdateBillInput } from "@/lib/validations/bill.schema";
 import type { OptimisticIncome, OptimisticDebt } from "@/hooks/use-server-budget";
@@ -33,6 +34,7 @@ interface NotebookBudgetPageProps {
   debts: OptimisticDebt[];
   subscriptions: OptimisticDebt[];
   plannedExpenses: OptimisticDebt[];
+  buckets: BudgetBucket[];
   currency: string;
   isPending: boolean;
   totals: {
@@ -43,6 +45,7 @@ interface NotebookBudgetPageProps {
     totalExpenses: number;
     remaining: number;
   };
+  onBucketsChange?: () => void;
   onAddIncome: (data: CreateIncomeInput) => Promise<{ success: boolean; error?: string }>;
   onUpdateIncome: (id: string, data: UpdateIncomeInput) => Promise<{ success: boolean; error?: string }>;
   onDeleteIncome: (id: string) => Promise<{ success: boolean; error?: string }>;
@@ -76,9 +79,11 @@ export function NotebookBudgetPage({
   debts,
   subscriptions,
   plannedExpenses,
+  buckets,
   currency,
   isPending,
   totals,
+  onBucketsChange,
   onAddIncome,
   onUpdateIncome,
   onDeleteIncome,
@@ -475,6 +480,15 @@ export function NotebookBudgetPage({
             </NotebookSection>
           </>
         )}
+
+        {/* Buckets Section */}
+        <NotebookBucketSection
+          buckets={buckets}
+          currency={currency}
+          totalIncome={totals.totalIncome}
+          availableAmount={totals.remaining}
+          onBucketsChange={onBucketsChange}
+        />
 
         {/* Running Total Footer */}
         <NotebookRunningTotal

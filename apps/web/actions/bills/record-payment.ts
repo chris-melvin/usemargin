@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { recordDebtPaymentSchema } from "@/lib/validations/bill.schema";
-import { billRepository, debtPaymentRepository } from "@/lib/repositories";
+import { billRepository, debtPaymentRepository, budgetBucketRepository } from "@/lib/repositories";
 import { requireAuth } from "@/lib/action-utils";
 import { type ActionResult, error, success } from "@/lib/errors";
 import type { DebtPayment, Debt } from "@repo/database";
@@ -49,6 +49,20 @@ export async function recordDebtPayment(
       debt.start_date
     );
 
+    // Check if this is an auto-deduct payment and deduct from bucket if applicable
+    let sourceBucketId: string | null = null;
+    if (debt.payment_mode === "auto_deduct" && debt.payment_bucket_id) {
+      const bucket = await budgetBucketRepository.deductFromBucket(
+        supabase,
+        debt.payment_bucket_id,
+        userId,
+        validation.data.amount
+      );
+      if (bucket) {
+        sourceBucketId = bucket.id;
+      }
+    }
+
     // Create payment record
     const payment = await debtPaymentRepository.create(supabase, {
       user_id: userId,
@@ -58,6 +72,7 @@ export async function recordDebtPayment(
       period_start: periodStart,
       period_end: periodEnd,
       notes: data.notes ?? null,
+      source_bucket_id: sourceBucketId,
     });
 
     // Update debt balance
