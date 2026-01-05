@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Lora, Inter, Caveat } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import { PaddleProvider } from "@/components/paddle";
 
 // Primary serif font for headings - scholarly, warm
 const lora = Lora({
@@ -46,7 +47,7 @@ export default function RootLayout({
       <body
         className={`${lora.variable} ${inter.variable} ${caveat.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <PaddleProvider>{children}</PaddleProvider>
       </body>
     </html>
   );

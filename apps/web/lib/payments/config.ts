@@ -27,6 +27,35 @@ export const PADDLE_CONFIG = {
   monthlyPriceId: process.env.PADDLE_MONTHLY_PRICE_ID ?? "",
   yearlyPriceId: process.env.PADDLE_YEARLY_PRICE_ID ?? "",
   environment: (process.env.PADDLE_ENVIRONMENT ?? "sandbox") as "sandbox" | "production",
+  clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "",
+} as const;
+
+// =============================================================================
+// DISPLAY PRICING (Philippine Market - PHP)
+// =============================================================================
+
+/**
+ * Pricing for display purposes only.
+ * Actual prices are configured in the Paddle dashboard.
+ */
+export const PRICING_DISPLAY = {
+  pro: {
+    monthly: {
+      amount: 299,
+      currency: "PHP",
+      formatted: "₱299",
+      period: "month",
+    },
+    yearly: {
+      amount: 2990,
+      currency: "PHP",
+      formatted: "₱2,990",
+      period: "year",
+      monthlyEquivalent: "₱249",
+      savings: "₱598",
+      savingsPercent: 17,
+    },
+  },
 } as const;
 
 /**
@@ -66,12 +95,11 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierConfig> = {
   pro: {
     id: "pro",
     name: "Pro",
-    creditsPerMonth: 100,
+    creditsPerMonth: 0,
     features: [
       "Everything in Free",
       "Advanced analytics & visualizations",
       "Export to CSV & PDF",
-      "100 AI credits per month",
       "Priority support",
     ],
   },
