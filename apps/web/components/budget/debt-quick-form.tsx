@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Banknote, CalendarClock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -24,8 +24,11 @@ import {
 } from "@/components/ui/select";
 import { createBill } from "@/actions/bills";
 import type { CreateBillInput } from "@/lib/validations/bill.schema";
+import { cn } from "@/lib/utils";
 
 const DEBT_ICONS = ["💳", "💰", "🏠", "🚗", "🏦", "📱", "💸", "🎓"];
+
+type DebtType = "one_time" | "recurring";
 
 interface DebtQuickFormProps {
   open: boolean;
@@ -59,7 +62,7 @@ function detectDebtType(name: string): { icon: string; type: string } {
   if (/utang|loan|personal|borrowed|hiram/.test(lower)) {
     return { icon: "💰", type: "personal_loan" };
   }
-  return { icon: "💳", type: "other" };
+  return { icon: "💰", type: "other" };
 }
 
 // Format number with commas
@@ -82,16 +85,26 @@ export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickForm
   const [isPending, startTransition] = useTransition();
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Quick add fields (visible by default)
+  // Debt type selection
+  const [debtType, setDebtType] = useState<DebtType>("one_time");
+
+  // Common fields
   const [name, setName] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [icon, setIcon] = useState("💰");
+
+  // One-time fields
+  const [amount, setAmount] = useState("");
+  const [dueDate, setDueDate] = useState(""); // Full date YYYY-MM-DD
+  const [creditor, setCreditor] = useState("");
+
+  // Recurring fields
   const [monthlyPayment, setMonthlyPayment] = useState("");
+  const [dueDay, setDueDay] = useState("");
   const [monthsRemaining, setMonthsRemaining] = useState("");
 
-  // Advanced fields (hidden by default)
+  // Advanced fields (recurring only)
   const [totalBalance, setTotalBalance] = useState("");
   const [interestRate, setInterestRate] = useState("");
-  const [icon, setIcon] = useState("💳");
 
   // Auto-detect icon when name changes
   useEffect(() => {
@@ -104,13 +117,17 @@ export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickForm
   // Reset form when dialog opens/closes
   useEffect(() => {
     if (open) {
+      setDebtType("one_time");
       setName("");
+      setAmount("");
       setDueDate("");
+      setCreditor("");
       setMonthlyPayment("");
+      setDueDay("");
       setMonthsRemaining("");
       setTotalBalance("");
       setInterestRate("");
-      setIcon("💳");
+      setIcon("💰");
       setShowAdvanced(false);
     }
   }, [open]);
@@ -120,6 +137,11 @@ export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickForm
     const now = new Date();
     const endDate = new Date(now.getFullYear(), now.getMonth() + months, 1);
     return endDate.toISOString().split("T")[0] ?? "";
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatNumber(e.target.value);
+    setAmount(formatted);
   };
 
   const handleMonthlyPaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,47 +157,77 @@ export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickForm
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const parsedAmount = parseFloat(parseFormattedNumber(monthlyPayment));
-    const parsedTotal = totalBalance ? parseFloat(parseFormattedNumber(totalBalance)) : null;
-    const parsedInterest = interestRate ? parseFloat(interestRate) / 100 : null;
-    const parsedMonths = monthsRemaining ? parseInt(monthsRemaining, 10) : null;
-
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      toast.error("Please enter a valid monthly payment");
-      return;
-    }
-
-    // Calculate end date if months remaining is provided
-    const endDate = parsedMonths && parsedMonths > 0 ? calculateEndDate(parsedMonths) : null;
     const today = new Date().toISOString().split("T")[0] ?? null;
 
-    const data: CreateBillInput = {
-      label: name.trim(),
-      amount: parsedAmount,
-      due_date: dueDate ? parseInt(dueDate, 10) : null,
-      icon,
-      frequency: "monthly" as const,
-      is_recurring: true,
-      is_active: true,
-      payment_type: "fixed",
-      payment_mode: "manual", // Quick form defaults to manual
-      // Debt-specific fields
-      total_amount: parsedTotal,
-      remaining_balance: parsedTotal, // Same as total on creation
-      interest_rate: parsedInterest,
-      minimum_payment: parsedAmount, // Same as monthly payment
-      start_date: today,
-      end_date: endDate,
-    };
+    let data: CreateBillInput;
+
+    if (debtType === "one_time") {
+      // One-time debt
+      const parsedAmount = parseFloat(parseFormattedNumber(amount));
+
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        toast.error("Please enter a valid amount");
+        return;
+      }
+
+      data = {
+        label: name.trim(),
+        creditor: creditor.trim() || null,
+        amount: parsedAmount,
+        due_date: null, // One-time uses end_date instead
+        icon,
+        frequency: "once" as const,
+        is_recurring: false,
+        is_active: true,
+        payment_type: "fixed",
+        payment_mode: "manual",
+        total_amount: parsedAmount,
+        remaining_balance: parsedAmount,
+        interest_rate: null,
+        minimum_payment: null,
+        start_date: today,
+        end_date: dueDate || null,
+      };
+    } else {
+      // Recurring debt
+      const parsedAmount = parseFloat(parseFormattedNumber(monthlyPayment));
+      const parsedTotal = totalBalance ? parseFloat(parseFormattedNumber(totalBalance)) : null;
+      const parsedInterest = interestRate ? parseFloat(interestRate) / 100 : null;
+      const parsedMonths = monthsRemaining ? parseInt(monthsRemaining, 10) : null;
+
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        toast.error("Please enter a valid monthly payment");
+        return;
+      }
+
+      const endDate = parsedMonths && parsedMonths > 0 ? calculateEndDate(parsedMonths) : null;
+
+      data = {
+        label: name.trim(),
+        creditor: null,
+        amount: parsedAmount,
+        due_date: dueDay ? parseInt(dueDay, 10) : null,
+        icon,
+        frequency: "monthly" as const,
+        is_recurring: true,
+        is_active: true,
+        payment_type: "fixed",
+        payment_mode: "manual",
+        total_amount: parsedTotal,
+        remaining_balance: parsedTotal,
+        interest_rate: parsedInterest,
+        minimum_payment: parsedAmount,
+        start_date: today,
+        end_date: endDate,
+      };
+    }
 
     startTransition(async () => {
-      // If onSave is provided, use it (optimistic mode)
       if (onSave) {
         await onSave(data);
         return;
       }
 
-      // Fallback to direct server action (legacy mode)
       const result = await createBill(data);
 
       if (result.success) {
@@ -188,20 +240,62 @@ export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickForm
     });
   };
 
+  const isOneTimeValid = name.trim() && amount;
+  const isRecurringValid = name.trim() && monthlyPayment;
+  const isFormValid = debtType === "one_time" ? isOneTimeValid : isRecurringValid;
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Credit Card / Utang</DialogTitle>
+          <DialogTitle>Add Debt</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
+          {/* Debt Type Selector */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setDebtType("one_time")}
+              className={cn(
+                "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                debtType === "one_time"
+                  ? "border-amber-400 bg-amber-50 text-amber-900"
+                  : "border-stone-200 bg-white text-stone-600 hover:border-stone-300"
+              )}
+            >
+              <Banknote className="w-6 h-6" />
+              <div className="text-center">
+                <p className="font-medium text-sm">One-time</p>
+                <p className="text-xs opacity-70">Pay once</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDebtType("recurring")}
+              className={cn(
+                "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                debtType === "recurring"
+                  ? "border-amber-400 bg-amber-50 text-amber-900"
+                  : "border-stone-200 bg-white text-stone-600 hover:border-stone-300"
+              )}
+            >
+              <CalendarClock className="w-6 h-6" />
+              <div className="text-center">
+                <p className="font-medium text-sm">Recurring</p>
+                <p className="text-xs opacity-70">Monthly payments</p>
+              </div>
+            </button>
+          </div>
+
+          {/* Name field - common to both */}
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">
+              {debtType === "one_time" ? "What's this for?" : "Debt name"}
+            </Label>
             <Input
               id="name"
-              placeholder="e.g., BDO Card, Car Loan, Utang kay Juan"
+              placeholder={debtType === "one_time" ? "e.g., Laptop, Borrowed money" : "e.g., BDO Card, Car Loan"}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -209,75 +303,118 @@ export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickForm
             />
           </div>
 
-          {/* Due Date */}
-          <div className="space-y-2">
-            <Label htmlFor="dueDate">Due Date</Label>
-            <Select value={dueDate} onValueChange={setDueDate}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select due date" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                  <SelectItem key={day} value={day.toString()}>
-                    {day}
-                    {day === 1 || day === 21 || day === 31
-                      ? "st"
-                      : day === 2 || day === 22
-                        ? "nd"
-                        : day === 3 || day === 23
-                          ? "rd"
-                          : "th"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* One-time debt fields */}
+          {debtType === "one_time" && (
+            <>
+              {/* Amount and Due Date in a row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">
+                      {currency}
+                    </span>
+                    <Input
+                      id="amount"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="5,000"
+                      value={amount}
+                      onChange={handleAmountChange}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dueDate">Due date</Label>
+                  <Input
+                    id="dueDate"
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                </div>
+              </div>
 
-          {/* Monthly Payment */}
-          <div className="space-y-2">
-            <Label htmlFor="monthlyPayment">Monthly Payment</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">
-                {currency}
-              </span>
-              <Input
-                id="monthlyPayment"
-                type="text"
-                inputMode="decimal"
-                placeholder="5,000"
-                value={monthlyPayment}
-                onChange={handleMonthlyPaymentChange}
-                className="pl-14"
-                required
-              />
-            </div>
-          </div>
+              {/* Creditor */}
+              <div className="space-y-2">
+                <Label htmlFor="creditor">Who do you owe?</Label>
+                <Input
+                  id="creditor"
+                  placeholder="e.g., Juan Santos, Globe"
+                  value={creditor}
+                  onChange={(e) => setCreditor(e.target.value)}
+                />
+              </div>
+            </>
+          )}
 
-          {/* Months to Pay */}
-          <div className="space-y-2">
-            <Label htmlFor="monthsRemaining">Months to Pay</Label>
-            <Select value={monthsRemaining} onValueChange={setMonthsRemaining}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select duration (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="3">3 months</SelectItem>
-                <SelectItem value="6">6 months</SelectItem>
-                <SelectItem value="9">9 months</SelectItem>
-                <SelectItem value="12">12 months (1 year)</SelectItem>
-                <SelectItem value="18">18 months</SelectItem>
-                <SelectItem value="24">24 months (2 years)</SelectItem>
-                <SelectItem value="36">36 months (3 years)</SelectItem>
-                <SelectItem value="48">48 months (4 years)</SelectItem>
-                <SelectItem value="60">60 months (5 years)</SelectItem>
-              </SelectContent>
-            </Select>
-            {monthsRemaining && (
-              <p className="text-xs text-stone-500">
-                Target payoff: {new Date(new Date().getFullYear(), new Date().getMonth() + parseInt(monthsRemaining), 1).toLocaleDateString("en-PH", { month: "long", year: "numeric" })}
-              </p>
-            )}
-          </div>
+          {/* Recurring debt fields */}
+          {debtType === "recurring" && (
+            <>
+              {/* Monthly Payment and Due Day */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="monthlyPayment">Monthly payment</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">
+                      {currency}
+                    </span>
+                    <Input
+                      id="monthlyPayment"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="5,000"
+                      value={monthlyPayment}
+                      onChange={handleMonthlyPaymentChange}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dueDay">Due day</Label>
+                  <Select value={dueDay} onValueChange={setDueDay}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                        <SelectItem key={day} value={day.toString()}>
+                          {day}{day === 1 || day === 21 || day === 31 ? "st" : day === 2 || day === 22 ? "nd" : day === 3 || day === 23 ? "rd" : "th"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Duration */}
+              <div className="space-y-2">
+                <Label htmlFor="monthsRemaining">Duration</Label>
+                <Select value={monthsRemaining} onValueChange={setMonthsRemaining}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="How long? (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3 months</SelectItem>
+                    <SelectItem value="6">6 months</SelectItem>
+                    <SelectItem value="12">12 months (1 year)</SelectItem>
+                    <SelectItem value="24">24 months (2 years)</SelectItem>
+                    <SelectItem value="36">36 months (3 years)</SelectItem>
+                    <SelectItem value="48">48 months (4 years)</SelectItem>
+                    <SelectItem value="60">60 months (5 years)</SelectItem>
+                  </SelectContent>
+                </Select>
+                {monthsRemaining && (
+                  <p className="text-xs text-stone-500">
+                    Target payoff: {new Date(new Date().getFullYear(), new Date().getMonth() + parseInt(monthsRemaining), 1).toLocaleDateString("en-PH", { month: "long", year: "numeric" })}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
 
           {/* More Options Toggle */}
           <button
@@ -301,57 +438,56 @@ export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickForm
           {/* Advanced Fields */}
           {showAdvanced && (
             <div className="space-y-4 pt-2 border-t border-stone-100">
-              <p className="text-xs text-stone-400 uppercase tracking-wider">
-                Additional Details
-              </p>
+              {/* Recurring-only advanced fields */}
+              {debtType === "recurring" && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="totalBalance">Total balance</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">
+                        {currency}
+                      </span>
+                      <Input
+                        id="totalBalance"
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="45,000"
+                        value={totalBalance}
+                        onChange={handleTotalBalanceChange}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
 
-              {/* Total Balance */}
-              <div className="space-y-2">
-                <Label htmlFor="totalBalance">Total Balance</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">
-                    {currency}
-                  </span>
-                  <Input
-                    id="totalBalance"
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="45,000"
-                    value={totalBalance}
-                    onChange={handleTotalBalanceChange}
-                    className="pl-14"
-                  />
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="interestRate">Interest rate (APR)</Label>
+                    <div className="relative">
+                      <Input
+                        id="interestRate"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        placeholder="24.99"
+                        value={interestRate}
+                        onChange={(e) => setInterestRate(e.target.value)}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">
+                        %
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
 
-              {/* Interest Rate */}
-              <div className="space-y-2">
-                <Label htmlFor="interestRate">Interest Rate (APR)</Label>
-                <div className="relative">
-                  <Input
-                    id="interestRate"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    placeholder="24.99"
-                    value={interestRate}
-                    onChange={(e) => setInterestRate(e.target.value)}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">
-                    %
-                  </span>
-                </div>
-              </div>
-
-              {/* Icon Picker */}
+              {/* Icon picker - for both types */}
               <div className="space-y-2">
                 <Label>Icon</Label>
                 <IconPicker
                   icons={DEBT_ICONS}
                   value={icon}
                   onChange={(emoji) => setIcon(emoji)}
-                  color="rose"
+                  color="amber"
                 />
               </div>
             </div>
@@ -363,8 +499,8 @@ export function DebtQuickForm({ open, onClose, currency, onSave }: DebtQuickForm
             </Button>
             <Button
               type="submit"
-              disabled={isPending || !name.trim() || !monthlyPayment}
-              className="bg-rose-600 hover:bg-rose-700"
+              disabled={isPending || !isFormValid}
+              className="bg-amber-600 hover:bg-amber-700"
             >
               {isPending ? "Adding..." : "Add Debt"}
             </Button>

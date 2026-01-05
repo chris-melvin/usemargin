@@ -146,6 +146,7 @@ export interface Debt {
   id: string;
   user_id: string;
   label: string;
+  creditor: string | null; // Person or company the debt is owed to
   amount: number; // Payment amount per period (for variable debts, this is the default/suggested amount)
   due_date: number | null; // Day of month 1-31, nullable for non-monthly
   icon: string | null;
@@ -390,6 +391,7 @@ export type IncomeInsert = Omit<Income, "id" | "created_at" | "updated_at"> & {
 
 export type DebtInsert = Omit<Debt, "id" | "created_at" | "updated_at"> & {
   id?: string;
+  creditor?: string | null;
   frequency?: BillFrequency;
   is_recurring?: boolean;
   payment_type?: DebtPaymentType;

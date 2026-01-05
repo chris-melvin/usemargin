@@ -266,6 +266,7 @@ export function useServerBudget({ incomes: initialIncomes, bills: initialBills }
         id: tempId,
         user_id: "",
         label: data.label,
+        creditor: data.creditor ?? null,
         amount: data.amount,
         due_date: data.due_date ?? null,
         icon: data.icon ?? null,

@@ -26,6 +26,7 @@ export async function createBill(
     const bill = await billRepository.create(supabase, {
       user_id: userId,
       label: validation.data.label,
+      creditor: validation.data.creditor ?? null,
       amount: validation.data.amount,
       due_date: validation.data.due_date ?? null,
       icon: validation.data.icon ?? null,

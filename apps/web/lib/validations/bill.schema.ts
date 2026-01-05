@@ -29,6 +29,7 @@ export const createBillSchema = z.object({
     .string()
     .min(1, "Label is required")
     .max(255, "Label must be 255 characters or less"),
+  creditor: z.string().max(100, "Creditor name too long").optional().nullable(),
   amount: z.coerce
     .number()
     .positive("Amount must be positive")
