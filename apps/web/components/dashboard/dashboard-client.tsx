@@ -604,6 +604,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
                   expenses={localExpenses}
                   incomes={incomes}
                   bills={bills}
+                  buckets={buckets}
                   onDayClick={handleDayClick}
                   selectedDate={selectedDate}
                 />

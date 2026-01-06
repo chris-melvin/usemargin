@@ -1,3 +1,13 @@
+// Bucket spending summary for calendar visualization
+export interface BucketSpendingSummary {
+  bucketId: string;
+  bucketSlug: string;
+  bucketName: string;
+  bucketColor: string;
+  amount: number;
+  transactionCount: number;
+}
+
 // Calendar day data computed from expenses
 export interface CalendarDay {
   day: number;
@@ -7,6 +17,11 @@ export interface CalendarDay {
   spent: number;
   remaining: number;
   isPadding?: boolean;
+  // Bucket-aware spending (only daily-spending bucket counts toward status)
+  dailySpendingSpent?: number;
+  // Transaction metadata
+  transactionCount?: number;
+  bucketSummary?: BucketSpendingSummary[];
   // Income/Bill indicators
   hasIncome?: boolean;
   incomeAmount?: number;

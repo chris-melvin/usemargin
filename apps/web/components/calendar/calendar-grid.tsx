@@ -5,7 +5,8 @@ import { CalendarNav } from "./calendar-nav";
 import { CalendarDayCell } from "./calendar-day";
 import { daysInMonth, firstDayOfMonth, formatKey } from "@/lib/utils";
 import { DEFAULT_DAILY_LIMIT } from "@/lib/constants";
-import type { CalendarDay, LocalExpense, LocalIncome, LocalBill } from "@/lib/types";
+import type { CalendarDay, LocalExpense, LocalIncome, LocalBill, BucketSpendingSummary } from "@/lib/types";
+import type { BudgetBucket } from "@repo/database";
 
 // Short weekday labels for mobile
 const WEEKDAYS_SHORT = ["S", "M", "T", "W", "T", "F", "S"];
@@ -15,11 +16,12 @@ interface CalendarGridProps {
   expenses: LocalExpense[];
   incomes?: LocalIncome[];
   bills?: LocalBill[];
+  buckets?: BudgetBucket[];
   onDayClick: (date: Date) => void;
   selectedDate?: Date | null;
 }
 
-export function CalendarGrid({ expenses, incomes = [], bills = [], onDayClick, selectedDate }: CalendarGridProps) {
+export function CalendarGrid({ expenses, incomes = [], bills = [], buckets = [], onDayClick, selectedDate }: CalendarGridProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const calendarDays = useMemo(() => {
@@ -28,6 +30,13 @@ export function CalendarGrid({ expenses, incomes = [], bills = [], onDayClick, s
     const totalDays = daysInMonth(year, month);
     const startOffset = firstDayOfMonth(year, month);
     const days: CalendarDay[] = [];
+
+    // Find the daily-spending bucket for status color calculation
+    const dailySpendingBucket = buckets.find((b) => b.slug === "daily-spending");
+    const dailySpendingId = dailySpendingBucket?.id;
+
+    // Create bucket lookup map for efficiency
+    const bucketMap = new Map(buckets.map((b) => [b.id, b]));
 
     // Filter expenses for current month
     const monthExpenses = expenses.filter((e) => {
@@ -53,12 +62,76 @@ export function CalendarGrid({ expenses, incomes = [], bills = [], onDayClick, s
       const dateObj = new Date(year, month, d);
       const key = formatKey(dateObj);
 
-      const spent = monthExpenses
-        .filter((e) => formatKey(new Date(e.date)) === key)
+      // Get all expenses for this day
+      const dayExpenses = monthExpenses.filter(
+        (e) => formatKey(new Date(e.date)) === key
+      );
+
+      // Calculate total spent (all buckets - for display)
+      const spent = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+      // Calculate daily-spending only (for status color)
+      // Expenses with no bucket_id are treated as daily-spending
+      const dailySpendingSpent = dayExpenses
+        .filter((e) => !e.bucket_id || e.bucket_id === dailySpendingId)
         .reduce((sum, e) => sum + e.amount, 0);
 
       const limit = DEFAULT_DAILY_LIMIT;
-      const remaining = limit - spent;
+      // Remaining is based on daily spending only (bucket-aware)
+      const remaining = limit - dailySpendingSpent;
+
+      // Group expenses by bucket for visual summary
+      const bucketGroups = new Map<string, { amount: number; count: number }>();
+      dayExpenses.forEach((e) => {
+        const bucketId = e.bucket_id || "uncategorized";
+        const existing = bucketGroups.get(bucketId) || { amount: 0, count: 0 };
+        bucketGroups.set(bucketId, {
+          amount: existing.amount + e.amount,
+          count: existing.count + 1,
+        });
+      });
+
+      // Build bucket summary array
+      const bucketSummary: BucketSpendingSummary[] = [];
+      bucketGroups.forEach((data, bucketId) => {
+        if (bucketId === "uncategorized") {
+          // Treat uncategorized as daily-spending visually
+          if (dailySpendingBucket) {
+            bucketSummary.push({
+              bucketId: dailySpendingBucket.id,
+              bucketSlug: dailySpendingBucket.slug,
+              bucketName: dailySpendingBucket.name,
+              bucketColor: dailySpendingBucket.color || "#1A9E9E",
+              amount: data.amount,
+              transactionCount: data.count,
+            });
+          } else {
+            bucketSummary.push({
+              bucketId: "uncategorized",
+              bucketSlug: "uncategorized",
+              bucketName: "Uncategorized",
+              bucketColor: "#78716c",
+              amount: data.amount,
+              transactionCount: data.count,
+            });
+          }
+        } else {
+          const bucket = bucketMap.get(bucketId);
+          if (bucket) {
+            bucketSummary.push({
+              bucketId: bucket.id,
+              bucketSlug: bucket.slug,
+              bucketName: bucket.name,
+              bucketColor: bucket.color || "#78716c",
+              amount: data.amount,
+              transactionCount: data.count,
+            });
+          }
+        }
+      });
+
+      // Sort by amount descending for consistent dot ordering
+      bucketSummary.sort((a, b) => b.amount - a.amount);
 
       // Check for income on this day
       const dayIncomes = incomes.filter((inc) => inc.dayOfMonth === d);
@@ -89,6 +162,9 @@ export function CalendarGrid({ expenses, incomes = [], bills = [], onDayClick, s
         limit,
         spent,
         remaining,
+        dailySpendingSpent,
+        transactionCount: dayExpenses.length,
+        bucketSummary: bucketSummary.length > 0 ? bucketSummary : undefined,
         hasIncome: dayIncomes.length > 0,
         incomeAmount: incomeAmount > 0 ? incomeAmount : undefined,
         hasBill: dayBills.length > 0,
@@ -98,7 +174,7 @@ export function CalendarGrid({ expenses, incomes = [], bills = [], onDayClick, s
     }
 
     return days;
-  }, [currentDate, expenses, incomes, bills]);
+  }, [currentDate, expenses, incomes, bills, buckets]);
 
   const handlePrevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
