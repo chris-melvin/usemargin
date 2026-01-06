@@ -459,11 +459,17 @@ Examples:
   const submit = useCallback(async (input: string) => {
     const results = await parse(input);
     if (results.length > 0) {
-      onSuccess?.(results);
+      // Apply default bucket to expenses that don't have one
+      const withDefaults = results.map((expense) => ({
+        ...expense,
+        bucketId: expense.bucketId ?? defaultBucket?.id,
+        bucketSlug: expense.bucketSlug ?? defaultBucket?.slug,
+      }));
+      onSuccess?.(withDefaults);
       setPreview([]);
     }
     return results;
-  }, [parse, onSuccess]);
+  }, [parse, onSuccess, defaultBucket]);
 
   // Real-time preview (local only for speed)
   const updatePreview = useCallback((input: string) => {

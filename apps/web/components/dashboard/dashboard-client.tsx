@@ -248,7 +248,9 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
 
   const handleAddExpense = async (amount: number, label: string) => {
     if (selectedDate) {
-      await addExpense(selectedDate, amount, label);
+      await addExpense(selectedDate, amount, label, {
+        bucketId: defaultBucket?.id,
+      });
       quickWin();
       setSuccessMessage(`${label} added!`);
       setShowSuccessFlash(true);
@@ -263,7 +265,10 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
     if (preview.length > 0) {
       // Add each expense to the selected date
       for (const exp of preview) {
-        await addExpense(selectedDate, exp.amount, exp.label);
+        await addExpense(selectedDate, exp.amount, exp.label, {
+          category: exp.category,
+          bucketId: exp.bucketId ?? defaultBucket?.id,
+        });
       }
 
       // Trigger success feedback
@@ -278,10 +283,12 @@ export function DashboardClient({ initialExpenses, dailyLimit, initialBuckets = 
       // Clear the preview
       updatePreview("");
     }
-  }, [selectedDate, preview, addExpense, quickWin, updatePreview]);
+  }, [selectedDate, preview, addExpense, quickWin, updatePreview, defaultBucket]);
 
   const handleQuickAdd = async (amount: number, label: string) => {
-    await addExpense(new Date(), amount, label);
+    await addExpense(new Date(), amount, label, {
+      bucketId: defaultBucket?.id,
+    });
     quickWin();
     setSuccessMessage(`${label} added!`);
     setShowSuccessFlash(true);
