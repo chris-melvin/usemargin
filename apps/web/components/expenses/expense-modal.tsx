@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import posthog from "posthog-js";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,13 @@ export function ExpenseModal({
     if (isNaN(numAmount) || numAmount <= 0) return;
 
     onAddExpense(numAmount, label || "Misc");
+
+    // Track expense creation
+    posthog.capture("expense_created", {
+      amount: numAmount,
+      has_label: Boolean(label),
+    });
+
     setAmount("");
     setLabel("");
     onClose();

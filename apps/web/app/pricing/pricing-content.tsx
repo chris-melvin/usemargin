@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
+import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { CheckoutButton } from "@/components/subscription";
 import { PRICING_DISPLAY, SUBSCRIPTION_TIERS } from "@/lib/payments/config";
@@ -18,6 +19,13 @@ export function PricingContent({ isLoggedIn }: PricingContentProps) {
 
   const pricing = PRICING_DISPLAY.pro;
   const currentPrice = billingCycle === "monthly" ? pricing.monthly : pricing.yearly;
+
+  const handleBillingCycleChange = useCallback((cycle: "monthly" | "yearly") => {
+    setBillingCycle(cycle);
+    posthog.capture("billing_cycle_changed", {
+      billing_cycle: cycle,
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-stone-50 via-amber-50/30 to-stone-50">
@@ -60,7 +68,7 @@ export function PricingContent({ isLoggedIn }: PricingContentProps) {
             />
 
             <button
-              onClick={() => setBillingCycle("monthly")}
+              onClick={() => handleBillingCycleChange("monthly")}
               className={cn(
                 "relative z-10 px-5 py-2 text-sm font-medium rounded-full transition-colors duration-200",
                 billingCycle === "monthly" ? "text-stone-900" : "text-stone-500 hover:text-stone-700"
@@ -69,7 +77,7 @@ export function PricingContent({ isLoggedIn }: PricingContentProps) {
               Monthly
             </button>
             <button
-              onClick={() => setBillingCycle("yearly")}
+              onClick={() => handleBillingCycleChange("yearly")}
               className={cn(
                 "relative z-10 px-5 py-2 text-sm font-medium rounded-full transition-colors duration-200 flex items-center gap-2",
                 billingCycle === "yearly" ? "text-stone-900" : "text-stone-500 hover:text-stone-700"

@@ -10,6 +10,7 @@ import {
   settingsRepository,
 } from "@/lib/repositories";
 import type { SubscriptionUpdate } from "@repo/database";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 // Webhook timestamp tolerance (5 minutes)
 const WEBHOOK_TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000;
@@ -177,6 +178,18 @@ async function handleSubscriptionCreated(
     throw error;
   }
 
+  // Track subscription creation in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "subscription_created",
+    properties: {
+      provider: providerName,
+      billing_cycle: event.billingCycle,
+      status: event.status,
+    },
+  });
+
   console.log(`Subscription created for user ${userId}:`, data);
 }
 
@@ -270,6 +283,16 @@ async function handleSubscriptionCancelled(
     }
   );
 
+  // Track subscription cancellation in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: existing.user_id,
+    event: "subscription_cancelled",
+    properties: {
+      billing_cycle: event.billingCycle,
+    },
+  });
+
   // Note: Don't downgrade to free yet - user has access until period end
   // A scheduled job should check current_period_end and downgrade expired subs
 
@@ -308,6 +331,16 @@ async function handlePaymentSucceeded(
     subscription_tier: "pro",
   } as Record<string, unknown>);
 
+  // Track payment success in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: existing.user_id,
+    event: "payment_succeeded",
+    properties: {
+      billing_cycle: event.billingCycle,
+    },
+  });
+
   console.log(`Payment succeeded for user ${existing.user_id}`);
 }
 
@@ -318,6 +351,11 @@ async function handlePaymentFailed(
   supabase: ReturnType<typeof createServiceClient>,
   event: PaymentEvent
 ) {
+  const existing = await subscriptionRepository.getByProviderSubscriptionId(
+    supabase,
+    event.providerSubscriptionId
+  );
+
   await subscriptionRepository.updateByProviderSubscriptionId(
     supabase,
     event.providerSubscriptionId,
@@ -325,6 +363,18 @@ async function handlePaymentFailed(
       status: "past_due",
     }
   );
+
+  // Track payment failure in PostHog
+  if (existing) {
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: existing.user_id,
+      event: "payment_failed",
+      properties: {
+        billing_cycle: event.billingCycle,
+      },
+    });
+  }
 
   console.log(`Payment failed for subscription ${event.providerSubscriptionId}`);
 
@@ -361,6 +411,18 @@ async function handleCreditPackPurchase(
     `Purchased ${pack.name} (${pack.credits} credits)`,
     event.providerTransactionId
   );
+
+  // Track credit pack purchase in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "credit_pack_purchased",
+    properties: {
+      pack_id: packId,
+      credits: pack.credits,
+      pack_name: pack.name,
+    },
+  });
 
   console.log(
     `Credit pack ${packId} purchased by user ${userId}: +${pack.credits} credits`

@@ -1,0 +1,77 @@
+[
+  {
+    "event": "user_signed_up",
+    "description": "User successfully created a new account",
+    "file": "apps/web/app/(auth)/signup/page.tsx"
+  },
+  {
+    "event": "user_signed_in",
+    "description": "User successfully logged in to their account",
+    "file": "apps/web/app/(auth)/login/page.tsx"
+  },
+  {
+    "event": "budget_setup_completed",
+    "description": "User completed the budget setup wizard",
+    "file": "apps/web/components/budget-setup/budget-setup-page.tsx"
+  },
+  {
+    "event": "budget_setup_skipped",
+    "description": "User skipped the budget setup wizard",
+    "file": "apps/web/components/budget-setup/budget-setup-page.tsx"
+  },
+  {
+    "event": "expense_created",
+    "description": "User logged a new expense/transaction",
+    "file": "apps/web/components/expenses/expense-modal.tsx"
+  },
+  {
+    "event": "checkout_initiated",
+    "description": "User clicked the upgrade to Pro button to start checkout",
+    "file": "apps/web/components/subscription/checkout-button.tsx"
+  },
+  {
+    "event": "billing_cycle_changed",
+    "description": "User toggled between monthly and yearly billing on pricing page",
+    "file": "apps/web/app/pricing/pricing-content.tsx"
+  },
+  {
+    "event": "feedback_submitted",
+    "description": "User submitted feedback via the feedback form",
+    "file": "apps/web/actions/feedback/index.ts"
+  },
+  {
+    "event": "roadmap_item_voted",
+    "description": "User voted for a roadmap feature",
+    "file": "apps/web/components/roadmap/vote-button.tsx"
+  },
+  {
+    "event": "settings_updated",
+    "description": "User updated their settings",
+    "file": "apps/web/app/dashboard/settings/settings-client.tsx"
+  },
+  {
+    "event": "subscription_created",
+    "description": "New subscription was created (server-side, via webhook)",
+    "file": "apps/web/app/api/webhooks/payments/route.ts"
+  },
+  {
+    "event": "subscription_cancelled",
+    "description": "User cancelled their subscription (server-side, via webhook)",
+    "file": "apps/web/app/api/webhooks/payments/route.ts"
+  },
+  {
+    "event": "payment_succeeded",
+    "description": "Subscription payment was successful (server-side, via webhook)",
+    "file": "apps/web/app/api/webhooks/payments/route.ts"
+  },
+  {
+    "event": "payment_failed",
+    "description": "Subscription payment failed (server-side, via webhook)",
+    "file": "apps/web/app/api/webhooks/payments/route.ts"
+  },
+  {
+    "event": "credit_pack_purchased",
+    "description": "User purchased a credit pack (server-side, via webhook)",
+    "file": "apps/web/app/api/webhooks/payments/route.ts"
+  }
+]

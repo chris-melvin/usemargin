@@ -308,7 +308,7 @@ describe("Bills Status Calculations", () => {
       const overdue = identifyOverdueBills(bills, today);
 
       expect(overdue).toHaveLength(1);
-      expect(overdue[0].label).toBe("Rent");
+      expect(overdue[0]?.label).toBe("Rent");
     });
 
     it("should not include paid bills", () => {
@@ -497,9 +497,9 @@ describe("Cash Flow Calculations", () => {
 
       const result = calculateTotalExpensesByCategory(expenses);
 
-      expect(result[0].category).toBe("B");
-      expect(result[1].category).toBe("C");
-      expect(result[2].category).toBe("A");
+      expect(result[0]?.category).toBe("B");
+      expect(result[1]?.category).toBe("C");
+      expect(result[2]?.category).toBe("A");
     });
 
     it("should handle empty category as 'Other'", () => {

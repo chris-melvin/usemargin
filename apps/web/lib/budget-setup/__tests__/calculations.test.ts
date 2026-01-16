@@ -88,8 +88,8 @@ describe("Budget Setup Calculations", () => {
   describe("calculateTotalMonthlyIncome", () => {
     it("should sum all incomes normalized to monthly", () => {
       const incomes: WizardIncome[] = [
-        { label: "Salary", amount: 5000, frequency: "monthly" },
-        { label: "Side gig", amount: 500, frequency: "weekly" },
+        { id: "Salary_id", label: "Salary", amount: 5000, frequency: "monthly", isPrimary: true },
+        { id: "Side gig_id", label: "Side gig", amount: 500, frequency: "weekly", isPrimary: true },
       ];
 
       const total = calculateTotalMonthlyIncome(incomes);
@@ -103,16 +103,16 @@ describe("Budget Setup Calculations", () => {
 
     it("should handle single income", () => {
       const incomes: WizardIncome[] = [
-        { label: "Salary", amount: 5000, frequency: "monthly" },
+        { id: "Salary_id", label: "Salary", amount: 5000, frequency: "monthly", isPrimary: true },
       ];
       expect(calculateTotalMonthlyIncome(incomes)).toBe(5000);
     });
 
     it("should handle mixed frequencies", () => {
       const incomes: WizardIncome[] = [
-        { label: "Salary", amount: 4000, frequency: "biweekly" }, // 8680
-        { label: "Bonus", amount: 12000, frequency: "yearly" }, // 1000
-        { label: "Freelance", amount: 100, frequency: "weekly" }, // 433
+        { id: "Salary_id", label: "Salary", amount: 4000, frequency: "biweekly", isPrimary: true }, // 8680
+        { id: "Bonus_id", label: "Bonus", amount: 12000, frequency: "yearly", isPrimary: true }, // 1000
+        { id: "Freelance_id", label: "Freelance", amount: 100, frequency: "weekly", isPrimary: true }, // 433
       ];
 
       const total = calculateTotalMonthlyIncome(incomes);
@@ -123,8 +123,8 @@ describe("Budget Setup Calculations", () => {
   describe("calculateTotalMonthlyExpenses", () => {
     it("should sum all expenses normalized to monthly", () => {
       const bills: WizardBill[] = [
-        { label: "Rent", amount: 1500, frequency: "monthly" },
-        { label: "Insurance", amount: 600, frequency: "quarterly" },
+        { id: "Rent_id", label: "Rent", amount: 1500, frequency: "monthly", category: "housing" },
+        { id: "Insurance_id", label: "Insurance", amount: 600, frequency: "yearly", category: "insurance" },
       ];
 
       const total = calculateTotalMonthlyExpenses(bills);
@@ -162,9 +162,11 @@ describe("Budget Setup Calculations", () => {
   describe("calculateBucketAllocations", () => {
     const baseBuckets: WizardBucket[] = [
       {
+        id: "1",
         name: "Savings",
         slug: "savings",
         percentage: 20,
+        targetAmount: null,
         color: "#22c55e",
         icon: "PiggyBank",
         isDefault: false,
@@ -172,9 +174,11 @@ describe("Budget Setup Calculations", () => {
         allocatedAmount: 0,
       },
       {
+        id: "2",
         name: "Daily Spending",
         slug: "daily-spending",
         percentage: 80,
+        targetAmount: null,
         color: "#3b82f6",
         icon: "Wallet",
         isDefault: true,
@@ -186,39 +190,41 @@ describe("Budget Setup Calculations", () => {
     it("should allocate amounts based on percentages", () => {
       const result = calculateBucketAllocations(baseBuckets, 10000);
 
-      expect(result[0].allocatedAmount).toBe(2000); // 20% of 10000
-      expect(result[1].allocatedAmount).toBe(8000); // 80% of 10000
+      expect(result[0]?.allocatedAmount).toBe(2000); // 20% of 10000
+      expect(result[1]?.allocatedAmount).toBe(8000); // 80% of 10000
     });
 
     it("should floor allocated amounts to avoid fractional cents", () => {
       const result = calculateBucketAllocations(baseBuckets, 9999);
 
-      expect(result[0].allocatedAmount).toBe(1999); // floor(20% of 9999)
-      expect(result[1].allocatedAmount).toBe(7999); // floor(80% of 9999)
+      expect(result[0]?.allocatedAmount).toBe(1999); // floor(20% of 9999)
+      expect(result[1]?.allocatedAmount).toBe(7999); // floor(80% of 9999)
     });
 
     it("should handle zero available amount", () => {
       const result = calculateBucketAllocations(baseBuckets, 0);
 
-      expect(result[0].allocatedAmount).toBe(0);
-      expect(result[1].allocatedAmount).toBe(0);
+      expect(result[0]?.allocatedAmount).toBe(0);
+      expect(result[1]?.allocatedAmount).toBe(0);
     });
 
     it("should preserve other bucket properties", () => {
       const result = calculateBucketAllocations(baseBuckets, 10000);
 
-      expect(result[0].name).toBe("Savings");
-      expect(result[0].isDefault).toBe(false);
-      expect(result[1].isDefault).toBe(true);
+      expect(result[0]?.name).toBe("Savings");
+      expect(result[0]?.isDefault).toBe(false);
+      expect(result[1]?.isDefault).toBe(true);
     });
   });
 
   describe("calculateDailyLimit", () => {
     const bucketsWithDefault: WizardBucket[] = [
       {
+        id: "1",
         name: "Daily Spending",
         slug: "daily-spending",
         percentage: 80,
+        targetAmount: null,
         color: "#3b82f6",
         icon: "Wallet",
         isDefault: true,
@@ -229,9 +235,11 @@ describe("Budget Setup Calculations", () => {
 
     const bucketsWithoutDefault: WizardBucket[] = [
       {
+        id: "1",
         name: "Savings",
         slug: "savings",
         percentage: 100,
+        targetAmount: null,
         color: "#22c55e",
         icon: "PiggyBank",
         isDefault: false,
@@ -338,8 +346,8 @@ describe("Budget Setup Calculations", () => {
   describe("validateBucketPercentages", () => {
     it("should return valid for exactly 100%", () => {
       const buckets: WizardBucket[] = [
-        { name: "A", slug: "a", percentage: 50, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
-        { name: "B", slug: "b", percentage: 50, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
+        { id: "A_id", name: "A", slug: "a", percentage: 50, targetAmount: null, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
+        { id: "B_id", name: "B", slug: "b", percentage: 50, targetAmount: null, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
       ];
 
       const result = validateBucketPercentages(buckets);
@@ -350,9 +358,9 @@ describe("Budget Setup Calculations", () => {
 
     it("should handle floating point near 100%", () => {
       const buckets: WizardBucket[] = [
-        { name: "A", slug: "a", percentage: 33.33, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
-        { name: "B", slug: "b", percentage: 33.33, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
-        { name: "C", slug: "c", percentage: 33.34, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
+        { id: "A_id", name: "A", slug: "a", percentage: 33.33, targetAmount: null, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
+        { id: "B_id", name: "B", slug: "b", percentage: 33.33, targetAmount: null, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
+        { id: "C_id", name: "C", slug: "c", percentage: 33.34, targetAmount: null, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
       ];
 
       const result = validateBucketPercentages(buckets);
@@ -361,8 +369,8 @@ describe("Budget Setup Calculations", () => {
 
     it("should return invalid for under 100%", () => {
       const buckets: WizardBucket[] = [
-        { name: "A", slug: "a", percentage: 30, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
-        { name: "B", slug: "b", percentage: 40, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
+        { id: "A_id", name: "A", slug: "a", percentage: 30, targetAmount: null, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
+        { id: "B_id", name: "B", slug: "b", percentage: 40, targetAmount: null, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
       ];
 
       const result = validateBucketPercentages(buckets);
@@ -373,8 +381,8 @@ describe("Budget Setup Calculations", () => {
 
     it("should return invalid for over 100%", () => {
       const buckets: WizardBucket[] = [
-        { name: "A", slug: "a", percentage: 60, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
-        { name: "B", slug: "b", percentage: 60, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
+        { id: "A_id", name: "A", slug: "a", percentage: 60, targetAmount: null, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
+        { id: "B_id", name: "B", slug: "b", percentage: 60, targetAmount: null, color: "", icon: "", isDefault: false, isSystem: false, allocatedAmount: 0 },
       ];
 
       const result = validateBucketPercentages(buckets);
@@ -428,16 +436,16 @@ describe("Budget Setup Calculations", () => {
 
     it("should calculate complete budget summary", () => {
       const incomes: WizardIncome[] = [
-        { label: "Salary", amount: 10000, frequency: "monthly" },
+        { id: "Salary_id", label: "Salary", amount: 10000, frequency: "monthly", isPrimary: true },
       ];
 
       const bills: WizardBill[] = [
-        { label: "Rent", amount: 3000, frequency: "monthly" },
+        { id: "Rent_id", label: "Rent", amount: 3000, frequency: "monthly", category: "housing" },
       ];
 
       const buckets: WizardBucket[] = [
-        { name: "Savings", slug: "savings", percentage: 20, color: "#22c55e", icon: "PiggyBank", isDefault: false, isSystem: true, allocatedAmount: 0 },
-        { name: "Daily Spending", slug: "daily-spending", percentage: 80, color: "#3b82f6", icon: "Wallet", isDefault: true, isSystem: true, allocatedAmount: 0 },
+        { id: "Savings_id", name: "Savings", slug: "savings", percentage: 20, targetAmount: null, color: "#22c55e", icon: "PiggyBank", isDefault: false, isSystem: true, allocatedAmount: 0 },
+        { id: "Daily Spending_id", name: "Daily Spending", slug: "daily-spending", percentage: 80, targetAmount: null, color: "#3b82f6", icon: "Wallet", isDefault: true, isSystem: true, allocatedAmount: 0 },
       ];
 
       const summary = calculateBudgetSummary(incomes, bills, buckets);
@@ -453,11 +461,11 @@ describe("Budget Setup Calculations", () => {
 
     it("should handle no savings bucket", () => {
       const incomes: WizardIncome[] = [
-        { label: "Salary", amount: 9000, frequency: "monthly" },
+        { id: "Salary_id", label: "Salary", amount: 9000, frequency: "monthly", isPrimary: true },
       ];
 
       const buckets: WizardBucket[] = [
-        { name: "Daily Spending", slug: "daily-spending", percentage: 100, color: "#3b82f6", icon: "Wallet", isDefault: true, isSystem: true, allocatedAmount: 0 },
+        { id: "Daily Spending_id", name: "Daily Spending", slug: "daily-spending", percentage: 100, targetAmount: null, color: "#3b82f6", icon: "Wallet", isDefault: true, isSystem: true, allocatedAmount: 0 },
       ];
 
       const summary = calculateBudgetSummary(incomes, [], buckets);

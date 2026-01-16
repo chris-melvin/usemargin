@@ -342,7 +342,7 @@ describe("Feature Gate Configuration", () => {
 
     for (const feature of subscriptionFeatures) {
       expect(FEATURE_GATES[feature]).toBeDefined();
-      expect(FEATURE_GATES[feature].requiredTier).toBe("pro");
+      expect(FEATURE_GATES[feature]?.requiredTier).toBe("pro");
     }
   });
 
@@ -351,7 +351,7 @@ describe("Feature Gate Configuration", () => {
 
     for (const feature of creditFeatures) {
       expect(FEATURE_GATES[feature]).toBeDefined();
-      expect(FEATURE_GATES[feature].creditsRequired).toBeGreaterThan(0);
+      expect(FEATURE_GATES[feature]?.creditsRequired).toBeGreaterThan(0);
     }
   });
 

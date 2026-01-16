@@ -2,6 +2,7 @@
 
 import { useState, type ComponentProps } from "react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { usePaddle } from "@/components/paddle";
 import { createCheckout } from "@/actions/subscriptions/create-checkout";
@@ -53,6 +54,11 @@ export function CheckoutButton({
         return;
       }
 
+      // Track checkout initiation
+      posthog.capture("checkout_initiated", {
+        billing_cycle: billingCycle,
+      });
+
       // Open Paddle overlay with the transaction ID
       paddle.Checkout.open({
         transactionId: result.data.sessionId,
@@ -65,6 +71,7 @@ export function CheckoutButton({
       });
     } catch (error) {
       console.error("Checkout error:", error);
+      posthog.captureException(error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);

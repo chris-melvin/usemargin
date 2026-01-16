@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { Check, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StartingBalanceSection } from "./sections/starting-balance-section";
@@ -70,6 +71,7 @@ export function BudgetSetupPage() {
 
   // Handle skip
   const handleSkip = useCallback(() => {
+    posthog.capture("budget_setup_skipped");
     router.push("/dashboard");
   }, [router]);
 
@@ -100,9 +102,20 @@ export function BudgetSetupPage() {
         totalFixedExpenses: summary.totalFixedExpenses,
       });
 
+      // Track budget setup completion
+      posthog.capture("budget_setup_completed", {
+        income_sources_count: incomes.length,
+        bills_count: allBills.length,
+        buckets_count: buckets.length,
+        daily_limit: summary.dailyLimit,
+        total_monthly_income: summary.totalMonthlyIncome,
+        total_fixed_expenses: summary.totalFixedExpenses,
+      });
+
       router.push("/dashboard");
     } catch (error) {
       console.error("Failed to complete setup:", error);
+      posthog.captureException(error);
     } finally {
       setIsSubmitting(false);
     }

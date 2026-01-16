@@ -465,9 +465,9 @@ describe("Bucket Sort Order", () => {
     ];
 
     const sorted = sortBuckets(buckets);
-    expect(sorted[0].id).toBe("a");
-    expect(sorted[1].id).toBe("b");
-    expect(sorted[2].id).toBe("c");
+    expect(sorted[0]?.id).toBe("a");
+    expect(sorted[1]?.id).toBe("b");
+    expect(sorted[2]?.id).toBe("c");
   });
 
   it("should handle empty array", () => {

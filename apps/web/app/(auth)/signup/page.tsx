@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import posthog from "posthog-js";
 import { signUp } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +14,14 @@ function SignUpForm() {
   const redirectTo = searchParams.get("redirect") || "/";
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const emailRef = useRef<string>("");
 
   async function handleSubmit(formData: FormData) {
     setIsLoading(true);
     setError(null);
+
+    // Store email for PostHog identification
+    emailRef.current = formData.get("email")?.toString() || "";
 
     // Add redirect URL to form data
     formData.set("redirectTo", redirectTo);
@@ -26,6 +31,13 @@ function SignUpForm() {
     // If we get here, there was an error (successful signup redirects)
     if (result && !result.success) {
       setError(result.error);
+    } else {
+      // Identify user and capture signup event on successful signup
+      const email = emailRef.current;
+      if (email) {
+        posthog.identify(email, { email });
+        posthog.capture("user_signed_up", { email });
+      }
     }
     setIsLoading(false);
   }

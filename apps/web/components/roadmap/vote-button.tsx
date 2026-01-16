@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import posthog from "posthog-js";
 import { ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,13 @@ export function VoteButton({
         // Update with actual values from server
         setOptimisticVoted(result.data.voted);
         setOptimisticCount(result.data.voteCount);
+
+        // Track vote action
+        posthog.capture("roadmap_item_voted", {
+          item_id: itemId,
+          voted: result.data.voted,
+          vote_count: result.data.voteCount,
+        });
       }
     });
   };
