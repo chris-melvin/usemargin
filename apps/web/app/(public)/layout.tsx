@@ -143,6 +143,14 @@ export default function PublicLayout({
                     Terms of Service
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/refund"
+                    className="text-neutral-600 transition-colors hover:text-neutral-900"
+                  >
+                    Refund Policy
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>

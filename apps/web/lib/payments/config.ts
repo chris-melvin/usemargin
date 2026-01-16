@@ -41,18 +41,18 @@ export const PADDLE_CONFIG = {
 export const PRICING_DISPLAY = {
   pro: {
     monthly: {
-      amount: 299,
+      amount: 250,
       currency: "PHP",
-      formatted: "₱299",
+      formatted: "₱250",
       period: "month",
     },
     yearly: {
-      amount: 2990,
+      amount: 2500,
       currency: "PHP",
-      formatted: "₱2,990",
+      formatted: "₱2,500",
       period: "year",
-      monthlyEquivalent: "₱249",
-      savings: "₱598",
+      monthlyEquivalent: "₱208",
+      savings: "₱500",
       savingsPercent: 17,
     },
   },
