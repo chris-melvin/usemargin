@@ -1,9 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, Plus, Settings2 } from "lucide-react";
+import {
+  Zap, Plus, Settings2, Coffee, Bus, Utensils, UtensilsCrossed,
+  Apple, Bike, ShoppingCart, ShoppingBag, LucideIcon
+} from "lucide-react";
 import { TEMPLATES, CURRENCY } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+
+// Icon mapping for Lucide icons
+const iconMap: Record<string, LucideIcon> = {
+  Coffee,
+  Bus,
+  Utensils,
+  UtensilsCrossed,
+  Apple,
+  Bike,
+  ShoppingCart,
+  ShoppingBag,
+};
 
 interface QuickTemplatesProps {
   onSelect: (amount: number, label: string) => void;
@@ -52,35 +67,38 @@ export function QuickTemplates({
       <div className="p-3">
         <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2">
           {/* Default Templates */}
-          {TEMPLATES.map((t, index) => (
-            <button
-              key={t.id}
-              onClick={() => handlePress(t.id, t.amount, t.label)}
-              className={cn(
-                "group relative p-2.5 bg-stone-50/80 hover:bg-stone-100 border border-stone-100 rounded-xl",
-                "flex flex-col items-center gap-0.5 transition-all duration-200",
-                "hover:shadow-sm hover:border-stone-200 hover:-translate-y-0.5",
-                "active:scale-95 active:shadow-none",
-                pressedId === t.id && "scale-95 bg-amber-50 border-amber-200"
-              )}
-              style={{
-                animationDelay: `${index * 30}ms`,
-              }}
-            >
-              {/* Icon with subtle bounce on hover */}
-              <span className="text-lg transition-transform group-hover:scale-110">
-                {t.icon}
-              </span>
-              {/* Label */}
-              <span className="text-[10px] font-semibold text-stone-700 truncate max-w-full">
-                {t.label}
-              </span>
-              {/* Amount - smaller and muted */}
-              <span className="text-[9px] text-stone-400 font-medium tabular-nums">
-                {CURRENCY}{t.amount}
-              </span>
-            </button>
-          ))}
+          {TEMPLATES.map((t, index) => {
+            const IconComponent = iconMap[t.icon];
+            return (
+              <button
+                key={t.id}
+                onClick={() => handlePress(t.id, t.amount, t.label)}
+                className={cn(
+                  "group relative p-2.5 bg-stone-50/80 hover:bg-stone-100 border border-stone-100 rounded-xl",
+                  "flex flex-col items-center gap-0.5 transition-all duration-200",
+                  "hover:shadow-sm hover:border-stone-200 hover:-translate-y-0.5",
+                  "active:scale-95 active:shadow-none",
+                  pressedId === t.id && "scale-95 bg-amber-50 border-amber-200"
+                )}
+                style={{
+                  animationDelay: `${index * 30}ms`,
+                }}
+              >
+                {/* Icon with subtle bounce on hover */}
+                <div className="text-stone-600 transition-transform group-hover:scale-110">
+                  {IconComponent && <IconComponent className="h-5 w-5" />}
+                </div>
+                {/* Label */}
+                <span className="text-[10px] font-semibold text-stone-700 truncate max-w-full">
+                  {t.label}
+                </span>
+                {/* Amount - smaller and muted */}
+                <span className="text-[9px] text-stone-400 font-medium tabular-nums">
+                  {CURRENCY}{t.amount}
+                </span>
+              </button>
+            );
+          })}
 
           {/* Custom Shortcuts */}
           {customShortcuts.map((shortcut, index) => (

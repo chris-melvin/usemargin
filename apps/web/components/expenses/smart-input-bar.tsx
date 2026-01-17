@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Sparkles, Loader2, ArrowUp, X, Plus, HelpCircle, Lightbulb, ChevronUp } from "lucide-react";
+import {
+  Sparkles, Loader2, ArrowUp, X, Plus, HelpCircle, Lightbulb, ChevronUp,
+  Coffee, Utensils, Bus, Bike, LucideIcon
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CURRENCY } from "@/lib/constants";
 import { BucketChip } from "./bucket-chip";
@@ -36,13 +39,21 @@ const SYNTAX_EXAMPLES = [
   { example: "uber 180 #travel", desc: "Add category" },
 ];
 
-// Quick suggestion chips for new users
+// Quick suggestion chips for new users (using Lucide icons)
 const QUICK_SUGGESTIONS = [
-  { label: "Coffee", amount: 120, icon: "☕" },
-  { label: "Lunch", amount: 180, icon: "🍱" },
-  { label: "Transport", amount: 50, icon: "🚌" },
-  { label: "Grab", amount: 180, icon: "🛵" },
+  { label: "Coffee", amount: 120, icon: "Coffee" as const },
+  { label: "Lunch", amount: 180, icon: "Utensils" as const },
+  { label: "Transport", amount: 50, icon: "Bus" as const },
+  { label: "Grab", amount: 180, icon: "Bike" as const },
 ];
+
+// Icon mapping
+const suggestionIconMap: Record<string, LucideIcon> = {
+  Coffee,
+  Utensils,
+  Bus,
+  Bike,
+};
 
 export function SmartInputBar({
   onAddExpenses,
@@ -316,24 +327,7 @@ export function SmartInputBar({
               </div>
 
               {/* Quick suggestions for mobile */}
-              <div className="mb-4">
-                <p className="text-xs text-neutral-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                  <Lightbulb className="w-3 h-3" /> Quick add
-                </p>
-                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                  {QUICK_SUGGESTIONS.map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => handleQuickAdd(item.label, item.amount)}
-                      className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-100 active:bg-teal-100 transition-colors"
-                    >
-                      <span className="text-lg">{item.icon}</span>
-                      <span className="text-sm font-medium text-neutral-700">{item.label}</span>
-                      <span className="text-xs text-neutral-400">{CURRENCY}{item.amount}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Quick add suggestions removed per user request */}
 
               {/* Help toggle for mobile */}
               <button
@@ -473,24 +467,7 @@ export function SmartInputBar({
               </div>
 
               {/* Quick suggestions */}
-              <div className="mb-4">
-                <p className="text-xs text-neutral-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                  <Lightbulb className="w-3 h-3" /> Quick add
-                </p>
-                <div className="flex gap-2 flex-wrap">
-                  {QUICK_SUGGESTIONS.map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => handleQuickAdd(item.label, item.amount)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-neutral-100 hover:bg-teal-100 transition-colors"
-                    >
-                      <span className="text-lg">{item.icon}</span>
-                      <span className="text-sm font-medium text-neutral-700">{item.label}</span>
-                      <span className="text-xs text-neutral-400">{CURRENCY}{item.amount}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Quick add suggestions removed per user request */}
 
               {/* Help toggle */}
               <button
