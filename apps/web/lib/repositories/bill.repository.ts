@@ -1,10 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Debt, DebtInsert, DebtUpdate } from "@repo/database";
 import { BaseRepository } from "./base.repository";
+import * as dateUtils from "@/lib/utils/date";
 
 /**
  * Repository for bill/debt operations
  * Note: Uses the "debts" table but we call them "bills" in the UI
+ *
+ * Updated to use timestamp fields for proper timezone handling.
  */
 class BillRepository extends BaseRepository<Debt, DebtInsert, DebtUpdate> {
   protected tableName = "debts";
@@ -91,21 +94,37 @@ class BillRepository extends BaseRepository<Debt, DebtInsert, DebtUpdate> {
 
   /**
    * Mark a bill as paid
+   *
+   * @param supabase - Supabase client
+   * @param id - Bill ID
+   * @param userId - User ID
+   * @param paidTimestamp - When bill was paid (defaults to now)
+   * @param timezone - User's timezone (for default timestamp)
+   * @returns Updated bill record
    */
   async markAsPaid(
     supabase: SupabaseClient,
     id: string,
     userId: string,
-    paidDate?: string
+    paidTimestamp?: string,
+    timezone?: string
   ): Promise<Debt> {
+    const timestamp = paidTimestamp ??
+      (timezone ? dateUtils.getCurrentTimestamp(timezone) : new Date().toISOString());
+
     return this.update(supabase, id, userId, {
       status: "paid",
-      paid_date: paidDate ?? new Date().toISOString().split("T")[0],
+      paid_timestamp: timestamp,
     });
   }
 
   /**
    * Reset bill status (for recurring bills at start of month)
+   *
+   * @param supabase - Supabase client
+   * @param id - Bill ID
+   * @param userId - User ID
+   * @returns Updated bill record
    */
   async resetStatus(
     supabase: SupabaseClient,
@@ -114,7 +133,7 @@ class BillRepository extends BaseRepository<Debt, DebtInsert, DebtUpdate> {
   ): Promise<Debt> {
     return this.update(supabase, id, userId, {
       status: "pending",
-      paid_date: null,
+      paid_timestamp: null,
     });
   }
 

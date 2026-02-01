@@ -189,6 +189,7 @@ async function handleSubscriptionCreated(
       status: event.status,
     },
   });
+  await posthog.flush(); // Ensure event is sent before function terminates
 
   console.log(`Subscription created for user ${userId}:`, data);
 }
@@ -292,6 +293,7 @@ async function handleSubscriptionCancelled(
       billing_cycle: event.billingCycle,
     },
   });
+  await posthog.flush(); // Ensure event is sent before function terminates
 
   // Note: Don't downgrade to free yet - user has access until period end
   // A scheduled job should check current_period_end and downgrade expired subs
@@ -340,6 +342,7 @@ async function handlePaymentSucceeded(
       billing_cycle: event.billingCycle,
     },
   });
+  await posthog.flush(); // Ensure event is sent before function terminates
 
   console.log(`Payment succeeded for user ${existing.user_id}`);
 }
@@ -374,6 +377,7 @@ async function handlePaymentFailed(
         billing_cycle: event.billingCycle,
       },
     });
+    await posthog.flush(); // Ensure event is sent before function terminates
   }
 
   console.log(`Payment failed for subscription ${event.providerSubscriptionId}`);
@@ -423,6 +427,7 @@ async function handleCreditPackPurchase(
       pack_name: pack.name,
     },
   });
+  await posthog.flush(); // Ensure event is sent before function terminates
 
   console.log(
     `Credit pack ${packId} purchased by user ${userId}: +${pack.credits} credits`

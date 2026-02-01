@@ -12,9 +12,11 @@ export const updateFlexBucketSchema = z.object({
 
 /**
  * Schema for creating a flex allocation
+ *
+ * Updated to use allocated_timestamp
  */
 export const createFlexAllocationSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  allocated_timestamp: z.string().datetime("Invalid timestamp format (ISO 8601)"),
   amount: z.coerce
     .number()
     .positive("Amount must be positive")
@@ -29,9 +31,11 @@ export const updateFlexAllocationSchema = createFlexAllocationSchema.partial();
 
 /**
  * Schema for daily override (custom daily limit)
+ *
+ * Updated to use override_timestamp
  */
 export const createDailyOverrideSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  override_timestamp: z.string().datetime("Invalid timestamp format (ISO 8601)"),
   limit_amount: z.coerce
     .number()
     .positive("Limit must be positive")

@@ -95,6 +95,18 @@ export function CalendarDayCell({
   // Transaction count (only show if > 0)
   const txCount = day.transactionCount ?? 0;
 
+  // Debug logging for days with indicators
+  if (process.env.NODE_ENV === "development" && day.day && (txCount > 0 || day.hasIncome || day.hasBill || (day.bucketSummary && day.bucketSummary.length > 0))) {
+    console.log(`[CalendarDayCell] Day ${day.day} indicators:`, {
+      txCount,
+      hasIncome: day.hasIncome,
+      hasBill: day.hasBill,
+      bucketSummaryCount: day.bucketSummary?.length ?? 0,
+      spent: day.spent,
+      isPast,
+    });
+  }
+
   return (
     <div
       onClick={onClick}

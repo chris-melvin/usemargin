@@ -2,9 +2,12 @@ import { z } from "zod";
 
 /**
  * Schema for creating a new expense
+ *
+ * Updated to use occurred_at timestamp exclusively.
+ * The date and time_of_day fields have been removed.
  */
 export const createExpenseSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  occurred_at: z.string().datetime("Invalid timestamp format (ISO 8601)"),
   amount: z.coerce
     .number()
     .positive("Amount must be positive")
@@ -15,12 +18,6 @@ export const createExpenseSchema = z.object({
     .max(255, "Label must be 255 characters or less"),
   category: z.string().max(100).optional().nullable(),
   notes: z.string().max(1000).optional().nullable(),
-  time_of_day: z
-    .string()
-    .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Invalid time format (HH:MM or HH:MM:SS)")
-    .optional()
-    .nullable(),
-  occurred_at: z.string().datetime().optional().nullable(),
   bucket_id: z.string().uuid("Invalid bucket ID").optional().nullable(),
 });
 

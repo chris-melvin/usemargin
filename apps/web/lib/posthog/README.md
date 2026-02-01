@@ -7,11 +7,13 @@ PostHog is fully integrated into useMargin for comprehensive analytics and featu
 The following components are already configured:
 
 ### 1. Environment Variables
-Located in `/apps/web/.env`:
+Located in `/apps/web/.env.local`:
 ```env
-NEXT_PUBLIC_POSTHOG_KEY=phc_lZnI1jDOYc7adblHBBueGzq6ezaaU7QfMKFimn4LdWs
+NEXT_PUBLIC_POSTHOG_KEY=phc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
+
+**Important:** Never commit your actual PostHog API key to version control. Keep it in `.env.local` which should be in your `.gitignore`.
 
 ### 2. Provider Setup
 - `PostHogProvider` wraps the entire app in `/apps/web/app/layout.tsx`
@@ -205,7 +207,6 @@ Check browser console for PostHog logs during development.
 
 Access your PostHog dashboard at:
 - **URL**: https://us.i.posthog.com
-- **Project Key**: `phc_lZnI1jDOYc7adblHBBueGzq6ezaaU7QfMKFimn4LdWs`
 
 ### Key Dashboards to Set Up
 1. **User Engagement** - DAU/WAU/MAU, session duration

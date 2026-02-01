@@ -8,7 +8,8 @@ import type { Income } from "@repo/database";
 
 export async function markIncomeReceived(
   id: string,
-  receivedDate?: string
+  receivedTimestamp?: string,
+  timezone?: string
 ): Promise<ActionResult<Income>> {
   const authResult = await requireAuth();
   if (!authResult.success) return authResult;
@@ -19,7 +20,8 @@ export async function markIncomeReceived(
       supabase,
       id,
       userId,
-      receivedDate
+      receivedTimestamp,
+      timezone
     );
 
     revalidatePath("/dashboard");

@@ -9,36 +9,35 @@
 // ENUMS
 // =============================================================================
 
-export type IncomeFrequency =
-  | "weekly"
-  | "biweekly"
-  | "monthly"
-  | "quarterly"
-  | "yearly"
-  | "once";
-
-export type IncomeStatus = "pending" | "expected" | "received";
-
-export type BillFrequency =
-  | "weekly"
-  | "biweekly"
-  | "monthly"
-  | "yearly"
-  | "once";
-
-export type BillStatus = "pending" | "paid" | "overdue" | "partially_paid";
-
-export type DebtPaymentType = "fixed" | "variable";
-
-export type DebtPaymentMode = "manual" | "auto_deduct";
-
+/**
+ * Unified recurring frequency type for all recurring entities
+ */
 export type RecurringFrequency =
+  | "once"
   | "daily"
   | "weekly"
   | "biweekly"
   | "monthly"
   | "quarterly"
   | "yearly";
+
+/**
+ * Income frequency - same as recurring frequency
+ */
+export type IncomeFrequency = RecurringFrequency;
+
+export type IncomeStatus = "pending" | "expected" | "received";
+
+/**
+ * Bill frequency - excludes daily as bills are not typically daily
+ */
+export type BillFrequency = Exclude<RecurringFrequency, "daily">;
+
+export type BillStatus = "pending" | "paid" | "overdue" | "partially_paid";
+
+export type DebtPaymentType = "fixed" | "variable";
+
+export type DebtPaymentMode = "manual" | "auto_deduct";
 
 export type AssetType =
   | "cash"
@@ -87,14 +86,12 @@ export type TrackingMode = "tracking_only" | "budget_enabled";
 export interface Expense {
   id: string;
   user_id: string;
-  date: string; // YYYY-MM-DD
+  occurred_at: string; // TIMESTAMPTZ - when expense occurred
   amount: number;
   label: string;
   category: string | null;
   category_id: string | null;
   notes: string | null;
-  time_of_day: string | null; // HH:MM:SS (legacy)
-  occurred_at: string | null; // ISO timestamp when expense occurred
   recurring_expense_id: string | null;
   bucket_id: string | null; // Reference to budget bucket
   created_at: string;
@@ -104,7 +101,7 @@ export interface Expense {
 export interface DailyOverride {
   id: string;
   user_id: string;
-  date: string; // YYYY-MM-DD
+  override_timestamp: string; // TIMESTAMPTZ - when override applies
   limit_amount: number;
   created_at: string;
 }
@@ -119,7 +116,7 @@ export interface FlexBucket {
 export interface FlexAllocation {
   id: string;
   user_id: string;
-  date: string; // YYYY-MM-DD
+  allocated_timestamp: string; // TIMESTAMPTZ - when allocation was made
   amount: number;
   notes: string | null;
   created_at: string;
@@ -134,11 +131,11 @@ export interface Income {
   day_of_month: number | null; // 1-31, nullable for non-monthly frequencies
   frequency: IncomeFrequency;
   day_of_week: number | null; // 0-6 (Sunday-Saturday)
-  start_date: string | null;
-  end_date: string | null;
+  start_timestamp: string | null; // TIMESTAMPTZ - when income starts
+  end_timestamp: string | null; // TIMESTAMPTZ - when income ends
   is_active: boolean;
-  expected_date: string | null;
-  received_date: string | null;
+  expected_timestamp: string | null; // TIMESTAMPTZ - when income is expected
+  received_timestamp: string | null; // TIMESTAMPTZ - when income was received
   status: IncomeStatus;
   created_at: string;
   updated_at: string;
@@ -158,15 +155,15 @@ export interface Debt {
   minimum_payment: number | null;
   frequency: BillFrequency;
   day_of_week: number | null;
-  start_date: string | null;
-  end_date: string | null;
+  start_timestamp: string | null; // TIMESTAMPTZ - when debt starts
+  end_timestamp: string | null; // TIMESTAMPTZ - when debt ends
   is_recurring: boolean;
   payment_type: DebtPaymentType; // 'fixed' = same amount every period, 'variable' = user adjusts each period
   payment_mode: DebtPaymentMode; // 'manual' = user records payment, 'auto_deduct' = deduct from bucket
   payment_bucket_id: string | null; // Bucket to deduct from when payment_mode is 'auto_deduct'
   status: BillStatus;
-  paid_date: string | null;
-  receive_date: string | null;
+  paid_timestamp: string | null; // TIMESTAMPTZ - when debt was paid
+  receive_timestamp: string | null; // TIMESTAMPTZ - when payment was received
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -177,9 +174,9 @@ export interface DebtPayment {
   user_id: string;
   debt_id: string;
   amount: number;
-  payment_date: string; // YYYY-MM-DD
-  period_start: string; // YYYY-MM-DD
-  period_end: string; // YYYY-MM-DD
+  payment_timestamp: string; // TIMESTAMPTZ - when payment was made
+  period_start_timestamp: string; // TIMESTAMPTZ - start of payment period
+  period_end_timestamp: string; // TIMESTAMPTZ - end of payment period
   notes: string | null;
   source_bucket_id: string | null; // Bucket that was deducted when this payment was made (if any)
   created_at: string;
@@ -233,7 +230,7 @@ export interface RecurringExpense {
   day_of_week: number | null;
   start_date: string;
   end_date: string | null;
-  next_occurrence: string;
+  next_occurrence_timestamp: string; // TIMESTAMPTZ - when next occurrence is scheduled
   is_active: boolean;
   auto_log: boolean;
   created_at: string;
@@ -261,7 +258,7 @@ export interface SavingsGoal {
   current_balance: number;
   icon: string | null;
   color: string | null;
-  target_date: string | null;
+  target_timestamp: string | null; // TIMESTAMPTZ - target date for goal
   is_hidden: boolean;
   created_at: string;
   updated_at: string;
@@ -274,7 +271,7 @@ export interface SavingsTransaction {
   amount: number; // Positive = contribution, negative = withdrawal
   type: SavingsTransactionType;
   notes: string | null;
-  date: string;
+  transaction_timestamp: string; // TIMESTAMPTZ - when transaction occurred
   created_at: string;
 }
 
@@ -310,7 +307,7 @@ export interface Liability {
 export interface NetWorthSnapshot {
   id: string;
   user_id: string;
-  date: string;
+  snapshot_timestamp: string; // TIMESTAMPTZ - when snapshot was taken
   total_assets: number;
   total_liabilities: number;
   net_worth: number;
@@ -359,10 +356,8 @@ export interface RoadmapVote {
 // INSERT TYPES (for creating new records)
 // =============================================================================
 
-export type ExpenseInsert = Omit<Expense, "id" | "created_at" | "updated_at" | "bucket_id" | "occurred_at"> & {
+export type ExpenseInsert = Omit<Expense, "id" | "created_at" | "updated_at"> & {
   id?: string;
-  bucket_id?: string | null;
-  occurred_at?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -463,7 +458,6 @@ export type SavingsGoalInsert = Omit<SavingsGoal, "id" | "created_at" | "updated
 
 export type SavingsTransactionInsert = Omit<SavingsTransaction, "id" | "created_at"> & {
   id?: string;
-  date?: string;
   created_at?: string;
 };
 

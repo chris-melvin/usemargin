@@ -25,8 +25,8 @@ export async function updateExpense(
   // 3. Parse and validate input
   const rawData: Record<string, unknown> = {};
 
-  const date = formData.get("date");
-  if (date) rawData.date = date;
+  const occurred_at = formData.get("occurred_at");
+  if (occurred_at) rawData.occurred_at = occurred_at;
 
   const amount = formData.get("amount");
   if (amount) rawData.amount = amount;

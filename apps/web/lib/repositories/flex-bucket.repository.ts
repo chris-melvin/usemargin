@@ -10,6 +10,7 @@ import type {
   DailyOverrideInsert,
   DailyOverrideUpdate,
 } from "@repo/database";
+import * as dateUtils from "@/lib/utils/date";
 
 /**
  * Repository for flex bucket operations
@@ -112,46 +113,63 @@ class FlexAllocationRepository {
       .from(this.tableName)
       .select("*")
       .eq("user_id", userId)
-      .order("date", { ascending: false });
+      .order("allocated_timestamp", { ascending: false });
 
     if (error) throw error;
     return (data ?? []) as FlexAllocation[];
   }
 
   /**
-   * Find allocations for a date range
+   * Find allocations for a date range in user's timezone
    */
   async findByDateRange(
     supabase: SupabaseClient,
     userId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
+    timezone: string
   ): Promise<FlexAllocation[]> {
+    const { start, end } = dateUtils.dateRangeToTimestamps(
+      startDate,
+      endDate,
+      timezone,
+      true
+    );
+
     const { data, error } = await supabase
       .from(this.tableName)
       .select("*")
       .eq("user_id", userId)
-      .gte("date", startDate)
-      .lte("date", endDate)
-      .order("date", { ascending: false });
+      .gte("allocated_timestamp", start)
+      .lte("allocated_timestamp", end)
+      .order("allocated_timestamp", { ascending: false });
 
     if (error) throw error;
     return (data ?? []) as FlexAllocation[];
   }
 
   /**
-   * Get allocation for a specific date
+   * Get allocation for a specific date in user's timezone
    */
   async findByDate(
     supabase: SupabaseClient,
     userId: string,
-    date: string
+    date: string,
+    timezone: string
   ): Promise<FlexAllocation | null> {
+    const { start, end } = dateUtils.dateRangeToTimestamps(
+      date,
+      date,
+      timezone,
+      true
+    );
+
     const { data, error } = await supabase
       .from(this.tableName)
       .select("*")
       .eq("user_id", userId)
-      .eq("date", date)
+      .gte("allocated_timestamp", start)
+      .lte("allocated_timestamp", end)
       .single();
 
     if (error) {
@@ -162,18 +180,27 @@ class FlexAllocationRepository {
   }
 
   /**
-   * Get total allocation for a date
+   * Get total allocation for a date in user's timezone
    */
   async getTotalForDate(
     supabase: SupabaseClient,
     userId: string,
-    date: string
+    date: string,
+    timezone: string
   ): Promise<number> {
+    const { start, end } = dateUtils.dateRangeToTimestamps(
+      date,
+      date,
+      timezone,
+      true
+    );
+
     const { data, error } = await supabase
       .from(this.tableName)
       .select("amount")
       .eq("user_id", userId)
-      .eq("date", date);
+      .gte("allocated_timestamp", start)
+      .lte("allocated_timestamp", end);
 
     if (error) throw error;
     return (data ?? []).reduce((sum, a) => sum + Number(a.amount), 0);
@@ -252,45 +279,62 @@ class DailyOverrideRepository {
       .from(this.tableName)
       .select("*")
       .eq("user_id", userId)
-      .order("date", { ascending: false });
+      .order("override_timestamp", { ascending: false });
 
     if (error) throw error;
     return (data ?? []) as DailyOverride[];
   }
 
   /**
-   * Find overrides for a date range
+   * Find overrides for a date range in user's timezone
    */
   async findByDateRange(
     supabase: SupabaseClient,
     userId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
+    timezone: string
   ): Promise<DailyOverride[]> {
+    const { start, end } = dateUtils.dateRangeToTimestamps(
+      startDate,
+      endDate,
+      timezone,
+      true
+    );
+
     const { data, error } = await supabase
       .from(this.tableName)
       .select("*")
       .eq("user_id", userId)
-      .gte("date", startDate)
-      .lte("date", endDate);
+      .gte("override_timestamp", start)
+      .lte("override_timestamp", end);
 
     if (error) throw error;
     return (data ?? []) as DailyOverride[];
   }
 
   /**
-   * Get override for a specific date
+   * Get override for a specific date in user's timezone
    */
   async findByDate(
     supabase: SupabaseClient,
     userId: string,
-    date: string
+    date: string,
+    timezone: string
   ): Promise<DailyOverride | null> {
+    const { start, end } = dateUtils.dateRangeToTimestamps(
+      date,
+      date,
+      timezone,
+      true
+    );
+
     const { data, error } = await supabase
       .from(this.tableName)
       .select("*")
       .eq("user_id", userId)
-      .eq("date", date)
+      .gte("override_timestamp", start)
+      .lte("override_timestamp", end)
       .single();
 
     if (error) {
@@ -302,22 +346,32 @@ class DailyOverrideRepository {
 
   /**
    * Create or update override for a date
+   *
+   * @param supabase - Supabase client
+   * @param userId - User ID
+   * @param date - Date in YYYY-MM-DD format
+   * @param timezone - User's timezone
+   * @param limitAmount - Override limit amount
    */
   async upsert(
     supabase: SupabaseClient,
     userId: string,
     date: string,
+    timezone: string,
     limitAmount: number
   ): Promise<DailyOverride> {
+    // Convert date to timestamp at midnight in user's timezone
+    const timestamp = dateUtils.fromDateString(date, timezone);
+
     const { data, error } = await supabase
       .from(this.tableName)
       .upsert(
         {
           user_id: userId,
-          date,
+          override_timestamp: timestamp,
           limit_amount: limitAmount,
         } as DailyOverrideInsert,
-        { onConflict: "user_id,date" }
+        { onConflict: "user_id,override_timestamp" }
       )
       .select()
       .single();
@@ -332,13 +386,22 @@ class DailyOverrideRepository {
   async delete(
     supabase: SupabaseClient,
     userId: string,
-    date: string
+    date: string,
+    timezone: string
   ): Promise<void> {
+    const { start, end } = dateUtils.dateRangeToTimestamps(
+      date,
+      date,
+      timezone,
+      true
+    );
+
     const { error } = await supabase
       .from(this.tableName)
       .delete()
       .eq("user_id", userId)
-      .eq("date", date);
+      .gte("override_timestamp", start)
+      .lte("override_timestamp", end);
 
     if (error) throw error;
   }

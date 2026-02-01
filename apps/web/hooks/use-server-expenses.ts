@@ -7,6 +7,8 @@ import {
   deleteExpense as deleteExpenseAction,
 } from "@/actions/expenses";
 import type { Expense } from "@repo/database";
+import { useTimezone } from "@/components/providers";
+import * as dateUtils from "@/lib/utils/date";
 
 /**
  * Optimistic expense with pending state
@@ -23,9 +25,12 @@ type OptimisticAction =
 
 /**
  * Hook for managing expenses with server actions and optimistic updates
+ *
+ * Updated to use timestamps exclusively
  */
 export function useServerExpenses(initialExpenses: Expense[]) {
   const [isPending, startTransition] = useTransition();
+  const { timezone } = useTimezone();
 
   // Optimistic state reducer
   const [optimisticExpenses, setOptimisticExpenses] = useOptimistic<
@@ -50,28 +55,30 @@ export function useServerExpenses(initialExpenses: Expense[]) {
 
   /**
    * Add a single expense with optimistic update
+   *
+   * @param occurredAt - Timestamp when expense occurred (ISO 8601)
+   * @param amount - Expense amount
+   * @param label - Expense label
+   * @param options - Optional category and bucket
    */
   const addExpense = useCallback(
     async (
-      date: Date,
+      occurredAt: string,
       amount: number,
       label: string,
       options?: { category?: string; bucketId?: string }
     ): Promise<{ success: boolean; error?: string }> => {
-      const dateStr = date.toISOString().split("T")[0]!;
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       const optimisticExpense: OptimisticExpense = {
         id: tempId,
         user_id: "", // Will be set by server
-        date: dateStr,
+        occurred_at: occurredAt,
         amount,
         label,
         category: options?.category ?? null,
         category_id: null,
         notes: null,
-        time_of_day: null,
-        occurred_at: new Date().toISOString(),
         recurring_expense_id: null,
         bucket_id: options?.bucketId ?? null,
         created_at: new Date().toISOString(),
@@ -87,12 +94,11 @@ export function useServerExpenses(initialExpenses: Expense[]) {
 
         // Execute server action
         const serverResult = await createExpenseFromData({
-          date: dateStr,
+          occurred_at: occurredAt,
           amount,
           label,
           category: options?.category ?? null,
           bucket_id: options?.bucketId ?? null,
-          occurred_at: new Date().toISOString(),
         });
 
         if (!serverResult.success) {
@@ -109,27 +115,27 @@ export function useServerExpenses(initialExpenses: Expense[]) {
 
   /**
    * Add multiple expenses with optimistic update (for AI parser batch add)
+   *
+   * @param expenses - Array of expenses to add
+   * @param occurredAt - Timestamp when expenses occurred (defaults to now)
    */
   const addExpenses = useCallback(
     async (
       expenses: Array<{ amount: number; label: string; category?: string; bucketId?: string }>,
-      date: Date = new Date()
+      occurredAt: string = dateUtils.getCurrentTimestamp(timezone)
     ): Promise<{ success: boolean; errors: string[] }> => {
-      const dateStr = date.toISOString().split("T")[0]!;
       const errors: string[] = [];
 
       const optimisticExpenses: OptimisticExpense[] = expenses.map(
         (exp, index) => ({
           id: `temp-${Date.now()}-${index}-${Math.random().toString(36).slice(2)}`,
           user_id: "",
-          date: dateStr,
+          occurred_at: occurredAt,
           amount: exp.amount,
           label: exp.label,
           category: exp.category ?? null,
           category_id: null,
           notes: null,
-          time_of_day: null,
-          occurred_at: new Date().toISOString(),
           recurring_expense_id: null,
           bucket_id: exp.bucketId ?? null,
           created_at: new Date().toISOString(),
@@ -146,12 +152,11 @@ export function useServerExpenses(initialExpenses: Expense[]) {
         const results = await Promise.all(
           expenses.map((exp) =>
             createExpenseFromData({
-              date: dateStr,
+              occurred_at: occurredAt,
               amount: exp.amount,
               label: exp.label,
               category: exp.category ?? null,
               bucket_id: exp.bucketId ?? null,
-              occurred_at: new Date().toISOString(),
             })
           )
         );

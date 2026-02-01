@@ -20,6 +20,14 @@ if (typeof window !== "undefined") {
       capture_exceptions: true,
       // Turn on debug in development mode
       debug: process.env.NODE_ENV === "development",
+      // Disable session recording to prevent 431 errors from large headers
+      disable_session_recording: true,
+      // Disable surveys to reduce header size
+      disable_surveys: true,
+      // Reduce autocapture to prevent large payloads
+      autocapture: false,
+      // Limit property size to prevent 431 errors
+      properties_string_max_length: 1000,
     });
   }
 }

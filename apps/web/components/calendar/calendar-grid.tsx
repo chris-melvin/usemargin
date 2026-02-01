@@ -24,6 +24,20 @@ interface CalendarGridProps {
 export function CalendarGrid({ expenses, incomes = [], bills = [], buckets = [], onDayClick, selectedDate }: CalendarGridProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  // Debug logging
+  if (process.env.NODE_ENV === "development") {
+    console.log("[CalendarGrid] Data received:", {
+      expensesCount: expenses.length,
+      incomesCount: incomes.length,
+      billsCount: bills.length,
+      bucketsCount: buckets.length,
+      expenses: expenses.slice(0, 3),
+      incomes: incomes.slice(0, 3),
+      bills: bills.slice(0, 3),
+      buckets: buckets.map(b => ({ id: b.id, slug: b.slug, name: b.name, color: b.color })),
+    });
+  }
+
   const calendarDays = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -155,7 +169,7 @@ export function CalendarGrid({ expenses, incomes = [], bills = [], buckets = [],
       const billAmount = dayBills.reduce((sum, bill) => sum + bill.amount, 0);
       const billLabel = dayBills.length > 0 ? dayBills[0]?.label : undefined;
 
-      days.push({
+      const dayData = {
         day: d,
         date: dateObj,
         key,
@@ -170,7 +184,26 @@ export function CalendarGrid({ expenses, incomes = [], bills = [], buckets = [],
         hasBill: dayBills.length > 0,
         billAmount: billAmount > 0 ? billAmount : undefined,
         billLabel,
-      });
+      };
+
+      // Debug logging for days with data
+      if (process.env.NODE_ENV === "development" && (dayExpenses.length > 0 || dayIncomes.length > 0 || dayBills.length > 0)) {
+        console.log(`[CalendarGrid] Day ${d} data:`, {
+          key,
+          hasExpenses: dayExpenses.length > 0,
+          hasIncome: dayIncomes.length > 0,
+          hasBill: dayBills.length > 0,
+          bucketSummary: dayData.bucketSummary,
+          dayData,
+        });
+      }
+
+      days.push(dayData);
+    }
+
+    if (process.env.NODE_ENV === "development") {
+      const daysWithData = days.filter(d => !d.isPadding && (d.spent > 0 || d.hasIncome || d.hasBill));
+      console.log(`[CalendarGrid] Generated ${days.length} days, ${daysWithData.length} with data:`, daysWithData);
     }
 
     return days;

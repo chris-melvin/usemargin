@@ -1,16 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Income, IncomeInsert, IncomeUpdate } from "@repo/database";
-import { BaseRepository } from "./base.repository";
+import { BaseFinancialRepository } from "./base-financial.repository";
+import * as dateUtils from "@/lib/utils/date";
 
 /**
  * Repository for income operations
+ *
+ * Provides timezone-aware income queries using timestamp fields.
+ * All date-related methods now use TIMESTAMPTZ for proper timezone handling.
  */
-class IncomeRepository extends BaseRepository<
+class IncomeRepository extends BaseFinancialRepository<
   Income,
   IncomeInsert,
   IncomeUpdate
 > {
   protected tableName = "incomes";
+  protected timestampColumn = "expected_timestamp"; // Primary timestamp for queries
 
   /**
    * Find all active incomes for a user
@@ -76,21 +81,37 @@ class IncomeRepository extends BaseRepository<
 
   /**
    * Mark income as received
+   *
+   * @param supabase - Supabase client
+   * @param id - Income ID
+   * @param userId - User ID
+   * @param receivedTimestamp - When income was received (defaults to now)
+   * @param timezone - User's timezone (for default timestamp)
+   * @returns Updated income record
    */
   async markAsReceived(
     supabase: SupabaseClient,
     id: string,
     userId: string,
-    receivedDate?: string
+    receivedTimestamp?: string,
+    timezone?: string
   ): Promise<Income> {
+    const timestamp = receivedTimestamp ??
+      (timezone ? dateUtils.getCurrentTimestamp(timezone) : new Date().toISOString());
+
     return this.update(supabase, id, userId, {
       status: "received",
-      received_date: receivedDate ?? new Date().toISOString().split("T")[0],
+      received_timestamp: timestamp,
     });
   }
 
   /**
    * Reset income status (for recurring incomes at start of month)
+   *
+   * @param supabase - Supabase client
+   * @param id - Income ID
+   * @param userId - User ID
+   * @returns Updated income record
    */
   async resetStatus(
     supabase: SupabaseClient,
@@ -99,7 +120,7 @@ class IncomeRepository extends BaseRepository<
   ): Promise<Income> {
     return this.update(supabase, id, userId, {
       status: "expected",
-      received_date: null,
+      received_timestamp: null,
     });
   }
 

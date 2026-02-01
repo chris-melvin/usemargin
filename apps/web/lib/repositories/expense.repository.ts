@@ -1,126 +1,167 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Expense, ExpenseInsert, ExpenseUpdate } from "@repo/database";
-import { BaseRepository } from "./base.repository";
+import { BaseFinancialRepository } from "./base-financial.repository";
+import * as dateUtils from "@/lib/utils/date";
 
 /**
  * Repository for expense operations
+ *
+ * Provides timezone-aware expense queries using occurred_at timestamps.
+ * All date-related methods now use TIMESTAMPTZ for proper timezone handling.
  */
-class ExpenseRepository extends BaseRepository<
+class ExpenseRepository extends BaseFinancialRepository<
   Expense,
   ExpenseInsert,
   ExpenseUpdate
 > {
   protected tableName = "expenses";
+  protected timestampColumn = "occurred_at";
 
   /**
-   * Find expenses within a date range
+   * Find expenses within a date range in user's timezone
+   *
+   * @param supabase - Supabase client
+   * @param userId - User ID
+   * @param startDate - Start date (YYYY-MM-DD)
+   * @param endDate - End date (YYYY-MM-DD)
+   * @param timezone - User's timezone
+   * @returns Array of expenses in the date range
    */
   async findByDateRange(
     supabase: SupabaseClient,
     userId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
+    timezone: string
   ): Promise<Expense[]> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("user_id", userId)
-      .gte("date", startDate)
-      .lte("date", endDate)
-      .order("date", { ascending: false })
-      .order("created_at", { ascending: false });
+    const { start, end } = dateUtils.dateRangeToTimestamps(
+      startDate,
+      endDate,
+      timezone,
+      true // Include full day
+    );
 
-    if (error) throw error;
-    return (data ?? []) as Expense[];
+    return this.findByTimestampRange(supabase, userId, start, end);
   }
 
   /**
-   * Find expenses for a specific month
+   * Find expenses for a specific month in user's timezone
+   *
+   * @param supabase - Supabase client
+   * @param userId - User ID
+   * @param year - Year (e.g., 2024)
+   * @param month - Month (0-indexed, like JS Date: 0 = January)
+   * @param timezone - User's timezone
+   * @returns Array of expenses in the month
    */
   async findByMonth(
     supabase: SupabaseClient,
     userId: string,
     year: number,
-    month: number // 0-indexed like JS Date
+    month: number,
+    timezone: string
   ): Promise<Expense[]> {
+    // Create first and last day of month
     const startDate = `${year}-${String(month + 1).padStart(2, "0")}-01`;
     const lastDay = new Date(year, month + 1, 0).getDate();
     const endDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
-    return this.findByDateRange(supabase, userId, startDate, endDate);
+    return this.findByDateRange(supabase, userId, startDate, endDate, timezone);
   }
 
   /**
-   * Find expenses for a specific date
+   * Find expenses for a specific date in user's timezone
+   *
+   * @param supabase - Supabase client
+   * @param userId - User ID
+   * @param date - Date (YYYY-MM-DD)
+   * @param timezone - User's timezone
+   * @returns Array of expenses on that date
    */
   async findByDate(
     supabase: SupabaseClient,
     userId: string,
-    date: string
+    date: string,
+    timezone: string
   ): Promise<Expense[]> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select("*")
-      .eq("user_id", userId)
-      .eq("date", date)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    return (data ?? []) as Expense[];
+    return this.findByDateInTimezone(supabase, userId, date, timezone);
   }
 
   /**
-   * Get total spent for a specific date
+   * Get total spent for a specific date in user's timezone
+   *
+   * @param supabase - Supabase client
+   * @param userId - User ID
+   * @param date - Date (YYYY-MM-DD)
+   * @param timezone - User's timezone
+   * @returns Total amount spent
    */
   async getTotalForDate(
     supabase: SupabaseClient,
     userId: string,
-    date: string
+    date: string,
+    timezone: string
   ): Promise<number> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select("amount")
-      .eq("user_id", userId)
-      .eq("date", date);
+    const { start, end } = dateUtils.dateRangeToTimestamps(
+      date,
+      date,
+      timezone,
+      true
+    );
 
-    if (error) throw error;
-    return (data ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
+    return this.sumByTimestampRange(supabase, userId, start, end);
   }
 
   /**
-   * Get total spent for a date range
+   * Get total spent for a date range in user's timezone
+   *
+   * @param supabase - Supabase client
+   * @param userId - User ID
+   * @param startDate - Start date (YYYY-MM-DD)
+   * @param endDate - End date (YYYY-MM-DD)
+   * @param timezone - User's timezone
+   * @returns Total amount spent
    */
   async getTotalForDateRange(
     supabase: SupabaseClient,
     userId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
+    timezone: string
   ): Promise<number> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select("amount")
-      .eq("user_id", userId)
-      .gte("date", startDate)
-      .lte("date", endDate);
+    const { start, end } = dateUtils.dateRangeToTimestamps(
+      startDate,
+      endDate,
+      timezone,
+      true
+    );
 
-    if (error) throw error;
-    return (data ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
+    return this.sumByTimestampRange(supabase, userId, start, end);
   }
 
   /**
    * Get expenses grouped by category for a date range
+   *
+   * @param supabase - Supabase client
+   * @param userId - User ID
+   * @param startDate - Start date (YYYY-MM-DD)
+   * @param endDate - End date (YYYY-MM-DD)
+   * @param timezone - User's timezone
+   * @returns Array of category totals sorted by amount
    */
   async getByCategory(
     supabase: SupabaseClient,
     userId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
+    timezone: string
   ): Promise<{ category: string | null; total: number; count: number }[]> {
     const expenses = await this.findByDateRange(
       supabase,
       userId,
       startDate,
-      endDate
+      endDate,
+      timezone
     );
 
     const categoryMap = new Map<
@@ -147,35 +188,42 @@ class ExpenseRepository extends BaseRepository<
   }
 
   /**
-   * Get daily totals for a date range
+   * Get daily totals for a date range in user's timezone
+   * Overrides base method to provide expense-specific implementation
+   *
+   * @param supabase - Supabase client
+   * @param userId - User ID
+   * @param startDate - Start date (YYYY-MM-DD)
+   * @param endDate - End date (YYYY-MM-DD)
+   * @param timezone - User's timezone
+   * @returns Array of daily totals sorted by date
    */
-  async getDailyTotals(
+  async getDailyTotalsForDateRange(
     supabase: SupabaseClient,
     userId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
+    timezone: string
   ): Promise<{ date: string; total: number }[]> {
-    const expenses = await this.findByDateRange(
-      supabase,
-      userId,
+    const { start, end } = dateUtils.dateRangeToTimestamps(
       startDate,
-      endDate
+      endDate,
+      timezone,
+      true
     );
 
-    const dailyMap = new Map<string, number>();
-
-    for (const expense of expenses) {
-      const current = dailyMap.get(expense.date) ?? 0;
-      dailyMap.set(expense.date, current + expense.amount);
-    }
-
-    return Array.from(dailyMap.entries())
-      .map(([date, total]) => ({ date, total }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    // Use base class method
+    return super.getDailyTotals(supabase, userId, start, end, timezone);
   }
 
   /**
    * Find recent expenses (for quick access/suggestions)
+   * Ordered by when expense occurred, not when it was created
+   *
+   * @param supabase - Supabase client
+   * @param userId - User ID
+   * @param limit - Maximum number of results
+   * @returns Array of recent expenses
    */
   async findRecent(
     supabase: SupabaseClient,
@@ -186,7 +234,7 @@ class ExpenseRepository extends BaseRepository<
       .from(this.tableName)
       .select("*")
       .eq("user_id", userId)
-      .order("created_at", { ascending: false })
+      .order("occurred_at", { ascending: false })
       .limit(limit);
 
     if (error) throw error;

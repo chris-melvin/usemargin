@@ -30,12 +30,12 @@ export async function createIncome(
       day_of_month: validation.data.day_of_month ?? null,
       frequency: validation.data.frequency,
       day_of_week: validation.data.day_of_week ?? null,
-      start_date: validation.data.start_date ?? null,
-      end_date: validation.data.end_date ?? null,
-      expected_date: validation.data.expected_date ?? null,
+      start_timestamp: validation.data.start_timestamp ?? null,
+      end_timestamp: validation.data.end_timestamp ?? null,
+      expected_timestamp: validation.data.expected_timestamp ?? null,
       is_active: validation.data.is_active,
       status: "expected",
-      received_date: null,
+      received_timestamp: null,
     });
 
     revalidatePath("/dashboard");

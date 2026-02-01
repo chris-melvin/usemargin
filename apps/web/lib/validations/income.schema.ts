@@ -25,29 +25,30 @@ export const createIncomeSchema = z.object({
   day_of_month: z.coerce.number().int().min(1).max(31).optional().nullable(),
   frequency: frequencyEnum.default("monthly"),
   day_of_week: z.coerce.number().int().min(0).max(6).optional().nullable(),
-  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-  expected_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  start_timestamp: z.string().datetime().optional().nullable(),
+  end_timestamp: z.string().datetime().optional().nullable(),
+  expected_timestamp: z.string().datetime().optional().nullable(),
   is_active: z.boolean().default(true),
 });
 
 /**
  * Schema for updating an income
+ *
+ * Updated to use timestamp fields
  */
 export const updateIncomeSchema = createIncomeSchema.partial().extend({
   status: statusEnum.optional(),
-  received_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  received_timestamp: z.string().datetime().optional().nullable(),
 });
 
 /**
  * Schema for marking income as received
+ *
+ * Updated to use received_timestamp
  */
 export const markIncomeReceivedSchema = z.object({
   id: z.string().uuid("Invalid income ID"),
-  received_date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
-    .optional(),
+  received_timestamp: z.string().datetime("Invalid timestamp format").optional(),
   actual_amount: z.coerce.number().positive().optional(),
 });
 

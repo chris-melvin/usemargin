@@ -5,17 +5,19 @@ import { billRepository } from "@/lib/repositories";
 import { requireAuth } from "@/lib/action-utils";
 import { type ActionResult, error, success } from "@/lib/errors";
 import type { Debt } from "@repo/database";
+import * as dateUtils from "@/lib/utils/date";
 
 export async function markBillPaid(
   id: string,
-  paidDate?: string
+  paidTimestamp?: string,
+  timezone?: string
 ): Promise<ActionResult<Debt>> {
   const authResult = await requireAuth();
   if (!authResult.success) return authResult;
   const { userId, supabase } = authResult.data;
 
   try {
-    const bill = await billRepository.markAsPaid(supabase, id, userId, paidDate);
+    const bill = await billRepository.markAsPaid(supabase, id, userId, paidTimestamp, timezone);
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/budget");
@@ -51,7 +53,8 @@ export async function resetBillStatus(id: string): Promise<ActionResult<Debt>> {
 export async function makeDebtPayment(
   id: string,
   paymentAmount: number,
-  paidDate?: string
+  paidTimestamp?: string,
+  timezone?: string
 ): Promise<ActionResult<Debt>> {
   const authResult = await requireAuth();
   if (!authResult.success) return authResult;
@@ -67,10 +70,13 @@ export async function makeDebtPayment(
     const currentBalance = current.remaining_balance ?? current.total_amount ?? 0;
     const newBalance = Math.max(0, currentBalance - paymentAmount);
 
+    const timestamp = paidTimestamp ??
+      (timezone ? dateUtils.getCurrentTimestamp(timezone) : new Date().toISOString());
+
     const bill = await billRepository.update(supabase, id, userId, {
       remaining_balance: newBalance,
       status: "paid",
-      paid_date: paidDate ?? new Date().toISOString().split("T")[0],
+      paid_timestamp: timestamp,
     });
 
     revalidatePath("/dashboard");

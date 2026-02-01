@@ -49,8 +49,8 @@ export const createBillSchema = z.object({
     (val) => (val === "" || val === undefined ? null : val),
     z.coerce.number().int().min(0).max(6).optional().nullable()
   ),
-  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  start_timestamp: z.string().datetime().optional().nullable(),
+  end_timestamp: z.string().datetime().optional().nullable(),
   is_recurring: z.boolean().default(true),
   is_active: z.boolean().default(true),
   payment_mode: paymentModeEnum.default("manual"),
@@ -59,25 +59,28 @@ export const createBillSchema = z.object({
 
 /**
  * Schema for updating a bill
+ *
+ * Updated to use timestamp fields
  */
 export const updateBillSchema = createBillSchema.partial().extend({
   status: statusEnum.optional(),
-  paid_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  paid_timestamp: z.string().datetime().optional().nullable(),
 });
 
 /**
  * Schema for marking a bill as paid
+ *
+ * Updated to use paid_timestamp
  */
 export const markBillPaidSchema = z.object({
   id: z.string().uuid("Invalid bill ID"),
-  paid_date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
-    .optional(),
+  paid_timestamp: z.string().datetime("Invalid timestamp format").optional(),
 });
 
 /**
  * Schema for recording a debt payment (for payment history)
+ *
+ * Updated to use timestamps
  */
 export const recordDebtPaymentSchema = z.object({
   debt_id: z.string().uuid("Invalid debt ID"),
@@ -85,9 +88,9 @@ export const recordDebtPaymentSchema = z.object({
     .number()
     .positive("Amount must be positive")
     .max(999999999.99, "Amount too large"),
-  payment_date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  payment_timestamp: z.string().datetime("Invalid timestamp format"),
+  period_start_timestamp: z.string().datetime("Invalid timestamp format").optional(),
+  period_end_timestamp: z.string().datetime("Invalid timestamp format").optional(),
   notes: z.string().max(500).optional().nullable(),
 });
 

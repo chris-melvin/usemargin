@@ -71,7 +71,10 @@ export function CheckoutButton({
       });
     } catch (error) {
       console.error("Checkout error:", error);
-      posthog.captureException(error);
+      posthog.capture("$exception", {
+        error: error instanceof Error ? error.message : String(error),
+        context: "checkout_button",
+      });
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);

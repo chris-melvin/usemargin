@@ -17,12 +17,12 @@ export async function createExpense(
 
   // 2. Parse and validate input
   const rawData = {
-    date: formData.get("date"),
+    occurred_at: formData.get("occurred_at"),
     amount: formData.get("amount"),
     label: formData.get("label"),
     category: formData.get("category") || null,
     notes: formData.get("notes") || null,
-    time_of_day: formData.get("time_of_day") || null,
+    bucket_id: formData.get("bucket_id") || null,
   };
 
   const validation = createExpenseSchema.safeParse(rawData);
@@ -37,14 +37,14 @@ export async function createExpense(
   try {
     const expense = await expenseRepository.create(supabase, {
       user_id: userId,
-      date: validation.data.date,
+      occurred_at: validation.data.occurred_at,
       amount: validation.data.amount,
       label: validation.data.label,
       category: validation.data.category ?? null,
       category_id: null,
       notes: validation.data.notes ?? null,
-      time_of_day: validation.data.time_of_day ?? null,
       recurring_expense_id: null,
+      bucket_id: validation.data.bucket_id ?? null,
     });
 
     // 4. Revalidate cache
@@ -60,15 +60,16 @@ export async function createExpense(
 
 /**
  * Create expense from parsed data (for programmatic use)
+ *
+ * Updated to use occurred_at timestamp exclusively
  */
 export async function createExpenseFromData(data: {
-  date: string;
+  occurred_at: string;
   amount: number;
   label: string;
   category?: string | null;
   notes?: string | null;
   bucket_id?: string | null;
-  occurred_at?: string | null;
 }): Promise<ActionResult<Expense>> {
   const authResult = await requireAuth();
   if (!authResult.success) return authResult;
@@ -85,14 +86,12 @@ export async function createExpenseFromData(data: {
   try {
     const expense = await expenseRepository.create(supabase, {
       user_id: userId,
-      date: validation.data.date,
+      occurred_at: validation.data.occurred_at,
       amount: validation.data.amount,
       label: validation.data.label,
       category: validation.data.category ?? null,
       category_id: null,
       notes: validation.data.notes ?? null,
-      time_of_day: null,
-      occurred_at: validation.data.occurred_at ?? new Date().toISOString(),
       recurring_expense_id: null,
       bucket_id: validation.data.bucket_id ?? null,
     });

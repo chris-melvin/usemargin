@@ -39,13 +39,13 @@ export async function createBill(
       payment_bucket_id: validation.data.payment_bucket_id ?? null,
       frequency: validation.data.frequency,
       day_of_week: validation.data.day_of_week ?? null,
-      start_date: validation.data.start_date ?? null,
-      end_date: validation.data.end_date ?? null,
+      start_timestamp: validation.data.start_timestamp ?? null,
+      end_timestamp: validation.data.end_timestamp ?? null,
       is_recurring: validation.data.is_recurring,
       is_active: validation.data.is_active,
       status: "pending",
-      paid_date: null,
-      receive_date: null,
+      paid_timestamp: null,
+      receive_timestamp: null,
     });
 
     revalidatePath("/dashboard");
