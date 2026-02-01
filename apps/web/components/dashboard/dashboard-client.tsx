@@ -14,6 +14,8 @@ import {
   Receipt,
   MessageSquarePlus,
 } from "lucide-react";
+import { useTimezone } from "@/components/providers";
+import * as dateUtils from "@/lib/utils/date";
 import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import { DayDetailPanel } from "@/components/day-detail/day-detail-panel";
 import { DayDetailSheet } from "@/components/day-detail/day-detail-sheet";
@@ -37,7 +39,7 @@ import { WeeklyProgressCard } from "@/components/dashboard/weekly-progress-card"
 import { RolloverDisplay } from "@/components/dashboard/rollover-display";
 import { showExpenseDeletedToast } from "@/components/ui/undo-toast";
 import { restoreExpense } from "@/actions/expenses/restore";
-import { formatKey, formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { DEFAULT_DAILY_LIMIT, CURRENCY } from "@/lib/constants";
 import type { Expense, BudgetBucket, Income, Debt } from "@repo/database";
 import type { LocalIncome, LocalBill } from "@/lib/types";
@@ -64,7 +66,7 @@ function toLocalIncome(income: Income): LocalIncome {
 }
 
 // Helper to transform database Debt to LocalBill
-function toLocalBill(bill: Debt): LocalBill {
+function toLocalBill(bill: Debt, timezone: string): LocalBill {
   const today = new Date();
   const dueDay = bill.due_date ?? 1;
   const dueDate = new Date(today.getFullYear(), today.getMonth(), dueDay);
@@ -74,15 +76,15 @@ function toLocalBill(bill: Debt): LocalBill {
     label: bill.label,
     amount: bill.amount,
     icon: bill.icon ?? undefined,
-    receiveDate: bill.receive_date ?? undefined,
-    dueDate: dueDate.toISOString().split("T")[0] ?? "",
-    paidDate: bill.paid_date ?? undefined,
+    receiveDate: bill.receive_timestamp ?? undefined,
+    dueDate: dateUtils.formatInTimezone(dueDate, timezone, "yyyy-MM-dd"),
+    paidDate: bill.paid_timestamp ?? undefined,
     dueDayOfMonth: bill.due_date ?? undefined,
     isRecurring: bill.is_recurring,
     recurringPattern: bill.is_recurring ? {
       frequency: bill.frequency as "weekly" | "biweekly" | "monthly" | "yearly",
       dayOfMonth: bill.due_date ?? undefined,
-      endDate: bill.end_date ?? undefined,
+      endDate: bill.end_timestamp ?? undefined,
     } : undefined,
     status: bill.status as "pending" | "paid" | "overdue" | "partially_paid",
   };
@@ -99,6 +101,11 @@ interface DashboardClientProps {
   trackingMode?: "tracking_only" | "budget_enabled";
 }
 
+/**
+ * Main dashboard client component with timezone support
+ *
+ * Updated to use Expense type with occurred_at timestamps
+ */
 export function DashboardClient({
   initialExpenses,
   dailyLimit,
@@ -107,6 +114,7 @@ export function DashboardClient({
   initialBills = [],
   trackingMode = "tracking_only"
 }: DashboardClientProps) {
+  const { timezone } = useTimezone();
   const [activeTab, setActiveTab] = useState<TabType>("calendar");
   const [isShortcutModalOpen, setIsShortcutModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -120,8 +128,8 @@ export function DashboardClient({
   );
 
   const bills = useMemo(() =>
-    initialBills.map(toLocalBill),
-    [initialBills]
+    initialBills.map((bill) => toLocalBill(bill, timezone)),
+    [initialBills, timezone]
   );
   const [hideSavings, setHideSavings] = useState(false);
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
@@ -149,19 +157,9 @@ export function DashboardClient({
   // Micro-interactions for Duolingo-style feedback
   const { quickWin, playSound } = useMicroInteractions();
 
-  // Convert to LocalExpense format for existing components
-  const localExpenses = useMemo(() =>
-    expenses.map(e => ({
-      id: e.id,
-      date: e.date,
-      amount: e.amount,
-      label: e.label,
-      category: e.category ?? undefined,
-      occurred_at: e.occurred_at ?? null,
-      bucket_id: e.bucket_id ?? null,
-    })),
-    [expenses]
-  );
+  // Note: Expenses now use occurred_at timestamps
+  // Pass expenses directly to hooks that support Expense type
+  const localExpenses = expenses;
 
   const { todayStatus } = useCalendar(localExpenses, { dailyLimit });
   const weeklyPatterns = useWeeklyPatterns(localExpenses);
@@ -206,7 +204,8 @@ export function DashboardClient({
   // AI Parser - Updated to use batch add with success animation
   const handleAiAddExpenses = useCallback(
     async (parsedExpenses: Array<{ amount: number; label: string; category?: string; bucketId?: string }>) => {
-      await addExpenses(parsedExpenses, new Date());
+      const timestamp = dateUtils.getCurrentTimestamp(timezone);
+      await addExpenses(parsedExpenses, timestamp);
 
       // Trigger success feedback
       quickWin();
@@ -223,7 +222,7 @@ export function DashboardClient({
       // Notify onboarding
       onExpenseAdded?.();
     },
-    [addExpenses, quickWin, onExpenseAdded]
+    [addExpenses, quickWin, onExpenseAdded, timezone]
   );
 
   const handleUnknownShortcut = useCallback((unknown: UnknownShortcut) => {
@@ -239,13 +238,16 @@ export function DashboardClient({
     defaultBucketId: defaultBucket?.id,
   });
 
-  // Today's expenses
+  // Today's expenses using timezone-aware filtering
   const todayExpenses = useMemo(() => {
-    const todayKey = formatKey(new Date());
+    const todayKey = dateUtils.formatInTimezone(new Date(), timezone, "yyyy-MM-dd");
     return localExpenses
-      .filter((e) => formatKey(new Date(e.date)) === todayKey)
+      .filter((e) => {
+        const expenseKey = dateUtils.formatInTimezone(new Date(e.occurred_at), timezone, "yyyy-MM-dd");
+        return expenseKey === todayKey;
+      })
       .map((e) => ({ label: e.label, amount: e.amount }));
-  }, [localExpenses]);
+  }, [localExpenses, timezone]);
 
   const handleDayClick = (date: Date) => {
     setSelectedDate(date);
@@ -256,7 +258,8 @@ export function DashboardClient({
 
   const handleAddExpense = async (amount: number, label: string) => {
     if (selectedDate) {
-      await addExpense(selectedDate, amount, label, {
+      const timestamp = dateUtils.toTimestamp(selectedDate, timezone);
+      await addExpense(timestamp, amount, label, {
         bucketId: defaultBucket?.id,
       });
       quickWin();
@@ -271,9 +274,10 @@ export function DashboardClient({
 
     // Get the current preview (already parsed locally)
     if (preview.length > 0) {
+      const timestamp = dateUtils.toTimestamp(selectedDate, timezone);
       // Add each expense to the selected date
       for (const exp of preview) {
-        await addExpense(selectedDate, exp.amount, exp.label, {
+        await addExpense(timestamp, exp.amount, exp.label, {
           category: exp.category,
           bucketId: exp.bucketId ?? defaultBucket?.id,
         });
@@ -291,10 +295,11 @@ export function DashboardClient({
       // Clear the preview
       updatePreview("");
     }
-  }, [selectedDate, preview, addExpense, quickWin, updatePreview, defaultBucket]);
+  }, [selectedDate, preview, addExpense, quickWin, updatePreview, defaultBucket, timezone]);
 
   const handleQuickAdd = async (amount: number, label: string) => {
-    await addExpense(new Date(), amount, label, {
+    const timestamp = dateUtils.getCurrentTimestamp(timezone);
+    await addExpense(timestamp, amount, label, {
       bucketId: defaultBucket?.id,
     });
     quickWin();
