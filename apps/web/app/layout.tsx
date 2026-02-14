@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Lora, Inter, Caveat } from "next/font/google";
+import { Lora, Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { PaddleProvider } from "@/components/paddle";
@@ -16,13 +16,6 @@ const lora = Lora({
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
-  display: "swap",
-});
-
-// Handwriting font for annotations - marginalia feel
-const caveat = Caveat({
-  subsets: ["latin"],
-  variable: "--font-handwriting",
   display: "swap",
 });
 
@@ -46,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${lora.variable} ${inter.variable} ${caveat.variable} ${geistMono.variable} antialiased`}
+        className={`${lora.variable} ${inter.variable} ${geistMono.variable} antialiased`}
       >
         <PostHogProvider>
           <PaddleProvider>{children}</PaddleProvider>

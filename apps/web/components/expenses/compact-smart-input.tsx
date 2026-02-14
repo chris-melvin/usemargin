@@ -4,9 +4,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Sparkles, Loader2, ArrowUp, X, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CURRENCY } from "@/lib/constants";
-import { BucketChip } from "./bucket-chip";
-import { CategoryChip } from "./category-chip";
-import type { BudgetBucket } from "@repo/database";
 
 interface ExpensePreview {
   amount: number;
@@ -24,7 +21,7 @@ interface CompactSmartInputProps {
   onSubmit: (value: string) => void;
   placeholder?: string;
   autoFocus?: boolean;
-  buckets?: BudgetBucket[];
+  buckets?: unknown[];
   categories?: string[];
   onPreviewUpdate?: (index: number, updates: Partial<ExpensePreview>) => void;
   onCreateCategory?: (name: string) => void;
@@ -37,10 +34,6 @@ export function CompactSmartInput({
   onSubmit,
   placeholder = "coffee 120, lunch and grab...",
   autoFocus = false,
-  buckets = [],
-  categories = [],
-  onPreviewUpdate,
-  onCreateCategory,
 }: CompactSmartInputProps) {
   const [value, setValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -93,7 +86,6 @@ export function CompactSmartInput({
 
   const totalPreview = preview.reduce((sum, p) => sum + p.amount, 0);
 
-  // Collapsed state - show button
   if (!isExpanded) {
     return (
       <button
@@ -109,7 +101,6 @@ export function CompactSmartInput({
     );
   }
 
-  // Expanded state - show input
   return (
     <div className="space-y-2">
       {/* Preview chips */}
@@ -127,38 +118,21 @@ export function CompactSmartInput({
               <div className="flex-1 flex items-center gap-1 min-w-0">
                 <span className="text-teal-700 font-medium text-xs truncate">{expense.label}</span>
                 <span className="text-teal-500/80 text-[10px] flex-shrink-0">
-                  {CURRENCY}{expense.amount.toLocaleString()}
+                  {CURRENCY}
+                  {expense.amount.toLocaleString()}
                 </span>
               </div>
-              <div className="flex items-center gap-0.5 flex-shrink-0">
-                {buckets.length > 0 && (
-                  <BucketChip
-                    buckets={buckets}
-                    selectedSlug={expense.bucketSlug}
-                    onSelect={(bucket) => {
-                      onPreviewUpdate?.(index, {
-                        bucketId: bucket.id,
-                        bucketSlug: bucket.slug,
-                      });
-                    }}
-                    size="sm"
-                  />
-                )}
-                <CategoryChip
-                  categories={categories}
-                  selectedCategory={expense.category}
-                  onSelect={(category) => {
-                    onPreviewUpdate?.(index, { category: category || undefined });
-                  }}
-                  onCreateNew={onCreateCategory}
-                  size="sm"
-                />
-              </div>
+              {expense.category && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-teal-100 text-teal-600 flex-shrink-0">
+                  {expense.category}
+                </span>
+              )}
             </div>
           ))}
           {preview.length > 1 && (
             <div className="inline-flex items-center px-2 py-1 rounded-full bg-neutral-100 text-[10px] font-semibold text-neutral-500">
-              = {CURRENCY}{totalPreview.toLocaleString()}
+              = {CURRENCY}
+              {totalPreview.toLocaleString()}
             </div>
           )}
         </div>
@@ -176,12 +150,8 @@ export function CompactSmartInput({
       >
         <div
           className={cn(
-            "flex-shrink-0 w-8 h-8 rounded-lg",
-            "flex items-center justify-center",
-            "transition-all duration-200",
-            isFocused
-              ? "bg-teal-100 text-teal-600"
-              : "bg-neutral-100 text-neutral-400"
+            "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
+            isFocused ? "bg-teal-100 text-teal-600" : "bg-neutral-100 text-neutral-400"
           )}
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -196,14 +166,7 @@ export function CompactSmartInput({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           placeholder={placeholder}
-          className={cn(
-            "flex-1 min-w-0",
-            "bg-transparent",
-            "text-neutral-800 text-sm",
-            "placeholder:text-neutral-400/70",
-            "outline-none",
-            "caret-teal-500"
-          )}
+          className="flex-1 min-w-0 bg-transparent text-neutral-800 text-sm placeholder:text-neutral-400/70 outline-none caret-teal-500"
         />
 
         {value && (
@@ -219,9 +182,7 @@ export function CompactSmartInput({
           onClick={handleSubmit}
           disabled={!value.trim() || isParsing}
           className={cn(
-            "flex-shrink-0 w-8 h-8 rounded-lg",
-            "flex items-center justify-center",
-            "transition-all duration-200",
+            "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
             "disabled:opacity-40 disabled:cursor-not-allowed",
             value.trim() && !isParsing
               ? "bg-neutral-900 text-white hover:bg-neutral-800 active:scale-95"
@@ -236,7 +197,6 @@ export function CompactSmartInput({
         </button>
       </div>
 
-      {/* Cancel button */}
       <button
         onClick={() => {
           setValue("");
@@ -248,9 +208,9 @@ export function CompactSmartInput({
         Cancel
       </button>
 
-      {/* Hint */}
       <p className="text-[10px] text-neutral-400 text-center">
-        Try: &quot;coffee 120&quot; • &quot;:flex&quot; for bucket • &quot;#travel&quot; for category
+        Try: &quot;coffee 120&quot; &bull; &quot;@shortcut 200&quot; &bull; &quot;#travel&quot; for
+        category
       </p>
     </div>
   );

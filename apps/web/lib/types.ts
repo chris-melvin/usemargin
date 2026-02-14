@@ -34,7 +34,6 @@ export interface CalendarDay {
 // Note: Matches Expense type from database with occurred_at as primary timestamp
 export interface LocalExpense {
   id: string;
-  date?: string; // DEPRECATED: Legacy field, use occurred_at instead
   amount: number;
   label: string;
   category?: string | null; // Can be null from database

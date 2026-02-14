@@ -37,7 +37,6 @@ export async function restoreExpense(
     }
 
     revalidatePath("/dashboard");
-    revalidatePath("/dashboard/transactions");
 
     return { success: true, data: restored };
   } catch (error) {

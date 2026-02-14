@@ -68,6 +68,8 @@ function parseShortcutPattern(
 
 /**
  * Parse simple patterns like "coffee 120" or "grab 180 and lunch"
+ * Uses token-based approach: split by whitespace, find pure-number tokens,
+ * take the LAST one as price. Everything else is the label.
  */
 function parseSimplePatterns(input: string): ParsedExpense[] {
   const results: ParsedExpense[] = [];
@@ -87,19 +89,35 @@ function parseSimplePatterns(input: string): ParsedExpense[] {
       continue;
     }
 
-    // Pattern: "label amount" or "amount label"
-    const numberMatch = trimmed.match(/(\d+(?:\.\d+)?)/);
-    if (numberMatch && numberMatch[1]) {
-      const amount = parseFloat(numberMatch[1]);
-      const labelPart = trimmed
-        .replace(numberMatch[0], "")
-        .replace(/[₱$]/g, "")
-        .trim();
+    // Token-based parsing: split by whitespace, find pure-number tokens
+    // A pure-number token is one that is entirely a number (e.g., "120", "50.5")
+    // Tokens like "ps5", "7-eleven", "iphone15" are NOT pure numbers
+    const tokens = trimmed.split(/\s+/);
+    const numberTokenIndices: number[] = [];
 
+    tokens.forEach((token, i) => {
+      // Strip currency symbols before checking
+      const cleaned = token.replace(/[₱$]/g, "");
+      if (/^\d+(?:\.\d+)?$/.test(cleaned)) {
+        numberTokenIndices.push(i);
+      }
+    });
+
+    if (numberTokenIndices.length > 0) {
+      // Take the LAST pure-number token as the price
+      const priceIndex = numberTokenIndices[numberTokenIndices.length - 1]!;
+      const priceToken = tokens[priceIndex]!.replace(/[₱$]/g, "");
+      const amount = parseFloat(priceToken);
+
+      // Everything else is the label
+      const labelTokens = tokens.filter((_, i) => i !== priceIndex);
+      const labelPart = labelTokens.join(" ").trim();
+
+      // Check if label matches a template (use template label but user's amount)
       const template = TEMPLATE_MAP.get(labelPart.toLowerCase());
 
       results.push({
-        amount: template ? template.amount : amount,
+        amount,  // Always use user-provided amount
         label: template ? template.label : labelPart || "Expense",
         category: template?.label,
       });
@@ -174,7 +192,7 @@ describe("Expense Parser", () => {
       const result = parseSimplePatterns("coffee 120");
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
-        amount: 120, // Uses template amount
+        amount: 120, // User-provided amount (happens to match template)
         label: "Coffee",
         category: "Coffee",
       });
@@ -203,10 +221,10 @@ describe("Expense Parser", () => {
       expect(result).toHaveLength(2);
     });
 
-    it("should use template amount for known labels", () => {
+    it("should use user-provided amount even for known labels", () => {
       const result = parseSimplePatterns("coffee 999");
-      // Template amount (120) should be used, not 999
-      expect(result[0]?.amount).toBe(120);
+      // User-provided amount always wins over template default
+      expect(result[0]?.amount).toBe(999);
     });
 
     it("should use provided amount for unknown labels", () => {
@@ -228,8 +246,8 @@ describe("Expense Parser", () => {
 
     it("should handle decimal amounts", () => {
       const result = parseSimplePatterns("coffee 99.5");
-      // Should use template amount
-      expect(result[0]?.amount).toBe(120);
+      // User-provided amount always wins
+      expect(result[0]?.amount).toBe(99.5);
     });
 
     it("should return empty array for invalid input", () => {
@@ -379,8 +397,6 @@ describe("Expense Parser", () => {
     });
 
     it("should handle special characters in label", () => {
-      // Note: Numbers at start of labels get parsed as amounts
-      // Testing with letter-prefixed labels
       const result = parseSimplePatterns("sari-sari 100");
       expect(result[0]?.label).toBe("sari-sari");
       expect(result[0]?.amount).toBe(100);
@@ -399,6 +415,57 @@ describe("Expense Parser", () => {
     it("should handle multiple 'and' in sequence", () => {
       const result = parseSimplePatterns("coffee 100 and lunch 150 and dinner 200");
       expect(result).toHaveLength(3);
+    });
+  });
+
+  describe("Product names with numbers", () => {
+    it("should parse 'iphone 15 pro 50000' — last number is price", () => {
+      const result = parseSimplePatterns("iphone 15 pro 50000");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(50000);
+      expect(result[0]?.label).toBe("iphone 15 pro");
+    });
+
+    it("should parse 'ps5 3000' — ps5 is not a pure number", () => {
+      const result = parseSimplePatterns("ps5 3000");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(3000);
+      expect(result[0]?.label).toBe("ps5");
+    });
+
+    it("should parse '7-eleven 200' — 7-eleven is not a pure number", () => {
+      const result = parseSimplePatterns("7-eleven 200");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(200);
+      expect(result[0]?.label).toBe("7-eleven");
+    });
+
+    it("should parse 'coffee 999' — user amount overrides template default", () => {
+      const result = parseSimplePatterns("coffee 999");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(999);
+      expect(result[0]?.label).toBe("Coffee");
+    });
+
+    it("should parse 'samsung s24 ultra 65000'", () => {
+      const result = parseSimplePatterns("samsung s24 ultra 65000");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(65000);
+      expect(result[0]?.label).toBe("samsung s24 ultra");
+    });
+
+    it("should parse 'vitamin b12 150'", () => {
+      const result = parseSimplePatterns("vitamin b12 150");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(150);
+      expect(result[0]?.label).toBe("vitamin b12");
+    });
+
+    it("should parse '₱500 food' with currency prefix", () => {
+      const result = parseSimplePatterns("₱500 food");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(500);
+      expect(result[0]?.label).toBe("food");
     });
   });
 });

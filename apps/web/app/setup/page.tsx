@@ -1,7 +1,5 @@
-"use client";
-
-import { BudgetSetupPage } from "@/components/budget-setup/budget-setup-page";
+import { redirect } from "next/navigation";
 
 export default function SetupPage() {
-  return <BudgetSetupPage />;
+  redirect("/dashboard");
 }

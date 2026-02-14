@@ -99,6 +99,11 @@ export function useAiParser({
     bucketId?: string;
     remaining: string;
   } => {
+    // Skip bucket extraction when no buckets are configured
+    if (bucketMap.size === 0) {
+      return { remaining: input };
+    }
+
     const match = input.match(BUCKET_PATTERN);
     if (match && match[0]) {
       const slug = match[0].slice(1).toLowerCase(); // Remove : prefix
@@ -320,6 +325,8 @@ export function useAiParser({
   }, [parseShortcutPattern, onUnknownShortcut, extractBucket, extractCategory]);
 
   // Parse simple patterns like "coffee 120" or "grab 180 and lunch"
+  // Uses token-based approach: split by whitespace, find pure-number tokens,
+  // take the LAST one as price. Everything else is the label.
   const parseSimplePatterns = (input: string): ParsedExpense[] => {
     const results: ParsedExpense[] = [];
 
@@ -340,21 +347,35 @@ export function useAiParser({
         continue;
       }
 
-      // Pattern: "label amount" or "amount label"
-      // e.g., "coffee 120", "120 coffee", "grab 180"
-      const numberMatch = trimmed.match(/(\d+(?:\.\d+)?)/);
-      if (numberMatch && numberMatch[1]) {
-        const amount = parseFloat(numberMatch[1]);
-        const labelPart = trimmed
-          .replace(numberMatch[0], "")
-          .replace(/[₱$]/g, "")
-          .trim();
+      // Token-based parsing: split by whitespace, find pure-number tokens
+      // A pure-number token is one that is entirely a number (e.g., "120", "50.5")
+      // Tokens like "ps5", "7-eleven", "iphone15" are NOT pure numbers
+      const tokens = trimmed.split(/\s+/);
+      const numberTokenIndices: number[] = [];
 
-        // Check if label matches a template
+      tokens.forEach((token, i) => {
+        // Strip currency symbols before checking
+        const cleaned = token.replace(/[₱$]/g, "");
+        if (/^\d+(?:\.\d+)?$/.test(cleaned)) {
+          numberTokenIndices.push(i);
+        }
+      });
+
+      if (numberTokenIndices.length > 0) {
+        // Take the LAST pure-number token as the price
+        const priceIndex = numberTokenIndices[numberTokenIndices.length - 1]!;
+        const priceToken = tokens[priceIndex]!.replace(/[₱$]/g, "");
+        const amount = parseFloat(priceToken);
+
+        // Everything else is the label
+        const labelTokens = tokens.filter((_, i) => i !== priceIndex);
+        const labelPart = labelTokens.join(" ").trim();
+
+        // Check if label matches a template (use template label but user's amount)
         const template = TEMPLATE_MAP.get(labelPart.toLowerCase());
 
         results.push({
-          amount: amount,  // Always use user-provided amount
+          amount,  // Always use user-provided amount
           label: template ? template.label : labelPart || "Expense",
           category: template?.label,
         });
