@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, lazy, Suspense } from "react";
 import Link from "next/link";
 import { Settings, MessageSquarePlus, Trash2, ChevronDown } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isSameDay } from "date-fns";
 import { useTimezone } from "@/components/providers";
 import * as dateUtils from "@/lib/utils/date";
@@ -20,6 +21,12 @@ import { restoreExpense } from "@/actions/expenses/restore";
 import { formatCurrency, cn } from "@/lib/utils";
 import { DEFAULT_DAILY_LIMIT, CURRENCY } from "@/lib/constants";
 import type { Expense, TrackingMode } from "@repo/database";
+
+const InsightsTab = lazy(() =>
+  import("@/components/insights/insights-tab").then((m) => ({
+    default: m.InsightsTab,
+  }))
+);
 
 interface DashboardClientProps {
   initialExpenses: Expense[];
@@ -163,133 +170,164 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
         </div>
       </header>
 
-      {/* Scrollable Main Content */}
-      <main className="relative flex-1 overflow-auto pb-24">
-        <div className="max-w-lg mx-auto p-3 sm:p-4 space-y-4">
-          {/* Week Strip */}
-          <WeekStrip
-            selectedDate={selectedDate}
-            onSelectDate={handleSelectDate}
-            expenses={expenses}
-            dailyLimit={actualDailyLimit}
-            timezone={timezone}
-            onTodayPress={handleTodayPress}
-          />
-
-          {/* Hero Daily Card */}
-          <HeroDailyCard
-            remaining={selectedDayStatus.remaining}
-            limit={selectedDayStatus.limit}
-            spent={selectedDayStatus.spent}
-            expenses={heroExpenses}
-            date={selectedDate}
-            timezone={timezone}
-            isBudgetMode={isBudgetMode}
-          />
-
-          {/* Expense List Card */}
-          <div className="bg-white rounded-2xl border border-neutral-200 shadow-lg overflow-hidden">
-            <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-neutral-900">
-                {isToday ? "Today\u2019s Transactions" : "Transactions"}
-              </h3>
-              <span className="text-xs text-neutral-400">{selectedDayExpenses.length} total</span>
-            </div>
-            <div className="divide-y divide-neutral-100">
-              {selectedDayExpenses.length === 0 ? (
-                <div className="p-6 text-center">
-                  <p className="text-neutral-400 text-sm">
-                    {isToday ? "No expenses yet today" : "No expenses recorded"}
-                  </p>
-                  <p className="text-neutral-300 text-xs mt-1">
-                    Tap + to add your first expense
-                  </p>
-                </div>
-              ) : (
-                selectedDayExpenses.map((expense) => {
-                  const isEditing = editingExpenseId === expense.id;
-                  const time = dateUtils.formatDate(expense.occurred_at, timezone, "h:mm a");
-
-                  return (
-                    <div key={expense.id} className="group">
-                      <div className="px-4 py-3 flex items-center gap-3">
-                        {/* Label + metadata */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-neutral-800 truncate">
-                            {expense.label}
-                          </p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[10px] text-neutral-500">{time}</span>
-                            {expense.category && (
-                              <button
-                                onClick={() => setEditingExpenseId(isEditing ? null : expense.id)}
-                                className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
-                              >
-                                {expense.category}
-                              </button>
-                            )}
-                            {!expense.category && (
-                              <button
-                                onClick={() => setEditingExpenseId(isEditing ? null : expense.id)}
-                                className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-50 text-neutral-400 hover:bg-neutral-100 transition-colors"
-                              >
-                                + category
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Amount */}
-                        <span className="text-sm font-semibold text-neutral-700 tabular-nums flex-shrink-0">
-                          -{formatCurrency(expense.amount, CURRENCY)}
-                        </span>
-
-                        {/* Delete */}
-                        <button
-                          onClick={() => handleDeleteExpense(expense.id)}
-                          className="p-1.5 text-neutral-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
-                          aria-label="Delete expense"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-
-                      {/* Inline category editor */}
-                      {isEditing && (
-                        <div className="px-4 pb-3 pt-0 border-t border-neutral-100">
-                          <div className="pt-2">
-                            <label className="text-[10px] font-medium text-neutral-700 uppercase tracking-wider block mb-1">
-                              Category
-                            </label>
-                            <div className="relative">
-                              <select
-                                value={expense.category || ""}
-                                onChange={(e) => {
-                                  updateExpense(expense.id, { category: e.target.value || null });
-                                  setEditingExpenseId(null);
-                                }}
-                                className="w-full text-sm bg-white border border-neutral-200 rounded-lg px-3 py-2 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                              >
-                                <option value="">No category</option>
-                                {existingCategories.map((cat) => (
-                                  <option key={cat} value={cat}>
-                                    {cat}
-                                  </option>
-                                ))}
-                              </select>
-                              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
+      {/* Tabs + Main Content */}
+      <Tabs defaultValue="today" className="relative flex-1 flex flex-col min-h-0 gap-0">
+        <div className="relative flex-shrink-0 flex justify-center py-2 border-b border-neutral-100 bg-white/60 backdrop-blur-sm">
+          <TabsList className="bg-neutral-100 rounded-full">
+            <TabsTrigger value="today" className="rounded-full text-xs px-4">
+              Today
+            </TabsTrigger>
+            <TabsTrigger value="insights" className="rounded-full text-xs px-4">
+              Insights
+            </TabsTrigger>
+          </TabsList>
         </div>
-      </main>
+
+        <main className="relative flex-1 overflow-auto pb-24">
+          <TabsContent value="today" className="outline-none">
+            <div className="max-w-lg mx-auto p-3 sm:p-4 space-y-4">
+              {/* Week Strip */}
+              <WeekStrip
+                selectedDate={selectedDate}
+                onSelectDate={handleSelectDate}
+                expenses={expenses}
+                dailyLimit={actualDailyLimit}
+                timezone={timezone}
+                onTodayPress={handleTodayPress}
+              />
+
+              {/* Hero Daily Card */}
+              <HeroDailyCard
+                remaining={selectedDayStatus.remaining}
+                limit={selectedDayStatus.limit}
+                spent={selectedDayStatus.spent}
+                expenses={heroExpenses}
+                date={selectedDate}
+                timezone={timezone}
+                isBudgetMode={isBudgetMode}
+              />
+
+              {/* Expense List Card */}
+              <div className="bg-white rounded-2xl border border-neutral-200 shadow-lg overflow-hidden">
+                <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-neutral-900">
+                    {isToday ? "Today\u2019s Transactions" : "Transactions"}
+                  </h3>
+                  <span className="text-xs text-neutral-400">{selectedDayExpenses.length} total</span>
+                </div>
+                <div className="divide-y divide-neutral-100">
+                  {selectedDayExpenses.length === 0 ? (
+                    <div className="p-6 text-center">
+                      <p className="text-neutral-400 text-sm">
+                        {isToday ? "No expenses yet today" : "No expenses recorded"}
+                      </p>
+                      <p className="text-neutral-300 text-xs mt-1">
+                        Tap + to add your first expense
+                      </p>
+                    </div>
+                  ) : (
+                    selectedDayExpenses.map((expense) => {
+                      const isEditing = editingExpenseId === expense.id;
+                      const time = dateUtils.formatDate(expense.occurred_at, timezone, "h:mm a");
+
+                      return (
+                        <div key={expense.id} className="group">
+                          <div className="px-4 py-3 flex items-center gap-3">
+                            {/* Label + metadata */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-neutral-800 truncate">
+                                {expense.label}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="text-[10px] text-neutral-500">{time}</span>
+                                {expense.category && (
+                                  <button
+                                    onClick={() => setEditingExpenseId(isEditing ? null : expense.id)}
+                                    className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
+                                  >
+                                    {expense.category}
+                                  </button>
+                                )}
+                                {!expense.category && (
+                                  <button
+                                    onClick={() => setEditingExpenseId(isEditing ? null : expense.id)}
+                                    className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-50 text-neutral-400 hover:bg-neutral-100 transition-colors"
+                                  >
+                                    + category
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Amount */}
+                            <span className="text-sm font-semibold text-neutral-700 tabular-nums flex-shrink-0">
+                              -{formatCurrency(expense.amount, CURRENCY)}
+                            </span>
+
+                            {/* Delete */}
+                            <button
+                              onClick={() => handleDeleteExpense(expense.id)}
+                              className="p-1.5 text-neutral-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                              aria-label="Delete expense"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Inline category editor */}
+                          {isEditing && (
+                            <div className="px-4 pb-3 pt-0 border-t border-neutral-100">
+                              <div className="pt-2">
+                                <label className="text-[10px] font-medium text-neutral-700 uppercase tracking-wider block mb-1">
+                                  Category
+                                </label>
+                                <div className="relative">
+                                  <select
+                                    value={expense.category || ""}
+                                    onChange={(e) => {
+                                      updateExpense(expense.id, { category: e.target.value || null });
+                                      setEditingExpenseId(null);
+                                    }}
+                                    className="w-full text-sm bg-white border border-neutral-200 rounded-lg px-3 py-2 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                  >
+                                    <option value="">No category</option>
+                                    {existingCategories.map((cat) => (
+                                      <option key={cat} value={cat}>
+                                        {cat}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="insights" className="outline-none">
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-6 h-6 border-2 border-neutral-200 border-t-teal-500 rounded-full animate-spin" />
+                </div>
+              }
+            >
+              <InsightsTab
+                expenses={expenses}
+                dailyLimit={actualDailyLimit}
+                isBudgetMode={isBudgetMode}
+              />
+            </Suspense>
+          </TabsContent>
+        </main>
+      </Tabs>
 
       {/* Smart Input Bar */}
       <SmartInputBar

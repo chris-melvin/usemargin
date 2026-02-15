@@ -1,0 +1,182 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { useTimezone } from "@/components/providers";
+import * as dateUtils from "@/lib/utils/date";
+import { formatCurrency } from "@/lib/utils";
+import { CURRENCY } from "@/lib/constants";
+import {
+  computeDailySpending,
+  computeCategoryBreakdown,
+  computeDayOfWeekSpending,
+  computeStreaks,
+  computePeriodTotals,
+  computeMonthComparison,
+  computeRollingAverage,
+  computeWeekdayWeekendSplit,
+} from "@/lib/insights/calculations";
+import { SpendingTrendChart } from "./spending-trend-chart";
+import { CategoryBreakdown } from "./category-breakdown";
+import { DayOfWeekHeatmap } from "./day-of-week-heatmap";
+import { StreakCard } from "./streak-card";
+import { MonthComparisonCard } from "./month-comparison";
+import { WeekdayWeekendSplitCard } from "./weekday-weekend-split";
+import type { Expense } from "@repo/database";
+import type { InsightsPeriod } from "@/lib/insights/types";
+
+interface InsightsTabProps {
+  expenses: Expense[];
+  dailyLimit: number;
+  isBudgetMode: boolean;
+}
+
+export function InsightsTab({
+  expenses,
+  dailyLimit,
+  isBudgetMode,
+}: InsightsTabProps) {
+  const { timezone } = useTimezone();
+  const [period, setPeriod] = useState<InsightsPeriod>("month");
+
+  const days = period === "week" ? 7 : 30;
+
+  // Filter expenses to the selected period
+  const periodExpenses = useMemo(() => {
+    const now = new Date();
+    const endTimestamp = dateUtils.getCurrentTimestamp(timezone, true);
+    const startTimestamp = dateUtils.subtractDaysFromTimestamp(
+      endTimestamp,
+      days - 1,
+      timezone
+    );
+    const startDate = dateUtils.formatInTimezone(
+      new Date(startTimestamp),
+      timezone,
+      "yyyy-MM-dd"
+    );
+
+    return expenses.filter((e) => {
+      const key = dateUtils.formatInTimezone(
+        new Date(e.occurred_at),
+        timezone,
+        "yyyy-MM-dd"
+      );
+      return key >= startDate;
+    });
+  }, [expenses, timezone, days]);
+
+  const dailySpending = useMemo(() => {
+    const data = computeDailySpending(expenses, timezone, days);
+    if (isBudgetMode) {
+      return data.map((d) => ({ ...d, overBudget: d.amount > dailyLimit }));
+    }
+    return data;
+  }, [expenses, timezone, days, isBudgetMode, dailyLimit]);
+
+  const categoryBreakdown = useMemo(
+    () => computeCategoryBreakdown(periodExpenses),
+    [periodExpenses]
+  );
+
+  const dayOfWeek = useMemo(
+    () => computeDayOfWeekSpending(periodExpenses, timezone),
+    [periodExpenses, timezone]
+  );
+
+  const streak = useMemo(
+    () => computeStreaks(expenses, timezone, dailyLimit, isBudgetMode),
+    [expenses, timezone, dailyLimit, isBudgetMode]
+  );
+
+  const totals = useMemo(
+    () => computePeriodTotals(periodExpenses, period, timezone, days),
+    [periodExpenses, period, timezone, days]
+  );
+
+  const monthComparison = useMemo(
+    () => computeMonthComparison(expenses, timezone),
+    [expenses, timezone]
+  );
+
+  const rollingAverage = useMemo(
+    () => computeRollingAverage(dailySpending),
+    [dailySpending]
+  );
+
+  const weekdayWeekendSplit = useMemo(
+    () => computeWeekdayWeekendSplit(periodExpenses, timezone),
+    [periodExpenses, timezone]
+  );
+
+  return (
+    <div className="max-w-lg mx-auto p-3 sm:p-4 space-y-4">
+      {/* Period Toggle + Summary */}
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-lg overflow-hidden">
+        <div className="p-4">
+          {/* Period Toggle */}
+          <div className="flex items-center justify-center mb-3">
+            <div className="inline-flex bg-neutral-100 rounded-full p-0.5">
+              <button
+                onClick={() => setPeriod("week")}
+                className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
+                  period === "week"
+                    ? "bg-white text-neutral-900 shadow-sm"
+                    : "text-neutral-500 hover:text-neutral-700"
+                }`}
+              >
+                Week
+              </button>
+              <button
+                onClick={() => setPeriod("month")}
+                className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
+                  period === "month"
+                    ? "bg-white text-neutral-900 shadow-sm"
+                    : "text-neutral-500 hover:text-neutral-700"
+                }`}
+              >
+                Month
+              </button>
+            </div>
+          </div>
+          {/* Summary */}
+          <div className="text-center">
+            <p className="text-xs text-neutral-500">
+              {totals.periodLabel}: {formatCurrency(totals.total, CURRENCY)}{" "}
+              spent
+            </p>
+            <p className="text-[10px] text-neutral-400 mt-0.5">
+              {formatCurrency(totals.avg, CURRENCY)}/day avg
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Month-over-Month Comparison */}
+      <MonthComparisonCard comparison={monthComparison} />
+
+      {/* Spending Trend Chart */}
+      <SpendingTrendChart
+        data={dailySpending}
+        rollingAverage={rollingAverage}
+        dailyLimit={dailyLimit}
+        isBudgetMode={isBudgetMode}
+      />
+
+      {/* Weekend vs Weekday Split */}
+      <WeekdayWeekendSplitCard data={weekdayWeekendSplit} />
+
+      {/* Category Breakdown */}
+      <CategoryBreakdown categories={categoryBreakdown} />
+
+      {/* Day of Week Heatmap */}
+      <DayOfWeekHeatmap
+        data={dayOfWeek}
+        dailyLimit={dailyLimit}
+        isBudgetMode={isBudgetMode}
+      />
+
+      {/* Streak Card */}
+      <StreakCard streak={streak} />
+    </div>
+  );
+}
