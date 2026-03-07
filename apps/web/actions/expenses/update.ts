@@ -86,6 +86,7 @@ export async function updateExpenseFromData(
     amount?: number;
     label?: string;
     notes?: string | null;
+    occurred_at?: string;
   }
 ): Promise<ActionResult<Expense>> {
   const authResult = await requireAuth();

@@ -26,7 +26,7 @@ interface SmartInputBarProps {
 const SYNTAX_EXAMPLES = [
   { example: "coffee 120", desc: "Simple expense" },
   { example: "grab 180 and lunch", desc: "Multiple items" },
-  { example: "@starbucks 200", desc: "Use a shortcut" },
+  { example: "coffee 120 at 2pm", desc: "With time" },
   { example: "uber 180 #travel", desc: "Add category" },
 ];
 

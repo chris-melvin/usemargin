@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, lazy, Suspense } from "react";
 import Link from "next/link";
-import { Settings, MessageSquarePlus, Trash2, ChevronDown } from "lucide-react";
+import { Settings, MessageSquarePlus, Trash2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isSameDay } from "date-fns";
 import { useTimezone } from "@/components/providers";
@@ -16,11 +16,13 @@ import { useServerExpenses } from "@/hooks/use-server-expenses";
 import { useAiParser } from "@/hooks/use-ai-parser";
 import { useShortcuts } from "@/hooks/use-shortcuts";
 import { HeroDailyCard } from "@/components/dashboard/hero-daily-card";
+import { ExpenseEditModal } from "@/components/expenses/expense-edit-modal";
 import { showExpenseDeletedToast } from "@/components/ui/undo-toast";
 import { restoreExpense } from "@/actions/expenses/restore";
 import { formatCurrency, cn } from "@/lib/utils";
 import { DEFAULT_DAILY_LIMIT, CURRENCY } from "@/lib/constants";
 import type { Expense, TrackingMode } from "@repo/database";
+import type { ParsedExpense } from "@/hooks/use-ai-parser";
 
 const InsightsTab = lazy(() =>
   import("@/components/insights/insights-tab").then((m) => ({
@@ -40,7 +42,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
   const [showSuccessFlash, setShowSuccessFlash] = useState(false);
   const [successMessage, setSuccessMessage] = useState("Added!");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [editExpense, setEditExpense] = useState<Expense | null>(null);
 
   const actualDailyLimit = dailyLimit ?? DEFAULT_DAILY_LIMIT;
   const isBudgetMode = trackingMode === "budget_enabled";
@@ -81,14 +83,34 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
   // AI Parser
   const handleAiAddExpenses = useCallback(
     async (
-      parsedExpenses: Array<{ amount: number; label: string; category?: string; bucketId?: string }>
+      parsedExpenses: Array<ParsedExpense>
     ) => {
-      // Today: use current time. Other days: use midnight of that day.
-      const timestamp = isToday
-        ? dateUtils.getCurrentTimestamp(timezone)
-        : dateUtils.toTimestamp(selectedDate, timezone);
+      const firstParsed = parsedExpenses[0];
+      const parsedTime = firstParsed?.parsedTime;
+
+      // Determine target date: parsed date (e.g., "yesterday") overrides selected date
+      const targetDate = parsedTime?.date ?? selectedDate;
+      const targetIsToday = isSameDay(targetDate, new Date());
+
+      let timestamp: string;
+      if (parsedTime?.hours !== undefined) {
+        // User specified exact time (e.g., "at 2pm")
+        const d = new Date(targetDate);
+        d.setHours(parsedTime.hours, parsedTime.minutes ?? 0, 0, 0);
+        timestamp = dateUtils.toTimestamp(d, timezone);
+      } else if (targetIsToday) {
+        // Today: use current time
+        timestamp = dateUtils.getCurrentTimestamp(timezone);
+      } else {
+        // Past day: use current wall-clock time applied to that date
+        const now = new Date();
+        const d = new Date(targetDate);
+        d.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0);
+        timestamp = dateUtils.toTimestamp(d, timezone);
+      }
+
       const result = await addExpenses(parsedExpenses, timestamp);
-      if (!result.success) return; // error toast already shown by hook
+      if (!result.success) return;
 
       const firstExpense = parsedExpenses[0];
       setSuccessMessage(
@@ -98,7 +120,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
       );
       setShowSuccessFlash(true);
     },
-    [addExpenses, timezone, isToday, selectedDate]
+    [addExpenses, timezone, selectedDate]
   );
 
   const { preview, isParsing, updatePreview, updatePreviewItem, submit } = useAiParser({
@@ -126,12 +148,12 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
 
   const handleSelectDate = useCallback((date: Date) => {
     setSelectedDate(date);
-    setEditingExpenseId(null);
+    setEditExpense(null);
   }, []);
 
   const handleTodayPress = useCallback(() => {
     setSelectedDate(new Date());
-    setEditingExpenseId(null);
+    setEditExpense(null);
   }, []);
 
   return (
@@ -150,7 +172,7 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
 
       {/* Header */}
       <header className="relative flex-shrink-0 h-14 sm:h-12 px-3 sm:px-4 flex items-center justify-between border-b border-neutral-200 bg-white/80 backdrop-blur-sm safe-area-top">
-        <span className="text-base font-bold text-neutral-800 tracking-tight">margin</span>
+        <span className="text-base font-bold text-neutral-800 tracking-tight">ledgr</span>
 
         <div className="flex items-center gap-1 sm:gap-2">
           <Link
@@ -227,12 +249,14 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
                     </div>
                   ) : (
                     selectedDayExpenses.map((expense) => {
-                      const isEditing = editingExpenseId === expense.id;
                       const time = dateUtils.formatDate(expense.occurred_at, timezone, "h:mm a");
 
                       return (
                         <div key={expense.id} className="group">
-                          <div className="px-4 py-3 flex items-center gap-3">
+                          <div
+                            className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-neutral-50 transition-colors"
+                            onClick={() => setEditExpense(expense)}
+                          >
                             {/* Label + metadata */}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-neutral-800 truncate">
@@ -241,22 +265,16 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
                               <div className="flex items-center gap-1.5 mt-0.5">
                                 <span className="text-[10px] text-neutral-500">{time}</span>
                                 {expense.category && (
-                                  <button
-                                    onClick={() => setEditingExpenseId(isEditing ? null : expense.id)}
-                                    className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
-                                  >
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600">
                                     {expense.category}
-                                  </button>
-                                )}
-                                {!expense.category && (
-                                  <button
-                                    onClick={() => setEditingExpenseId(isEditing ? null : expense.id)}
-                                    className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-50 text-neutral-400 hover:bg-neutral-100 transition-colors"
-                                  >
-                                    + category
-                                  </button>
+                                  </span>
                                 )}
                               </div>
+                              {expense.notes && (
+                                <p className="text-[10px] text-neutral-400 truncate mt-0.5">
+                                  {expense.notes}
+                                </p>
+                              )}
                             </div>
 
                             {/* Amount */}
@@ -266,42 +284,13 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
 
                             {/* Delete */}
                             <button
-                              onClick={() => handleDeleteExpense(expense.id)}
+                              onClick={(e) => { e.stopPropagation(); handleDeleteExpense(expense.id); }}
                               className="p-1.5 text-neutral-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
                               aria-label="Delete expense"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
-
-                          {/* Inline category editor */}
-                          {isEditing && (
-                            <div className="px-4 pb-3 pt-0 border-t border-neutral-100">
-                              <div className="pt-2">
-                                <label className="text-[10px] font-medium text-neutral-700 uppercase tracking-wider block mb-1">
-                                  Category
-                                </label>
-                                <div className="relative">
-                                  <select
-                                    value={expense.category || ""}
-                                    onChange={(e) => {
-                                      updateExpense(expense.id, { category: e.target.value || null });
-                                      setEditingExpenseId(null);
-                                    }}
-                                    className="w-full text-sm bg-white border border-neutral-200 rounded-lg px-3 py-2 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                  >
-                                    <option value="">No category</option>
-                                    {existingCategories.map((cat) => (
-                                      <option key={cat} value={cat}>
-                                        {cat}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
-                                </div>
-                              </div>
-                            </div>
-                          )}
                         </div>
                       );
                     })
@@ -350,6 +339,17 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
 
       {/* Feedback Dialog */}
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+
+      {/* Expense Edit Modal */}
+      <ExpenseEditModal
+        expense={editExpense}
+        open={editExpense !== null}
+        onClose={() => setEditExpense(null)}
+        onSave={updateExpense}
+        onDelete={handleDeleteExpense}
+        existingCategories={existingCategories}
+        timezone={timezone}
+      />
     </div>
   );
 }

@@ -12,6 +12,11 @@ export interface ParsedExpense {
   bucketId?: string;      // Resolved bucket ID
   bucketSlug?: string;    // For display (e.g., "flex", "daily-spending")
   fromShortcut?: string;  // The @keyword that was used
+  parsedTime?: {
+    hours?: number;
+    minutes?: number;
+    date?: Date;           // Resolved date for relative references (yesterday, last friday)
+  };
 }
 
 export interface UnknownShortcut {
@@ -33,6 +38,87 @@ interface UseAiParserOptions {
 const BUCKET_PATTERN = /:([a-z][a-z0-9-]*)/gi;
 // #category pattern - matches #word (e.g., #travel, #food)
 const CATEGORY_PATTERN = /#([a-zA-Z][a-zA-Z0-9]*)/g;
+
+// Time/date token extraction from natural language input
+function extractTimeTokens(input: string): {
+  parsedTime?: { hours?: number; minutes?: number; date?: Date };
+  remaining: string;
+} {
+  let remaining = input;
+  let hours: number | undefined;
+  let minutes: number | undefined;
+  let date: Date | undefined;
+
+  // Match "at <time>" patterns: "at 2pm", "at 2:30pm", "at 14:00"
+  const timeMatch = remaining.match(/\bat\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/i);
+  if (timeMatch) {
+    let h = parseInt(timeMatch[1]!, 10);
+    const m = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+    const meridiem = timeMatch[3]?.toLowerCase();
+
+    if (meridiem) {
+      // 12h format with am/pm
+      if (meridiem === "pm" && h < 12) h += 12;
+      if (meridiem === "am" && h === 12) h = 0;
+      hours = h;
+      minutes = m;
+      remaining = remaining.replace(timeMatch[0], " ").trim();
+    } else if (timeMatch[2]) {
+      // 24h format (has colon, like "at 14:00")
+      if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+        hours = h;
+        minutes = m;
+        remaining = remaining.replace(timeMatch[0], " ").trim();
+      }
+    }
+    // No meridiem and no colon → ambiguous, skip
+  }
+
+  // Match "yesterday"
+  const yesterdayMatch = remaining.match(/\byesterday\b/i);
+  if (yesterdayMatch) {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    d.setHours(0, 0, 0, 0);
+    date = d;
+    remaining = remaining.replace(yesterdayMatch[0], " ").trim();
+  }
+
+  // Match "last <day>"
+  if (!date) {
+    const lastDayMatch = remaining.match(
+      /\blast\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun)\b/i
+    );
+    if (lastDayMatch) {
+      const dayMap: Record<string, number> = {
+        sunday: 0, sun: 0,
+        monday: 1, mon: 1,
+        tuesday: 2, tue: 2,
+        wednesday: 3, wed: 3,
+        thursday: 4, thu: 4,
+        friday: 5, fri: 5,
+        saturday: 6, sat: 6,
+      };
+      const targetDay = dayMap[lastDayMatch[1]!.toLowerCase()];
+      if (targetDay !== undefined) {
+        const d = new Date();
+        const currentDay = d.getDay();
+        let diff = currentDay - targetDay;
+        if (diff <= 0) diff += 7;
+        d.setDate(d.getDate() - diff);
+        d.setHours(0, 0, 0, 0);
+        date = d;
+      }
+      remaining = remaining.replace(lastDayMatch[0], " ").trim();
+    }
+  }
+
+  if (hours !== undefined || date) {
+    return { parsedTime: { hours, minutes, date }, remaining };
+  }
+
+  return { remaining };
+}
 
 // Template shortcuts for instant parsing
 const TEMPLATE_MAP = new Map(
@@ -226,6 +312,14 @@ export function useAiParser({
       console.log("[parseLocally] After category extraction:", { category: explicitCategory, remaining: afterCategory });
     }
 
+    // Step 3: Extract time/date tokens (e.g., "at 2pm", "yesterday", "last friday")
+    const { parsedTime, remaining: afterTime } = extractTimeTokens(workingInput);
+    workingInput = afterTime;
+
+    if (process.env.NODE_ENV === "development" && parsedTime) {
+      console.log("[parseLocally] Parsed time:", parsedTime);
+    }
+
     const normalized = workingInput.toLowerCase().trim();
 
     // Step 3: Check for @keyword patterns
@@ -246,18 +340,19 @@ export function useAiParser({
           bucketId: bucketId ?? parsed.bucketId,
           bucketSlug: bucketSlug ?? parsed.bucketSlug,
           category: explicitCategory ?? parsed.category,
+          parsedTime,
         });
         setPendingShortcut(null);
 
         // Continue parsing remaining input if any
         if (remaining) {
           const moreResults = parseSimplePatterns(remaining);
-          // Apply bucket/category to all parsed results
           results.push(...moreResults.map((r) => ({
             ...r,
             bucketId: bucketId ?? r.bucketId,
             bucketSlug: bucketSlug ?? r.bucketSlug,
             category: explicitCategory ?? r.category,
+            parsedTime,
           })));
         }
 
@@ -267,7 +362,7 @@ export function useAiParser({
 
     setPendingShortcut(null);
 
-    // Step 4: Check for built-in shortcuts (both ways, roundtrip)
+    // Step 5: Check for built-in shortcuts (both ways, roundtrip)
     for (const [shortcut, config] of Object.entries(SHORTCUTS)) {
       if (normalized.includes(shortcut)) {
         const template = TEMPLATE_MAP.get(config.label.toLowerCase());
@@ -280,37 +375,38 @@ export function useAiParser({
               bucketId,
               bucketSlug,
               category: explicitCategory,
+              parsedTime,
             });
           }
         }
         // Remove the shortcut from input for further parsing
         const remaining = normalized.replace(shortcut, "").trim();
         if (remaining) {
-          // Continue parsing the rest
           const moreResults = parseSimplePatterns(remaining);
           results.push(...moreResults.map((r) => ({
             ...r,
             bucketId: bucketId ?? r.bucketId,
             bucketSlug: bucketSlug ?? r.bucketSlug,
             category: explicitCategory ?? r.category,
+            parsedTime,
           })));
         }
         return results.length > 0 ? results : null;
       }
     }
 
-    // Step 5: Try simple patterns
+    // Step 6: Try simple patterns
     const simpleResults = parseSimplePatterns(normalized);
     if (process.env.NODE_ENV === "development") {
       console.log("[parseLocally] Simple patterns result:", simpleResults);
     }
     if (simpleResults.length > 0) {
-      // Apply bucket/category to all parsed results
       const finalResults = simpleResults.map((r) => ({
         ...r,
         bucketId: bucketId ?? r.bucketId,
         bucketSlug: bucketSlug ?? r.bucketSlug,
         category: explicitCategory ?? r.category,
+        parsedTime,
       }));
       if (process.env.NODE_ENV === "development") {
         console.log("[parseLocally] Final results:", finalResults);

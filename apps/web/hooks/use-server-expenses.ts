@@ -134,7 +134,14 @@ export function useServerExpenses(initialExpenses: Expense[]) {
   const updateExpense = useCallback(
     async (
       id: string,
-      updates: { category?: string | null; bucket_id?: string | null }
+      updates: {
+        category?: string | null;
+        bucket_id?: string | null;
+        amount?: number;
+        label?: string;
+        notes?: string | null;
+        occurred_at?: string;
+      }
     ): Promise<{ success: boolean; error?: string }> => {
       if (id.startsWith("temp-")) {
         return { success: false, error: "Cannot update pending expense" };
