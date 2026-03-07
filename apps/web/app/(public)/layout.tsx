@@ -71,7 +71,7 @@ export default function PublicLayout({
                 </li>
                 <li>
                   <Link
-                    href="#how-it-works"
+                    href="#features"
                     className="text-neutral-600 transition-colors hover:text-neutral-900"
                   >
                     How It Works
