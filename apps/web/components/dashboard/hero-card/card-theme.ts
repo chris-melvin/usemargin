@@ -1,6 +1,9 @@
-export type CardTheme = "auto" | "emerald" | "ocean" | "sunset" | "lavender" | "slate" | "rose";
-export type BackgroundStyle = "mesh" | "grain" | "static";
-export type GlareStyle = "standard" | "holographic";
+export type CardTheme =
+  | "auto" | "emerald" | "ocean" | "sunset" | "lavender" | "slate" | "rose"
+  | "midnight" | "aurora" | "ember" | "neon" | "obsidian";
+export type BackgroundStyle = "mesh" | "grain" | "static" | "neuro" | "metaballs" | "godrays" | "swirl" | "waves";
+export type GlareStyle = "standard" | "holographic" | "prismatic";
+export type CardMaterial = "default" | "glass" | "metallic" | "holo";
 
 export interface CardPreferences {
   theme?: CardTheme;
@@ -9,6 +12,7 @@ export interface CardPreferences {
   enableTilt?: boolean;
   enableGlare?: boolean;
   glareStyle?: GlareStyle;
+  material?: CardMaterial;
 }
 
 export const CARD_PREFERENCE_DEFAULTS: Required<CardPreferences> = {
@@ -18,6 +22,7 @@ export const CARD_PREFERENCE_DEFAULTS: Required<CardPreferences> = {
   enableTilt: true,
   enableGlare: true,
   glareStyle: "standard",
+  material: "default",
 };
 
 type BudgetStatus = "safe" | "close" | "low" | "over";
@@ -26,10 +31,11 @@ interface ThemePreset {
   label: string;
   colors: string[];
   cssGradient: string;
-  swatch: string; // Preview color for the customization UI
+  swatch: string;
+  textMode?: "dark"; // dark backgrounds need light text
 }
 
-export const THEME_PRESETS: Record<Exclude<CardTheme, "auto">, ThemePreset> = {
+const FREE_THEME_PRESETS: Record<string, ThemePreset> = {
   emerald: {
     label: "Emerald",
     colors: ["#d1fae5", "#a7f3d0", "#6ee7b7", "#34d399"],
@@ -67,6 +73,68 @@ export const THEME_PRESETS: Record<Exclude<CardTheme, "auto">, ThemePreset> = {
     swatch: "#fb7185",
   },
 };
+
+const PRO_THEME_PRESETS: Record<string, ThemePreset> = {
+  midnight: {
+    label: "Midnight",
+    colors: ["#1e1b4b", "#312e81", "#4338ca", "#6366f1"],
+    cssGradient: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)",
+    swatch: "#6366f1",
+    textMode: "dark",
+  },
+  aurora: {
+    label: "Aurora",
+    colors: ["#042f2e", "#065f46", "#059669", "#34d399"],
+    cssGradient: "linear-gradient(135deg, #042f2e 0%, #065f46 50%, #059669 100%)",
+    swatch: "#34d399",
+    textMode: "dark",
+  },
+  ember: {
+    label: "Ember",
+    colors: ["#451a03", "#7c2d12", "#c2410c", "#f59e0b"],
+    cssGradient: "linear-gradient(135deg, #451a03 0%, #7c2d12 50%, #c2410c 100%)",
+    swatch: "#f59e0b",
+    textMode: "dark",
+  },
+  neon: {
+    label: "Neon",
+    colors: ["#0c0a1a", "#1e1b4b", "#06b6d4", "#e879f9"],
+    cssGradient: "linear-gradient(135deg, #0c0a1a 0%, #1e1b4b 50%, #06b6d4 100%)",
+    swatch: "#e879f9",
+    textMode: "dark",
+  },
+  obsidian: {
+    label: "Obsidian",
+    colors: ["#18181b", "#27272a", "#3f3f46", "#a1a1aa"],
+    cssGradient: "linear-gradient(135deg, #18181b 0%, #27272a 50%, #3f3f46 100%)",
+    swatch: "#a1a1aa",
+    textMode: "dark",
+  },
+};
+
+export const THEME_PRESETS = {
+  ...FREE_THEME_PRESETS,
+  ...PRO_THEME_PRESETS,
+} as Record<Exclude<CardTheme, "auto">, ThemePreset>;
+
+export const PRO_THEMES: CardTheme[] = ["midnight", "aurora", "ember", "neon", "obsidian"];
+export const PRO_BACKGROUNDS: BackgroundStyle[] = ["neuro", "metaballs", "godrays", "swirl", "waves"];
+export const PRO_MATERIALS: CardMaterial[] = ["glass", "metallic", "holo"];
+
+export function isProFeature(key: keyof CardPreferences, value: unknown): boolean {
+  switch (key) {
+    case "theme": return PRO_THEMES.includes(value as CardTheme);
+    case "backgroundStyle": return PRO_BACKGROUNDS.includes(value as BackgroundStyle);
+    case "glareStyle": return value === "prismatic";
+    case "material": return PRO_MATERIALS.includes(value as CardMaterial);
+    default: return false;
+  }
+}
+
+export function isDarkTheme(theme: CardTheme): boolean {
+  if (theme === "auto") return false;
+  return THEME_PRESETS[theme]?.textMode === "dark";
+}
 
 // Status colors used when theme is "auto"
 const STATUS_SHADER_COLORS: Record<BudgetStatus, string[]> = {
