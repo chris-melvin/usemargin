@@ -9,6 +9,7 @@ import {
 } from "@repo/shared/date";
 import { useTimezone } from "@/components/providers/timezone-provider";
 import { useSettingsContext } from "@/components/providers/settings-provider";
+import { useTheme } from "@/lib/theme/theme-context";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useSyncStatus } from "@/hooks/use-sync";
 import { useCategories } from "@/hooks/use-categories";
@@ -18,6 +19,8 @@ import { WeekStrip } from "@/components/dashboard/week-strip";
 import { ExpenseList } from "@/components/expenses/expense-list";
 import { SmartInput } from "@/components/expenses/smart-input";
 import { ExpenseEditModal } from "@/components/expenses/expense-edit-modal";
+import { tapMedium } from "@/lib/haptics";
+import { usePullToSync } from "@/components/ui/pull-to-sync";
 import type { LocalExpense } from "@/lib/db/expense-dao";
 
 export default function TodayScreen() {
@@ -29,6 +32,8 @@ export default function TodayScreen() {
   const { status } = useSyncStatus();
   const { categories } = useCategories();
   const { shortcutMap } = useShortcuts();
+  const { refreshControl } = usePullToSync();
+  const { colors } = useTheme();
 
   const startOfDay = getStartOfDay(selectedDate, timezone);
   const endOfDay = getEndOfDay(selectedDate, timezone);
@@ -57,19 +62,21 @@ export default function TodayScreen() {
   }, [timezone]);
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: "#FDFBF7" }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       {/* Header */}
-      <View className="h-14 px-3 flex-row items-center justify-between border-b border-neutral-200 bg-white">
-        <Text className="text-base font-bold text-neutral-800 tracking-tight">ledgr</Text>
+      <View className="h-14 px-4 flex-row items-center justify-between" style={{ backgroundColor: colors.background }}>
+        <Text style={{ fontFamily: "Lora_700Bold", fontSize: 18, color: colors.textPrimary, letterSpacing: -0.5 }}>
+          ledgr
+        </Text>
         <View className="flex-row items-center">
           {status === "syncing" && (
-            <Text className="text-xs text-neutral-400 mr-2">syncing...</Text>
+            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.textTertiary }}>syncing...</Text>
           )}
           {status === "offline" && (
-            <Text className="text-xs text-amber-500 mr-2">offline</Text>
+            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.warning }}>offline</Text>
           )}
           {status === "error" && (
-            <Text className="text-xs text-rose-500 mr-2">sync error</Text>
+            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.danger }}>sync error</Text>
           )}
         </View>
       </View>
@@ -77,8 +84,9 @@ export default function TodayScreen() {
       {/* Scrollable content */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 12, gap: 16 }}
+        contentContainerStyle={{ padding: 12, gap: 16, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
       >
         <WeekStrip
           selectedDate={selectedDate}
@@ -109,14 +117,15 @@ export default function TodayScreen() {
 
       {/* FAB */}
       <TouchableOpacity
-        onPress={() => setShowInput(true)}
-        className="absolute bottom-6 right-4 w-14 h-14 rounded-2xl items-center justify-center overflow-hidden"
+        onPress={() => { tapMedium(); setShowInput(true); }}
+        className="absolute bottom-24 right-4 w-14 h-14 rounded-2xl items-center justify-center overflow-hidden"
         style={styles.fab}
       >
         <LinearGradient
-          colors={["#14b8a6", "#0d9488"]}
+          colors={["#1A9E9E", "#0F6B6B"]}
           style={StyleSheet.absoluteFill}
         />
+        <View style={styles.fabBorder} />
         <Text className="text-white text-2xl font-light">+</Text>
       </TouchableOpacity>
 
@@ -146,10 +155,16 @@ export default function TodayScreen() {
 
 const styles = StyleSheet.create({
   fab: {
-    shadowColor: "#14b8a6",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowColor: "#1A9E9E",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  fabBorder: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
   },
 });

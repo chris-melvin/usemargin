@@ -1,4 +1,6 @@
-import { View, Text, TouchableOpacity, Modal } from "react-native";
+import { View, Text, TouchableOpacity, Modal, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 
 interface UpgradePromptProps {
   visible: boolean;
@@ -9,33 +11,107 @@ interface UpgradePromptProps {
 export function UpgradePrompt({ visible, feature, onClose }: UpgradePromptProps) {
   return (
     <Modal visible={visible} animationType="fade" transparent>
-      <View className="flex-1 bg-black/50 items-center justify-center px-6">
-        <View className="bg-white rounded-2xl p-6 w-full max-w-sm">
-          <Text className="text-lg font-bold text-center mb-2">
+      <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <View style={promptStyles.card}>
+          <View style={promptStyles.iconCircle}>
+            <Ionicons name="star" size={24} color="#1A9E9E" />
+          </View>
+
+          <Text style={promptStyles.title}>
             Unlock {feature}
           </Text>
-          <Text className="text-sm text-gray-500 text-center mb-6">
+          <Text style={promptStyles.description}>
             Upgrade to Pro to access {feature.toLowerCase()} and all premium features.
           </Text>
 
           <TouchableOpacity
-            className="bg-emerald-500 rounded-xl py-3.5 items-center mb-3"
             onPress={() => {
               // TODO: Integrate RevenueCat paywall
               onClose();
             }}
+            style={promptStyles.ctaButton}
           >
-            <Text className="text-white font-semibold">Upgrade to Pro</Text>
+            <LinearGradient
+              colors={["#1A9E9E", "#0F6B6B"]}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            />
+            <Text style={promptStyles.ctaText}>Upgrade to Pro</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={onClose}
-            className="py-2 items-center"
-          >
-            <Text className="text-gray-400 text-sm">Maybe later</Text>
+          <TouchableOpacity onPress={onClose} style={promptStyles.laterButton}>
+            <Text style={promptStyles.laterText}>Maybe later</Text>
           </TouchableOpacity>
         </View>
       </View>
     </Modal>
   );
 }
+
+const promptStyles = StyleSheet.create({
+  card: {
+    backgroundColor: "#FDFBF7",
+    borderRadius: 24,
+    padding: 28,
+    width: "100%",
+    maxWidth: 340,
+    alignItems: "center",
+    shadowColor: "#1C1917",
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.12,
+    shadowRadius: 40,
+    elevation: 12,
+  },
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(26,158,158,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  title: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 20,
+    color: "#1C1917",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  description: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 15,
+    color: "#78716C",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  ctaButton: {
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: "center",
+    width: "100%",
+    overflow: "hidden",
+    marginBottom: 12,
+    shadowColor: "#1A9E9E",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  ctaText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 16,
+    color: "#FFFFFF",
+  },
+  laterButton: {
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  laterText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: "#A8A29E",
+  },
+});

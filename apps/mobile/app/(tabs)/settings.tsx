@@ -1,212 +1,104 @@
-import { View, Text, TouchableOpacity, Alert, ScrollView } from "react-native";
+import { useState } from "react";
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "@/components/providers/auth-provider";
-import { useSyncStatus } from "@/hooks/use-sync";
-import { useSettingsContext } from "@/components/providers/settings-provider";
-import { useTimezone } from "@/components/providers/timezone-provider";
+import { GeneralSettings } from "@/components/settings/general-settings";
+import { BudgetSettings } from "@/components/settings/budget-settings";
+import { AccountSettings } from "@/components/settings/account-settings";
+import { DataSettings } from "@/components/settings/data-settings";
+import { selection } from "@/lib/haptics";
 
-const CURRENCY_OPTIONS = ["PHP", "USD", "EUR", "GBP", "JPY"];
-const WEEK_START_OPTIONS = [
-  { label: "Sunday", value: 0 },
-  { label: "Monday", value: 1 },
-  { label: "Saturday", value: 6 },
-];
-const TRACKING_MODE_OPTIONS = [
-  { label: "Tracking Only", value: "tracking_only" },
-  { label: "Budget Enabled", value: "budget_enabled" },
+type SettingsTab = "general" | "budget" | "account" | "data";
+
+const TABS: { key: SettingsTab; label: string }[] = [
+  { key: "general", label: "General" },
+  { key: "budget", label: "Budget" },
+  { key: "account", label: "Account" },
+  { key: "data", label: "Data" },
 ];
 
-function SettingRow({
-  label,
-  value,
-  onPress,
+function SegmentedControl({
+  activeTab,
+  onTabChange,
 }: {
-  label: string;
-  value: string;
-  onPress?: () => void;
+  activeTab: SettingsTab;
+  onTabChange: (tab: SettingsTab) => void;
 }) {
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={!onPress}
-      className="flex-row justify-between items-center py-2.5"
-    >
-      <Text className="text-base text-gray-600">{label}</Text>
-      <Text className="text-base text-gray-900">{value}</Text>
-    </TouchableOpacity>
+    <View style={segStyles.container}>
+      {TABS.map((tab) => (
+        <TouchableOpacity
+          key={tab.key}
+          onPress={() => {
+            selection();
+            onTabChange(tab.key);
+          }}
+          style={[segStyles.tab, activeTab === tab.key && segStyles.tabActive]}
+        >
+          <Text style={[segStyles.tabText, activeTab === tab.key && segStyles.tabTextActive]}>
+            {tab.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
   );
 }
 
+const segStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    backgroundColor: "#F5F5F4",
+    borderRadius: 12,
+    padding: 3,
+    marginBottom: 8,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  tabActive: {
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#1C1917",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  tabText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 13,
+    color: "#A8A29E",
+  },
+  tabTextActive: {
+    color: "#292524",
+  },
+});
+
 export default function SettingsScreen() {
-  const { user, signOut } = useAuth();
-  const { status, triggerSync } = useSyncStatus();
-  const { settings, updateSetting, isPro } = useSettingsContext();
-  const timezone = useTimezone();
-
-  const currencySymbol = settings.currency === "PHP" ? "₱" : settings.currency;
-
-  const handleSignOut = () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Sign Out", style: "destructive", onPress: signOut },
-    ]);
-  };
-
-  const handleCurrencyChange = () => {
-    Alert.alert(
-      "Currency",
-      "Select your currency",
-      CURRENCY_OPTIONS.map((c) => ({
-        text: c,
-        onPress: () => updateSetting("currency", c),
-      }))
-    );
-  };
-
-  const handleWeekStartChange = () => {
-    Alert.alert(
-      "Week Starts On",
-      "Select the first day of the week",
-      WEEK_START_OPTIONS.map((opt) => ({
-        text: opt.label,
-        onPress: () => updateSetting("week_starts_on", opt.value),
-      }))
-    );
-  };
-
-  const handleTrackingModeChange = () => {
-    Alert.alert(
-      "Tracking Mode",
-      "Select how you want to track expenses",
-      TRACKING_MODE_OPTIONS.map((opt) => ({
-        text: opt.label,
-        onPress: () => updateSetting("tracking_mode", opt.value),
-      }))
-    );
-  };
-
-  const handleDailyLimitChange = () => {
-    Alert.prompt(
-      "Daily Limit",
-      `Enter your daily spending limit (${currencySymbol})`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Save",
-          onPress: (value?: string) => {
-            const num = parseFloat(value ?? "");
-            if (!isNaN(num) && num > 0) {
-              updateSetting("default_daily_limit", num);
-            }
-          },
-        },
-      ],
-      "plain-text",
-      String(settings.default_daily_limit)
-    );
-  };
-
-  const weekStartLabel =
-    WEEK_START_OPTIONS.find((o) => o.value === settings.week_starts_on)?.label ?? "Sunday";
-  const trackingModeLabel =
-    TRACKING_MODE_OPTIONS.find((o) => o.value === settings.tracking_mode)?.label ??
-    "Tracking Only";
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView className="px-6 pt-4">
-        <Text className="text-2xl font-bold mb-6">Settings</Text>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: "#FDFBF7" }}>
+      <ScrollView className="px-5 pt-4" contentContainerStyle={{ paddingBottom: 100 }}>
+        <Text style={styles.screenTitle}>Settings</Text>
 
-        {/* Account section */}
-        <View className="bg-white rounded-xl p-4 mb-4">
-          <Text className="text-xs text-gray-400 uppercase tracking-wide mb-3">
-            Account
-          </Text>
-          <Text className="text-base text-gray-900">
-            {user?.email ?? "Not signed in"}
-          </Text>
-          <View className="flex-row items-center mt-2">
-            <View
-              className={`px-2 py-0.5 rounded-full ${
-                isPro ? "bg-emerald-100" : "bg-gray-100"
-              }`}
-            >
-              <Text
-                className={`text-xs font-medium ${
-                  isPro ? "text-emerald-700" : "text-gray-500"
-                }`}
-              >
-                {isPro ? "Pro" : "Free"}
-              </Text>
-            </View>
-          </View>
-        </View>
+        <SegmentedControl activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {/* Preferences */}
-        <View className="bg-white rounded-xl p-4 mb-4">
-          <Text className="text-xs text-gray-400 uppercase tracking-wide mb-3">
-            Preferences
-          </Text>
-          <SettingRow
-            label="Currency"
-            value={settings.currency}
-            onPress={handleCurrencyChange}
-          />
-          <SettingRow
-            label="Daily Limit"
-            value={`${currencySymbol}${settings.default_daily_limit}`}
-            onPress={handleDailyLimitChange}
-          />
-          <SettingRow
-            label="Tracking Mode"
-            value={trackingModeLabel}
-            onPress={handleTrackingModeChange}
-          />
-          <SettingRow
-            label="Week Starts On"
-            value={weekStartLabel}
-            onPress={handleWeekStartChange}
-          />
-          <SettingRow label="Timezone" value={timezone} />
-        </View>
-
-        {/* Sync */}
-        <View className="bg-white rounded-xl p-4 mb-4">
-          <Text className="text-xs text-gray-400 uppercase tracking-wide mb-3">
-            Sync
-          </Text>
-          <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-base text-gray-600">Status</Text>
-            <Text
-              className={`text-sm font-medium ${
-                status === "idle"
-                  ? "text-emerald-500"
-                  : status === "syncing"
-                    ? "text-blue-500"
-                    : status === "offline"
-                      ? "text-orange-500"
-                      : "text-red-500"
-              }`}
-            >
-              {status}
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={triggerSync}
-            className="bg-gray-50 rounded-lg py-3 items-center"
-          >
-            <Text className="text-emerald-500 font-medium">Sync Now</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Sign out */}
-        <TouchableOpacity
-          onPress={handleSignOut}
-          className="bg-white rounded-xl p-4 items-center mb-8"
-        >
-          <Text className="text-red-500 font-medium text-base">Sign Out</Text>
-        </TouchableOpacity>
+        {activeTab === "general" && <GeneralSettings />}
+        {activeTab === "budget" && <BudgetSettings />}
+        {activeTab === "account" && <AccountSettings />}
+        {activeTab === "data" && <DataSettings />}
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screenTitle: {
+    fontFamily: "Lora_700Bold",
+    fontSize: 28,
+    color: "#1C1917",
+    marginBottom: 20,
+  },
+});

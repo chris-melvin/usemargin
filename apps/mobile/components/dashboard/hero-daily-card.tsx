@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { CURRENCY } from "@repo/shared/constants";
 import { formatDate } from "@repo/shared/date";
 import { useSettingsContext } from "@/components/providers/settings-provider";
 import {
@@ -24,6 +23,13 @@ interface HeroDailyCardProps {
   isBudgetMode?: boolean;
 }
 
+const STATUS_BADGE_CONFIG = {
+  safe: { text: "On track", bg: "#F0FDF4", textColor: "#16A34A" },
+  close: { text: "Getting close", bg: "#FFFBEB", textColor: "#D97706" },
+  low: { text: "Almost there", bg: "#FFF7ED", textColor: "#EA580C" },
+  over: { text: "Over budget", bg: "#FFF1F2", textColor: "#E11D48" },
+} as const;
+
 export function HeroDailyCard({
   spent,
   remaining,
@@ -36,7 +42,7 @@ export function HeroDailyCard({
   const { settings } = useSettingsContext();
   const [showCustomize, setShowCustomize] = useState(false);
 
-  const currency = settings.currency === "PHP" ? "₱" : settings.currency;
+  const currency = settings.currency === "PHP" ? "\u20B1" : settings.currency;
 
   let cardPrefs: CardPreferences = {};
   try {
@@ -65,23 +71,15 @@ export function HeroDailyCard({
   const dayLabel = formatDate(selectedDate, timezone, "EEEE").toUpperCase();
   const dateStr = formatDate(selectedDate, timezone, "MMMM d, yyyy");
 
-  // Status badge text
-  const getStatusBadge = () => {
-    if (!isBudgetMode) return null;
-    if (isOver) return { text: "Over budget", bg: "bg-rose-50", textColor: "text-rose-600" };
-    if (ratio >= 0.85) return { text: "Almost there", bg: "bg-amber-50", textColor: "text-amber-600" };
-    if (ratio >= 0.65) return { text: "Getting close", bg: "bg-amber-50", textColor: "text-amber-600" };
-    return { text: "On track", bg: "bg-emerald-50", textColor: "text-emerald-600" };
-  };
-
-  const statusBadge = getStatusBadge();
+  // Status badge
+  const statusBadge = isBudgetMode ? STATUS_BADGE_CONFIG[status] : null;
 
   // Progress bar color
   const getProgressColor = () => {
-    if (isOver) return "bg-rose-500";
-    if (ratio >= 0.85) return "bg-amber-500";
-    if (ratio >= 0.65) return "bg-orange-400";
-    return "bg-emerald-500";
+    if (isOver) return "#F43F5E";
+    if (ratio >= 0.85) return "#F59E0B";
+    if (ratio >= 0.65) return "#FB923C";
+    return "#10B981";
   };
 
   return (
@@ -89,10 +87,10 @@ export function HeroDailyCard({
       <TouchableOpacity
         activeOpacity={0.9}
         onLongPress={() => setShowCustomize(true)}
-        className="rounded-3xl border overflow-hidden"
+        className="rounded-3xl overflow-hidden"
         style={[
           styles.card,
-          { borderColor: dark ? "transparent" : "#e7e5e4" },
+          { borderWidth: 1, borderColor: dark ? "transparent" : "rgba(231,229,228,0.6)" },
         ]}
       >
         <LinearGradient
@@ -105,7 +103,12 @@ export function HeroDailyCard({
         <View className="relative p-6">
           {/* Greeting */}
           {greeting && (
-            <Text className={`text-sm font-medium mb-3 ${dark ? "text-white/70" : "text-neutral-600"}`}>
+            <Text
+              style={[
+                styles.greetingText,
+                { color: dark ? "rgba(255,255,255,0.7)" : "#57534E" },
+              ]}
+            >
               {greeting}
             </Text>
           )}
@@ -114,18 +117,25 @@ export function HeroDailyCard({
           <View className="flex-row items-center justify-between mb-4">
             <View>
               <Text
-                className={`font-medium ${dark ? "text-white/50" : "text-neutral-400"}`}
-                style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase" }}
+                style={[
+                  styles.dayLabel,
+                  { color: dark ? "rgba(255,255,255,0.5)" : "#A8A29E" },
+                ]}
               >
                 {dayLabel}
               </Text>
-              <Text className={`text-sm font-medium ${dark ? "text-white/70" : "text-neutral-600"}`}>
+              <Text
+                style={[
+                  styles.dateStr,
+                  { color: dark ? "rgba(255,255,255,0.7)" : "#57534E" },
+                ]}
+              >
                 {dateStr}
               </Text>
             </View>
             {statusBadge && (
-              <View className={`px-3 py-1.5 rounded-full ${statusBadge.bg}`}>
-                <Text className={`text-xs font-medium ${statusBadge.textColor}`}>
+              <View style={[styles.statusBadge, { backgroundColor: statusBadge.bg }]}>
+                <Text style={[styles.statusBadgeText, { color: statusBadge.textColor }]}>
                   {statusBadge.text}
                 </Text>
               </View>
@@ -133,10 +143,20 @@ export function HeroDailyCard({
           </View>
 
           {/* Amount */}
-          <Text className={`text-4xl font-bold tracking-tight mb-1 ${dark ? "text-white" : "text-neutral-900"}`}>
+          <Text
+            style={[
+              styles.amountText,
+              { color: dark ? "#FFFFFF" : "#1C1917" },
+            ]}
+          >
             {currency}{spent.toLocaleString()}
           </Text>
-          <Text className={`text-sm ${dark ? "text-white/60" : "text-neutral-400"}`}>
+          <Text
+            style={[
+              styles.subtitleText,
+              { color: dark ? "rgba(255,255,255,0.6)" : "#A8A29E" },
+            ]}
+          >
             {isBudgetMode
               ? isOver
                 ? `${currency}${Math.abs(remaining).toLocaleString()} over limit`
@@ -145,17 +165,20 @@ export function HeroDailyCard({
           </Text>
 
           {/* Progress bar */}
-          <View className={`mt-4 h-2 rounded-full overflow-hidden ${dark ? "bg-white/20" : "bg-neutral-100"}`}>
+          <View
+            className="mt-4 h-2 rounded-full overflow-hidden"
+            style={{ backgroundColor: dark ? "rgba(255,255,255,0.2)" : "#F5F5F4" }}
+          >
             <View
-              className={`h-full rounded-full ${getProgressColor()}`}
-              style={{ width: `${progress * 100}%` }}
+              className="h-full rounded-full"
+              style={{ width: `${progress * 100}%`, backgroundColor: getProgressColor() }}
             />
           </View>
           <View className="flex-row justify-between mt-2">
-            <Text className={`text-xs ${dark ? "text-white/40" : "text-neutral-400"}`}>
+            <Text style={[styles.limitLabel, { color: dark ? "rgba(255,255,255,0.4)" : "#A8A29E" }]}>
               {currency}0
             </Text>
-            <Text className={`text-xs ${dark ? "text-white/40" : "text-neutral-400"}`}>
+            <Text style={[styles.limitLabel, { color: dark ? "rgba(255,255,255,0.4)" : "#A8A29E" }]}>
               {currency}{limit.toLocaleString()}
             </Text>
           </View>
@@ -166,14 +189,27 @@ export function HeroDailyCard({
               {expenses.map((e, i) => (
                 <View
                   key={i}
-                  className={`flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border ${
-                    dark ? "bg-white/15 border-white/10" : "bg-white/80 border-stone-100"
-                  }`}
+                  className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full"
+                  style={{
+                    backgroundColor: dark ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.8)",
+                    borderWidth: 1,
+                    borderColor: dark ? "rgba(255,255,255,0.1)" : "rgba(231,229,228,0.6)",
+                  }}
                 >
-                  <Text className={`text-xs font-medium ${dark ? "text-white/80" : "text-neutral-600"}`}>
+                  <Text
+                    style={[
+                      styles.chipLabel,
+                      { color: dark ? "rgba(255,255,255,0.8)" : "#57534E" },
+                    ]}
+                  >
                     {e.label}
                   </Text>
-                  <Text className={`text-xs ${dark ? "text-white/50" : "text-neutral-400"}`}>
+                  <Text
+                    style={[
+                      styles.chipAmount,
+                      { color: dark ? "rgba(255,255,255,0.5)" : "#A8A29E" },
+                    ]}
+                  >
                     {currency}{e.amount.toLocaleString()}
                   </Text>
                 </View>
@@ -193,10 +229,60 @@ export function HeroDailyCard({
 
 const styles = StyleSheet.create({
   card: {
-    shadowColor: "#000",
+    shadowColor: "#1A9E9E",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 6,
+  },
+  greetingText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  dayLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+  },
+  dateStr: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 14,
+    marginTop: 2,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 9999,
+  },
+  statusBadgeText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+  },
+  amountText: {
+    fontFamily: "Lora_700Bold",
+    fontSize: 36,
+    letterSpacing: -1,
+    fontVariant: ["tabular-nums"],
+    marginBottom: 2,
+  },
+  subtitleText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+  },
+  limitLabel: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    fontVariant: ["tabular-nums"],
+  },
+  chipLabel: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
+  },
+  chipAmount: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    fontVariant: ["tabular-nums"],
   },
 });

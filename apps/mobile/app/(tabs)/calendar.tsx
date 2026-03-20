@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar, type DateData } from "react-native-calendars";
 import { useSQLiteContext } from "expo-sqlite";
@@ -57,7 +57,7 @@ export default function CalendarScreen() {
     const dates = await dao.findDatesWithExpenses(user.id, monthStart, monthEnd);
     const marks: Record<string, { marked: boolean; dotColor: string }> = {};
     for (const d of dates) {
-      marks[d] = { marked: true, dotColor: "#10b981" };
+      marks[d] = { marked: true, dotColor: "#1A9E9E" };
     }
     setMarkedDates(marks);
   }, [dao, user, currentMonth, timezone]);
@@ -80,9 +80,9 @@ export default function CalendarScreen() {
     marks[selectedDate] = {
       ...(marks[selectedDate] || {}),
       marked: marks[selectedDate]?.marked || false,
-      dotColor: "#10b981",
+      dotColor: "#1A9E9E",
       selected: true,
-      selectedColor: "#10b981",
+      selectedColor: "#1A9E9E",
     } as any;
     return marks;
   }, [markedDates, selectedDate]);
@@ -93,10 +93,12 @@ export default function CalendarScreen() {
     DATE_FORMATS.WEEKDAY_SHORT
   );
 
+  const currency = "\u20B1";
+
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="px-6 pt-2 pb-3">
-        <Text className="text-2xl font-bold">Calendar</Text>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: "#FDFBF7" }}>
+      <View className="px-5 pt-2 pb-3">
+        <Text style={calStyles.screenTitle}>Calendar</Text>
       </View>
 
       <Calendar
@@ -105,28 +107,36 @@ export default function CalendarScreen() {
         onMonthChange={handleMonthChange}
         markedDates={calendarMarks}
         theme={{
-          todayTextColor: "#10b981",
-          selectedDayBackgroundColor: "#10b981",
-          arrowColor: "#10b981",
-          dotColor: "#10b981",
+          calendarBackground: "#FDFBF7",
+          todayTextColor: "#1A9E9E",
+          selectedDayBackgroundColor: "#1A9E9E",
+          selectedDayTextColor: "#FFFFFF",
+          arrowColor: "#1A9E9E",
+          dotColor: "#1A9E9E",
+          textDayFontFamily: "Inter_400Regular",
+          textMonthFontFamily: "Inter_600SemiBold",
+          textDayHeaderFontFamily: "Inter_500Medium",
           textDayFontSize: 14,
           textMonthFontSize: 16,
           textDayHeaderFontSize: 12,
+          monthTextColor: "#292524",
+          dayTextColor: "#44403C",
+          textDisabledColor: "#D6D3D1",
         }}
       />
 
       {/* Selected day info */}
-      <View className="px-6 py-3 flex-row items-center justify-between">
-        <Text className="text-sm font-medium text-gray-600">{dateLabel}</Text>
+      <View className="px-5 py-3 flex-row items-center justify-between">
+        <Text style={calStyles.dateLabel}>{dateLabel}</Text>
         {total > 0 && (
-          <Text className="text-sm font-semibold text-gray-900">
-            Total: ₱{total.toLocaleString()}
+          <Text style={calStyles.totalLabel}>
+            Total: {currency}{total.toLocaleString()}
           </Text>
         )}
       </View>
 
       {/* Expenses for selected day */}
-      <View className="flex-1">
+      <View className="flex-1 px-3">
         <ExpenseList
           expenses={expenses}
           timezone={timezone}
@@ -148,3 +158,22 @@ export default function CalendarScreen() {
     </SafeAreaView>
   );
 }
+
+const calStyles = StyleSheet.create({
+  screenTitle: {
+    fontFamily: "Lora_700Bold",
+    fontSize: 28,
+    color: "#1C1917",
+  },
+  dateLabel: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 14,
+    color: "#57534E",
+  },
+  totalLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "#292524",
+    fontVariant: ["tabular-nums"],
+  },
+});

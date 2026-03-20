@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import {
   getStartOfWeek,
   addDaysToTimestamp,
@@ -8,16 +8,17 @@ import {
   getTodayTimestamp,
 } from "@repo/shared/date";
 import { useSettingsContext } from "@/components/providers/settings-provider";
+import { selection as hapticSelection } from "@/lib/haptics";
 import type { LocalExpense } from "@/lib/db/expense-dao";
 
 const WEEKDAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
 function getSpendingDotColor(spent: number, limit: number, isFuture: boolean): string {
-  if (isFuture || spent === 0) return "bg-neutral-200";
+  if (isFuture || spent === 0) return "#E7E5E4";
   const pct = (spent / limit) * 100;
-  if (pct > 100) return "bg-rose-400";
-  if (pct >= 80) return "bg-amber-400";
-  return "bg-emerald-400";
+  if (pct > 100) return "#FB7185";
+  if (pct >= 80) return "#FBBF24";
+  return "#34D399";
 }
 
 interface WeekStripProps {
@@ -72,49 +73,44 @@ export function WeekStrip({
     const lastYear = formatDate(last, timezone, "yyyy");
 
     if (firstYear !== lastYear) {
-      return `${firstMonth} ${firstYear} – ${lastMonth} ${lastYear}`;
+      return `${firstMonth} ${firstYear} \u2013 ${lastMonth} ${lastYear}`;
     }
     if (firstMonth !== lastMonth) {
-      return `${firstMonth} – ${lastMonth} ${firstYear}`;
+      return `${firstMonth} \u2013 ${lastMonth} ${firstYear}`;
     }
     return `${firstMonth} ${firstYear}`;
   }, [weekDays, timezone]);
 
-  const goToPrevWeek = useCallback(() => setWeekOffset((o) => o - 1), []);
-  const goToNextWeek = useCallback(() => setWeekOffset((o) => o + 1), []);
+  const goToPrevWeek = useCallback(() => {
+    hapticSelection();
+    setWeekOffset((o) => o - 1);
+  }, []);
+  const goToNextWeek = useCallback(() => {
+    hapticSelection();
+    setWeekOffset((o) => o + 1);
+  }, []);
   const goToToday = useCallback(() => {
     setWeekOffset(0);
     onTodayPress();
   }, [onTodayPress]);
 
   return (
-    <View
-      className="bg-white rounded-2xl border border-neutral-200 p-3"
-      style={{
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-        elevation: 2,
-      }}
-    >
+    <View style={styles.container}>
       {/* Month header + nav */}
       <View className="flex-row items-center justify-between mb-3">
         <TouchableOpacity onPress={goToPrevWeek} className="p-1.5 rounded-lg">
-          <Text className="text-neutral-400 text-sm">‹</Text>
+          <Text style={styles.navArrow}>{"\u2039"}</Text>
         </TouchableOpacity>
         <View className="flex-row items-center gap-2">
-          <Text className="text-sm font-semibold text-neutral-700">{monthLabel}</Text>
+          <Text style={styles.monthLabel}>{monthLabel}</Text>
           {weekOffset !== 0 && (
-            <TouchableOpacity onPress={goToToday} className="px-2 py-0.5 rounded-full bg-teal-50">
-              <Text className="text-teal-600" style={{ fontSize: 10, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1 }}>
-                Today
-              </Text>
+            <TouchableOpacity onPress={goToToday} style={styles.todayBadge}>
+              <Text style={styles.todayBadgeText}>Today</Text>
             </TouchableOpacity>
           )}
         </View>
         <TouchableOpacity onPress={goToNextWeek} className="p-1.5 rounded-lg">
-          <Text className="text-neutral-400 text-sm">›</Text>
+          <Text style={styles.navArrow}>{"\u203A"}</Text>
         </TouchableOpacity>
       </View>
 
@@ -131,46 +127,40 @@ export function WeekStrip({
           return (
             <TouchableOpacity
               key={dayKey}
-              onPress={() => onSelectDate(day)}
-              className={`flex-1 items-center py-2 rounded-xl ${
-                isSelected
-                  ? "bg-neutral-900"
-                  : isTodayDate
-                    ? "bg-teal-50"
-                    : ""
-              }`}
+              onPress={() => { hapticSelection(); onSelectDate(day); }}
+              className="flex-1 items-center py-2 rounded-xl"
+              style={[
+                isSelected && styles.selectedDay,
+                isTodayDate && !isSelected && styles.todayDay,
+              ]}
             >
               <Text
-                className={`font-medium uppercase ${
-                  isSelected
-                    ? "text-neutral-400"
-                    : isTodayDate
-                      ? "text-teal-500"
-                      : "text-neutral-400"
-                }`}
-                style={{ fontSize: 10 }}
+                style={[
+                  styles.weekdayLetter,
+                  isSelected && { color: "rgba(255,255,255,0.6)" },
+                  isTodayDate && !isSelected && { color: "#1A9E9E" },
+                ]}
               >
                 {WEEKDAY_LETTERS[i]}
               </Text>
               <Text
-                className={`text-sm font-semibold ${
-                  isSelected
-                    ? "text-white"
-                    : isTodayDate
-                      ? "text-teal-700"
-                      : "text-neutral-700"
-                }`}
+                style={[
+                  styles.dayNum,
+                  isSelected && { color: "#FFFFFF" },
+                  isTodayDate && !isSelected && { color: "#0F6B6B" },
+                ]}
               >
                 {dayNum}
               </Text>
               <View
-                className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
-                  isSelected
+                className="w-1.5 h-1.5 rounded-full mt-0.5"
+                style={{
+                  backgroundColor: isSelected
                     ? spent > 0
-                      ? "bg-white/60"
-                      : "bg-neutral-600"
-                    : getSpendingDotColor(spent, dailyLimit, isFuture)
-                }`}
+                      ? "rgba(255,255,255,0.6)"
+                      : "#57534E"
+                    : getSpendingDotColor(spent, dailyLimit, isFuture),
+                }}
               />
             </TouchableOpacity>
           );
@@ -179,3 +169,60 @@ export function WeekStrip({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(231,229,228,0.6)",
+    padding: 12,
+    shadowColor: "#1C1917",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  navArrow: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: "#A8A29E",
+  },
+  monthLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "#44403C",
+  },
+  todayBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 9999,
+    backgroundColor: "rgba(26,158,158,0.1)",
+  },
+  todayBadgeText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 10,
+    color: "#1A9E9E",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  weekdayLetter: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 10,
+    color: "#A8A29E",
+    textTransform: "uppercase",
+  },
+  dayNum: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "#44403C",
+  },
+  selectedDay: {
+    backgroundColor: "#292524",
+    borderRadius: 12,
+  },
+  todayDay: {
+    backgroundColor: "rgba(26,158,158,0.08)",
+    borderRadius: 12,
+  },
+});

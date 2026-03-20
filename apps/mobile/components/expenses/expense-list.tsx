@@ -1,14 +1,15 @@
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   Animated,
   PanResponder,
+  StyleSheet,
 } from "react-native";
 import { CURRENCY } from "@repo/shared/constants";
 import { formatDate, DATE_FORMATS } from "@repo/shared/date";
+import { tapHeavy } from "@/lib/haptics";
 import type { LocalExpense } from "@/lib/db/expense-dao";
 
 interface ExpenseListProps {
@@ -49,12 +50,16 @@ function ExpenseItem({
         if (gestureState.dx < SWIPE_THRESHOLD) {
           Animated.spring(translateX, {
             toValue: SWIPE_THRESHOLD,
+            damping: 20,
+            stiffness: 200,
             useNativeDriver: true,
           }).start();
           isSwipedOpen.current = true;
         } else {
           Animated.spring(translateX, {
             toValue: 0,
+            damping: 20,
+            stiffness: 200,
             useNativeDriver: true,
           }).start();
           isSwipedOpen.current = false;
@@ -63,7 +68,7 @@ function ExpenseItem({
     })
   ).current;
 
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
     if (isSwipedOpen.current) {
       Animated.spring(translateX, {
         toValue: 0,
@@ -73,16 +78,21 @@ function ExpenseItem({
       return;
     }
     onEdit(expense);
-  };
+  }, [expense, onEdit]);
+
+  const handleDelete = useCallback(() => {
+    tapHeavy();
+    onDelete(expense.id);
+  }, [expense.id, onDelete]);
 
   return (
     <View className="relative overflow-hidden">
       {/* Delete action behind */}
       <TouchableOpacity
-        onPress={() => onDelete(expense.id)}
+        onPress={handleDelete}
         className="absolute right-0 top-0 bottom-0 w-20 bg-red-500 items-center justify-center"
       >
-        <Text className="text-white text-xs font-medium">Delete</Text>
+        <Text style={itemStyles.deleteText}>Delete</Text>
       </TouchableOpacity>
 
       {/* Foreground content */}
@@ -93,19 +103,24 @@ function ExpenseItem({
         <TouchableOpacity
           onPress={handlePress}
           activeOpacity={0.7}
-          className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-neutral-100"
+          className="flex-row items-center justify-between px-4 py-3"
+          style={{ backgroundColor: "#FFFFFF", borderBottomWidth: 1, borderBottomColor: "#F5F5F4" }}
         >
+          {/* Category color left border */}
+          {expense.category && (
+            <View style={itemStyles.categoryStripe} />
+          )}
           <View className="flex-1">
-            <Text className="text-sm font-medium text-neutral-800">
+            <Text style={itemStyles.label}>
               {expense.label}
             </Text>
             <View className="flex-row items-center gap-1.5 mt-0.5">
-              <Text className="text-neutral-500" style={{ fontSize: 10 }}>
+              <Text style={itemStyles.time}>
                 {formatDate(expense.occurred_at, timezone, DATE_FORMATS.TIME_12H)}
               </Text>
               {expense.category ? (
-                <View className="px-1.5 py-0.5 rounded bg-neutral-100">
-                  <Text className="text-neutral-600" style={{ fontSize: 9 }}>
+                <View style={itemStyles.categoryBadge}>
+                  <Text style={itemStyles.categoryText}>
                     {expense.category}
                   </Text>
                 </View>
@@ -113,12 +128,12 @@ function ExpenseItem({
             </View>
           </View>
           <View className="items-end">
-            <Text className="text-sm font-semibold text-neutral-700">
+            <Text style={itemStyles.amount}>
               -{CURRENCY}
               {expense.amount.toLocaleString()}
             </Text>
             {expense.is_synced === 0 && (
-              <Text className="text-amber-500 mt-0.5" style={{ fontSize: 10 }}>
+              <Text style={itemStyles.syncPending}>
                 pending sync
               </Text>
             )}
@@ -129,6 +144,56 @@ function ExpenseItem({
   );
 }
 
+const itemStyles = StyleSheet.create({
+  label: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 14,
+    color: "#292524",
+  },
+  time: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    color: "#78716C",
+  },
+  categoryStripe: {
+    position: "absolute",
+    left: 0,
+    top: 4,
+    bottom: 4,
+    width: 3,
+    borderRadius: 1.5,
+    backgroundColor: "#1A9E9E",
+  },
+  categoryBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: "#F5F5F4",
+  },
+  categoryText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 9,
+    color: "#57534E",
+  },
+  amount: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "#44403C",
+    fontVariant: ["tabular-nums"],
+  },
+  syncPending: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    color: "#D97706",
+    marginTop: 2,
+  },
+  deleteText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    color: "#FFFFFF",
+  },
+});
+
 export function ExpenseList({
   expenses,
   timezone,
@@ -137,56 +202,69 @@ export function ExpenseList({
 }: ExpenseListProps) {
   if (expenses.length === 0) {
     return (
-      <View
-        className="bg-white rounded-2xl border border-neutral-200 overflow-hidden"
-        style={{
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.06,
-          shadowRadius: 16,
-          elevation: 2,
-        }}
-      >
+      <View style={styles.container}>
         <View className="items-center justify-center py-12">
-          <Text className="text-neutral-400 text-sm">No expenses yet today</Text>
-          <Text className="text-neutral-300 text-xs mt-1">Tap + to add one</Text>
+          <Text style={styles.emptyTitle}>No expenses yet today</Text>
+          <Text style={styles.emptySubtitle}>Tap + to add one</Text>
         </View>
       </View>
     );
   }
 
   return (
-    <View
-      className="bg-white rounded-2xl border border-neutral-200 overflow-hidden"
-      style={{
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.06,
-        shadowRadius: 16,
-        elevation: 2,
-      }}
-    >
+    <View style={styles.container}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-neutral-100 flex-row items-center justify-between">
-        <Text className="text-sm font-semibold text-neutral-900">Today's Transactions</Text>
-        <Text className="text-xs text-neutral-400">{expenses.length} total</Text>
+      <View className="px-4 py-3 flex-row items-center justify-between" style={{ borderBottomWidth: 1, borderBottomColor: "#F5F5F4" }}>
+        <Text style={styles.headerTitle}>Today's Transactions</Text>
+        <Text style={styles.headerCount}>{expenses.length} total</Text>
       </View>
 
       {/* Items */}
-      <FlatList
-        data={expenses}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <ExpenseItem
-            expense={item}
-            timezone={timezone}
-            onDelete={onDelete}
-            onEdit={onEdit}
-          />
-        )}
-        scrollEnabled={false}
-        showsVerticalScrollIndicator={false}
-      />
+      {expenses.map((item) => (
+        <ExpenseItem
+          key={item.id}
+          expense={item}
+          timezone={timezone}
+          onDelete={onDelete}
+          onEdit={onEdit}
+        />
+      ))}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(231,229,228,0.6)",
+    overflow: "hidden",
+    shadowColor: "#1C1917",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  headerTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "#1C1917",
+  },
+  headerCount: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "#A8A29E",
+  },
+  emptyTitle: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: "#A8A29E",
+  },
+  emptySubtitle: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "#D6D3D1",
+    marginTop: 4,
+  },
+});

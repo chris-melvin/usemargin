@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
 } from "react-native";
 import { TEMPLATES, CURRENCY } from "@repo/shared/constants";
 import { getCurrentTimestamp } from "@repo/shared/date";
@@ -16,6 +17,7 @@ import {
   type ParsedExpense,
   type ShortcutEntry,
 } from "@/lib/parser/expense-parser";
+import { tapLight, notifySuccess } from "@/lib/haptics";
 
 interface SmartInputProps {
   visible: boolean;
@@ -57,6 +59,7 @@ export function SmartInput({
 
   const handleNlpSubmit = () => {
     if (preview.length === 0) return;
+    notifySuccess();
 
     const now = getCurrentTimestamp(timezone);
     for (const expense of preview) {
@@ -82,6 +85,7 @@ export function SmartInput({
   };
 
   const handleTemplatePress = (template: (typeof TEMPLATES)[number]) => {
+    tapLight();
     onSubmit({
       amount: template.amount,
       label: template.label,
@@ -94,6 +98,7 @@ export function SmartInput({
   const handleManualSubmit = () => {
     const parsedAmount = parseFloat(amount);
     if (!parsedAmount || !label.trim()) return;
+    notifySuccess();
 
     onSubmit({
       amount: parsedAmount,
@@ -124,17 +129,17 @@ export function SmartInput({
           activeOpacity={1}
           onPress={resetAndClose}
         />
-        <View className="bg-white rounded-t-3xl px-6 pt-6 pb-10 shadow-lg">
-          <View className="w-10 h-1 bg-neutral-300 rounded-full self-center mb-6" />
+        <View style={inputStyles.sheet}>
+          <View style={inputStyles.handle} />
 
-          <Text className="text-lg font-semibold mb-4">Add Expense</Text>
+          <Text style={inputStyles.title}>Add Expense</Text>
 
           {/* NLP Input */}
           <View className="mb-3">
             <TextInput
-              className="bg-neutral-50 border-2 border-neutral-200 rounded-2xl px-4 py-3 text-base"
+              style={inputStyles.nlpInput}
               placeholder='Try "coffee 120" or "lunch at 2pm"'
-              placeholderTextColor="#a3a3a3"
+              placeholderTextColor="#A8A29E"
               value={nlpInput}
               onChangeText={handleNlpChange}
               autoCapitalize="none"
@@ -149,11 +154,11 @@ export function SmartInput({
                     key={i}
                     className="flex-row items-center justify-between py-1"
                   >
-                    <Text className="text-sm text-gray-600">
+                    <Text style={inputStyles.previewLabel}>
                       {p.label}
-                      {p.category ? ` · ${p.category}` : ""}
+                      {p.category ? ` \u00B7 ${p.category}` : ""}
                     </Text>
-                    <Text className="text-sm font-semibold text-teal-600">
+                    <Text style={inputStyles.previewAmount}>
                       {CURRENCY}
                       {p.amount}
                     </Text>
@@ -161,9 +166,9 @@ export function SmartInput({
                 ))}
                 <TouchableOpacity
                   onPress={handleNlpSubmit}
-                  className="mt-2 bg-neutral-900 rounded-2xl py-3 items-center"
+                  style={inputStyles.submitButton}
                 >
-                  <Text className="text-white font-semibold text-sm">
+                  <Text style={inputStyles.submitButtonText}>
                     Add {preview.length > 1 ? `${preview.length} expenses` : "expense"}
                   </Text>
                 </TouchableOpacity>
@@ -186,18 +191,16 @@ export function SmartInput({
                       prev === cat ? "" : cat
                     )
                   }
-                  className={`mr-2 px-3 py-1.5 rounded-full border ${
-                    selectedCategory === cat
-                      ? "bg-teal-500 border-teal-500"
-                      : "bg-white border-neutral-200"
-                  }`}
+                  style={[
+                    inputStyles.categoryChip,
+                    selectedCategory === cat && inputStyles.categoryChipActive,
+                  ]}
                 >
                   <Text
-                    className={`text-xs ${
-                      selectedCategory === cat
-                        ? "text-white font-medium"
-                        : "text-neutral-500"
-                    }`}
+                    style={[
+                      inputStyles.categoryChipText,
+                      selectedCategory === cat && inputStyles.categoryChipTextActive,
+                    ]}
                   >
                     {cat}
                   </Text>
@@ -216,10 +219,10 @@ export function SmartInput({
               <TouchableOpacity
                 key={template.id}
                 onPress={() => handleTemplatePress(template)}
-                className="items-center mr-4 px-3 py-2 bg-neutral-50 rounded-xl border border-neutral-100 min-w-[72px]"
+                style={inputStyles.templateCard}
               >
-                <Text className="text-xs text-neutral-500">{template.label}</Text>
-                <Text className="text-sm font-semibold mt-0.5">
+                <Text style={inputStyles.templateLabel}>{template.label}</Text>
+                <Text style={inputStyles.templateAmount}>
                   {CURRENCY}
                   {template.amount}
                 </Text>
@@ -230,15 +233,17 @@ export function SmartInput({
           {/* Manual entry */}
           <View className="flex-row gap-3 mb-4">
             <TextInput
-              className="flex-1 bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-base"
+              style={[inputStyles.manualInput, { flex: 1 }]}
               placeholder="Label"
+              placeholderTextColor="#A8A29E"
               value={label}
               onChangeText={setLabel}
               autoCapitalize="sentences"
             />
             <TextInput
-              className="w-28 bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-base"
+              style={[inputStyles.manualInput, { width: 112 }]}
               placeholder="Amount"
+              placeholderTextColor="#A8A29E"
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
@@ -247,12 +252,131 @@ export function SmartInput({
 
           <TouchableOpacity
             onPress={handleManualSubmit}
-            className="bg-neutral-900 rounded-2xl py-4 items-center"
+            style={inputStyles.submitButton}
           >
-            <Text className="text-white font-semibold text-base">Add</Text>
+            <Text style={inputStyles.submitButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
+
+const inputStyles = StyleSheet.create({
+  sheet: {
+    backgroundColor: "#FDFBF7",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 40,
+    shadowColor: "#1C1917",
+    shadowOffset: { width: 0, height: -16 },
+    shadowOpacity: 0.12,
+    shadowRadius: 40,
+    elevation: 12,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#D6D3D1",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 24,
+  },
+  title: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 18,
+    color: "#1C1917",
+    marginBottom: 16,
+  },
+  nlpInput: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
+    color: "#292524",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#E7E5E4",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  previewLabel: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: "#57534E",
+  },
+  previewAmount: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "#1A9E9E",
+    fontVariant: ["tabular-nums"],
+  },
+  submitButton: {
+    backgroundColor: "#292524",
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  submitButtonText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    color: "#FFFFFF",
+  },
+  categoryChip: {
+    marginRight: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: "#E7E5E4",
+    backgroundColor: "#FFFFFF",
+  },
+  categoryChipActive: {
+    backgroundColor: "#1A9E9E",
+    borderColor: "#1A9E9E",
+  },
+  categoryChipText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    color: "#78716C",
+  },
+  categoryChipTextActive: {
+    color: "#FFFFFF",
+  },
+  templateCard: {
+    alignItems: "center",
+    marginRight: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(231,229,228,0.6)",
+    minWidth: 76,
+  },
+  templateLabel: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "#78716C",
+  },
+  templateAmount: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "#292524",
+    fontVariant: ["tabular-nums"],
+    marginTop: 2,
+  },
+  manualInput: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
+    color: "#292524",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E7E5E4",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+});

@@ -8,8 +8,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
 } from "react-native";
 import { formatDate } from "@repo/shared/date";
+import { tapLight, tapHeavy, notifySuccess } from "@/lib/haptics";
 import type { LocalExpense, UpdateExpenseInput } from "@/lib/db/expense-dao";
 
 interface ExpenseEditModalProps {
@@ -60,12 +62,14 @@ export function ExpenseEditModal({
 
     onClose();
     if (Object.keys(updates).length > 0) {
+      notifySuccess();
       onSave(expense.id, updates);
     }
   };
 
   const handleDelete = () => {
     if (!expense) return;
+    tapHeavy();
     onDelete(expense.id);
     onClose();
   };
@@ -85,33 +89,29 @@ export function ExpenseEditModal({
           activeOpacity={1}
           onPress={onClose}
         />
-        <View className="bg-white rounded-t-3xl px-6 pt-6 pb-10 shadow-lg">
-          <View className="w-10 h-1 bg-gray-200 rounded-full self-center mb-6" />
+        <View style={editStyles.sheet}>
+          <View style={editStyles.handle} />
 
           <View className="flex-row items-center justify-between mb-5">
-            <Text className="text-lg font-semibold">Edit Expense</Text>
-            <Text className="text-xs text-gray-400">{timeLabel}</Text>
+            <Text style={editStyles.title}>Edit Expense</Text>
+            <Text style={editStyles.time}>{timeLabel}</Text>
           </View>
 
           {/* Amount & Label */}
           <View className="flex-row gap-3 mb-4">
             <View className="flex-1">
-              <Text className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">
-                Label
-              </Text>
+              <Text style={editStyles.fieldLabel}>Label</Text>
               <TextInput
-                className="border border-gray-200 rounded-xl px-4 py-3 text-base"
+                style={editStyles.input}
                 value={label}
                 onChangeText={setLabel}
                 autoCapitalize="sentences"
               />
             </View>
             <View className="w-28">
-              <Text className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">
-                Amount
-              </Text>
+              <Text style={editStyles.fieldLabel}>Amount</Text>
               <TextInput
-                className="border border-gray-200 rounded-xl px-4 py-3 text-base"
+                style={editStyles.input}
                 value={amount}
                 onChangeText={setAmount}
                 keyboardType="decimal-pad"
@@ -121,46 +121,32 @@ export function ExpenseEditModal({
 
           {/* Category chips */}
           <View className="mb-5">
-            <Text className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-2">
-              Category
-            </Text>
+            <Text style={editStyles.fieldLabel}>Category</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
             >
               <TouchableOpacity
-                onPress={() => setCategory("")}
-                className={`mr-2 px-3 py-1.5 rounded-full border ${
-                  category === ""
-                    ? "bg-emerald-500 border-emerald-500"
-                    : "bg-white border-gray-200"
-                }`}
+                onPress={() => { tapLight(); setCategory(""); }}
+                style={[
+                  editStyles.chip,
+                  category === "" && editStyles.chipActive,
+                ]}
               >
-                <Text
-                  className={`text-xs ${
-                    category === "" ? "text-white font-medium" : "text-gray-500"
-                  }`}
-                >
+                <Text style={[editStyles.chipText, category === "" && editStyles.chipTextActive]}>
                   None
                 </Text>
               </TouchableOpacity>
               {existingCategories.map((cat) => (
                 <TouchableOpacity
                   key={cat}
-                  onPress={() => setCategory(cat)}
-                  className={`mr-2 px-3 py-1.5 rounded-full border ${
-                    category === cat
-                      ? "bg-emerald-500 border-emerald-500"
-                      : "bg-white border-gray-200"
-                  }`}
+                  onPress={() => { tapLight(); setCategory(cat); }}
+                  style={[
+                    editStyles.chip,
+                    category === cat && editStyles.chipActive,
+                  ]}
                 >
-                  <Text
-                    className={`text-xs ${
-                      category === cat
-                        ? "text-white font-medium"
-                        : "text-gray-500"
-                    }`}
-                  >
+                  <Text style={[editStyles.chipText, category === cat && editStyles.chipTextActive]}>
                     {cat}
                   </Text>
                 </TouchableOpacity>
@@ -170,30 +156,26 @@ export function ExpenseEditModal({
 
           {/* Actions */}
           <View className="flex-row gap-3">
-            <TouchableOpacity
-              onPress={handleDelete}
-              className="px-4 py-3 rounded-xl bg-red-50"
-            >
-              <Text className="text-red-600 text-sm font-medium">Delete</Text>
+            <TouchableOpacity onPress={handleDelete} style={editStyles.deleteButton}>
+              <Text style={editStyles.deleteText}>Delete</Text>
             </TouchableOpacity>
             <View className="flex-1" />
-            <TouchableOpacity
-              onPress={onClose}
-              className="px-4 py-3 rounded-xl"
-            >
-              <Text className="text-gray-400 text-sm font-medium">Cancel</Text>
+            <TouchableOpacity onPress={onClose} style={editStyles.cancelButton}>
+              <Text style={editStyles.cancelText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSave}
               disabled={!amount || !label.trim()}
-              className={`px-6 py-3 rounded-xl ${
-                !amount || !label.trim() ? "bg-gray-200" : "bg-emerald-500"
-              }`}
+              style={[
+                editStyles.saveButton,
+                (!amount || !label.trim()) && { backgroundColor: "#E7E5E4" },
+              ]}
             >
               <Text
-                className={`text-sm font-medium ${
-                  !amount || !label.trim() ? "text-gray-400" : "text-white"
-                }`}
+                style={[
+                  editStyles.saveText,
+                  (!amount || !label.trim()) && { color: "#A8A29E" },
+                ]}
               >
                 Save
               </Text>
@@ -204,3 +186,109 @@ export function ExpenseEditModal({
     </Modal>
   );
 }
+
+const editStyles = StyleSheet.create({
+  sheet: {
+    backgroundColor: "#FDFBF7",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 40,
+    shadowColor: "#1C1917",
+    shadowOffset: { width: 0, height: -16 },
+    shadowOpacity: 0.12,
+    shadowRadius: 40,
+    elevation: 12,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#D6D3D1",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 24,
+  },
+  title: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 18,
+    color: "#1C1917",
+  },
+  time: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "#A8A29E",
+  },
+  fieldLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 10,
+    color: "#A8A29E",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  input: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
+    color: "#292524",
+    borderWidth: 1,
+    borderColor: "#E7E5E4",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  chip: {
+    marginRight: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: "#E7E5E4",
+    backgroundColor: "#FFFFFF",
+  },
+  chipActive: {
+    backgroundColor: "#1A9E9E",
+    borderColor: "#1A9E9E",
+  },
+  chipText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    color: "#78716C",
+  },
+  chipTextActive: {
+    color: "#FFFFFF",
+  },
+  deleteButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: "#FFF1F2",
+  },
+  deleteText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 14,
+    color: "#E11D48",
+  },
+  cancelButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  cancelText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 14,
+    color: "#A8A29E",
+  },
+  saveButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: "#1A9E9E",
+  },
+  saveText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "#FFFFFF",
+  },
+});
