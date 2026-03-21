@@ -14,4 +14,13 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, "node_modules"),
 ];
 
+// Explicitly resolve packages that pnpm hoists to the root
+config.resolver.extraNodeModules = {
+  ...config.resolver.extraNodeModules,
+  "expo-apple-authentication": path.resolve(
+    monorepoRoot,
+    "node_modules/expo-apple-authentication"
+  ),
+};
+
 module.exports = withNativeWind(config, { input: "./global.css" });

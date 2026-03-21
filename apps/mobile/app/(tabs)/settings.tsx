@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/lib/theme/theme-context";
 import { GeneralSettings } from "@/components/settings/general-settings";
 import { BudgetSettings } from "@/components/settings/budget-settings";
 import { AccountSettings } from "@/components/settings/account-settings";
@@ -23,8 +24,9 @@ function SegmentedControl({
   activeTab: SettingsTab;
   onTabChange: (tab: SettingsTab) => void;
 }) {
+  const { colors } = useTheme();
   return (
-    <View style={segStyles.container}>
+    <View style={[segStyles.container, { backgroundColor: colors.surface }]}>
       {TABS.map((tab) => (
         <TouchableOpacity
           key={tab.key}
@@ -32,9 +34,9 @@ function SegmentedControl({
             selection();
             onTabChange(tab.key);
           }}
-          style={[segStyles.tab, activeTab === tab.key && segStyles.tabActive]}
+          style={[segStyles.tab, activeTab === tab.key && [segStyles.tabActive, { backgroundColor: colors.card, shadowColor: colors.textPrimary }]]}
         >
-          <Text style={[segStyles.tabText, activeTab === tab.key && segStyles.tabTextActive]}>
+          <Text style={[segStyles.tabText, { color: colors.textTertiary }, activeTab === tab.key && { color: colors.textPrimary }]}>
             {tab.label}
           </Text>
         </TouchableOpacity>
@@ -46,7 +48,6 @@ function SegmentedControl({
 const segStyles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    backgroundColor: "#F5F5F4",
     borderRadius: 12,
     padding: 3,
     marginBottom: 8,
@@ -58,8 +59,6 @@ const segStyles = StyleSheet.create({
     alignItems: "center",
   },
   tabActive: {
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#1C1917",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -68,20 +67,17 @@ const segStyles = StyleSheet.create({
   tabText: {
     fontFamily: "Inter_500Medium",
     fontSize: 13,
-    color: "#A8A29E",
-  },
-  tabTextActive: {
-    color: "#292524",
   },
 });
 
 export default function SettingsScreen() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const { colors } = useTheme();
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: "#FDFBF7" }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       <ScrollView className="px-5 pt-4" contentContainerStyle={{ paddingBottom: 100 }}>
-        <Text style={styles.screenTitle}>Settings</Text>
+        <Text style={[styles.screenTitle, { color: colors.textPrimary }]}>Settings</Text>
 
         <SegmentedControl activeTab={activeTab} onTabChange={setActiveTab} />
 

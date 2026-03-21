@@ -13,10 +13,12 @@ import { Link } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useTheme } from "@/lib/theme/theme-context";
 import { LedgrLogo } from "@/components/brand/logo";
 
 export default function LoginScreen() {
   const { signIn, signInWithApple } = useAuth();
+  const { colors } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -40,20 +42,20 @@ export default function LoginScreen() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
-      style={{ backgroundColor: "#FDFBF7" }}
+      style={{ backgroundColor: colors.background }}
     >
       <View className="flex-1 justify-center px-8">
         <View style={{ alignItems: "center", marginBottom: 8 }}>
           <LedgrLogo size="lg" />
         </View>
-        <Text style={authStyles.subtitle}>
+        <Text style={[authStyles.subtitle, { color: colors.textSecondary }]}>
           Track your daily expenses
         </Text>
 
         <TextInput
-          style={authStyles.input}
+          style={[authStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
           placeholder="Email"
-          placeholderTextColor="#A8A29E"
+          placeholderTextColor={colors.textTertiary}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -62,9 +64,9 @@ export default function LoginScreen() {
         />
 
         <TextInput
-          style={[authStyles.input, { marginBottom: 24 }]}
+          style={[authStyles.input, { marginBottom: 24, backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
           placeholder="Password"
-          placeholderTextColor="#A8A29E"
+          placeholderTextColor={colors.textTertiary}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -111,7 +113,7 @@ export default function LoginScreen() {
         )}
 
         <View className="flex-row justify-center mt-6">
-          <Text style={authStyles.linkText}>Don't have an account? </Text>
+          <Text style={[authStyles.linkText, { color: colors.textSecondary }]}>Don't have an account? </Text>
           <Link href="/(auth)/signup">
             <Text style={authStyles.linkAction}>Sign Up</Text>
           </Link>

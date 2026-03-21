@@ -14,6 +14,7 @@ import {
 } from "@repo/shared/date";
 import { useTimezone } from "@/components/providers/timezone-provider";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useTheme } from "@/lib/theme/theme-context";
 import { useExpenses } from "@/hooks/use-expenses";
 import { ExpenseDao } from "@/lib/db/expense-dao";
 import { ExpenseList } from "@/components/expenses/expense-list";
@@ -26,6 +27,7 @@ export default function CalendarScreen() {
   const db = useSQLiteContext();
   const { user } = useAuth();
   const { categories } = useCategories();
+  const { colors } = useTheme();
 
   const today = toDateString(new Date().toISOString(), timezone);
   const [selectedDate, setSelectedDate] = useState(today);
@@ -96,9 +98,9 @@ export default function CalendarScreen() {
   const currency = "\u20B1";
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: "#FDFBF7" }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       <View className="px-5 pt-2 pb-3">
-        <Text style={calStyles.screenTitle}>Calendar</Text>
+        <Text style={[calStyles.screenTitle, { color: colors.textPrimary }]}>Calendar</Text>
       </View>
 
       <Calendar
@@ -107,29 +109,29 @@ export default function CalendarScreen() {
         onMonthChange={handleMonthChange}
         markedDates={calendarMarks}
         theme={{
-          calendarBackground: "#FDFBF7",
-          todayTextColor: "#1A9E9E",
-          selectedDayBackgroundColor: "#1A9E9E",
+          calendarBackground: colors.background,
+          todayTextColor: colors.primary,
+          selectedDayBackgroundColor: colors.primary,
           selectedDayTextColor: "#FFFFFF",
-          arrowColor: "#1A9E9E",
-          dotColor: "#1A9E9E",
+          arrowColor: colors.primary,
+          dotColor: colors.primary,
           textDayFontFamily: "Inter_400Regular",
           textMonthFontFamily: "Inter_600SemiBold",
           textDayHeaderFontFamily: "Inter_500Medium",
           textDayFontSize: 14,
           textMonthFontSize: 16,
           textDayHeaderFontSize: 12,
-          monthTextColor: "#292524",
-          dayTextColor: "#44403C",
-          textDisabledColor: "#D6D3D1",
+          monthTextColor: colors.textPrimary,
+          dayTextColor: colors.textSecondary,
+          textDisabledColor: colors.textMuted,
         }}
       />
 
       {/* Selected day info */}
       <View className="px-5 py-3 flex-row items-center justify-between">
-        <Text style={calStyles.dateLabel}>{dateLabel}</Text>
+        <Text style={[calStyles.dateLabel, { color: colors.textSecondary }]}>{dateLabel}</Text>
         {total > 0 && (
-          <Text style={calStyles.totalLabel}>
+          <Text style={[calStyles.totalLabel, { color: colors.textPrimary }]}>
             Total: {currency}{total.toLocaleString()}
           </Text>
         )}

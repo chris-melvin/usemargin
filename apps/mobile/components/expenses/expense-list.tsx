@@ -10,6 +10,7 @@ import {
 import { CURRENCY } from "@repo/shared/constants";
 import { formatDate, DATE_FORMATS } from "@repo/shared/date";
 import { tapHeavy } from "@/lib/haptics";
+import { useTheme } from "@/lib/theme/theme-context";
 import type { LocalExpense } from "@/lib/db/expense-dao";
 
 interface ExpenseListProps {
@@ -32,6 +33,7 @@ function ExpenseItem({
   onDelete: (id: string) => void;
   onEdit: (expense: LocalExpense) => void;
 }) {
+  const { colors } = useTheme();
   const translateX = useRef(new Animated.Value(0)).current;
   const isSwipedOpen = useRef(false);
 
@@ -104,23 +106,23 @@ function ExpenseItem({
           onPress={handlePress}
           activeOpacity={0.7}
           className="flex-row items-center justify-between px-4 py-3"
-          style={{ backgroundColor: "#FFFFFF", borderBottomWidth: 1, borderBottomColor: "#F5F5F4" }}
+          style={{ backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.divider }}
         >
           {/* Category color left border */}
           {expense.category && (
             <View style={itemStyles.categoryStripe} />
           )}
           <View className="flex-1">
-            <Text style={itemStyles.label}>
+            <Text style={[itemStyles.label, { color: colors.textPrimary }]}>
               {expense.label}
             </Text>
             <View className="flex-row items-center gap-1.5 mt-0.5">
-              <Text style={itemStyles.time}>
+              <Text style={[itemStyles.time, { color: colors.textSecondary }]}>
                 {formatDate(expense.occurred_at, timezone, DATE_FORMATS.TIME_12H)}
               </Text>
               {expense.category ? (
-                <View style={itemStyles.categoryBadge}>
-                  <Text style={itemStyles.categoryText}>
+                <View style={[itemStyles.categoryBadge, { backgroundColor: colors.surface }]}>
+                  <Text style={[itemStyles.categoryText, { color: colors.textSecondary }]}>
                     {expense.category}
                   </Text>
                 </View>
@@ -128,7 +130,7 @@ function ExpenseItem({
             </View>
           </View>
           <View className="items-end">
-            <Text style={itemStyles.amount}>
+            <Text style={[itemStyles.amount, { color: colors.textSecondary }]}>
               -{CURRENCY}
               {expense.amount.toLocaleString()}
             </Text>
@@ -200,23 +202,25 @@ export function ExpenseList({
   onDelete,
   onEdit,
 }: ExpenseListProps) {
+  const { colors } = useTheme();
+
   if (expenses.length === 0) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.textPrimary }]}>
         <View className="items-center justify-center py-12">
-          <Text style={styles.emptyTitle}>No expenses yet today</Text>
-          <Text style={styles.emptySubtitle}>Tap + to add one</Text>
+          <Text style={[styles.emptyTitle, { color: colors.textTertiary }]}>No expenses yet today</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Tap + to add one</Text>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.textPrimary }]}>
       {/* Header */}
-      <View className="px-4 py-3 flex-row items-center justify-between" style={{ borderBottomWidth: 1, borderBottomColor: "#F5F5F4" }}>
-        <Text style={styles.headerTitle}>Today's Transactions</Text>
-        <Text style={styles.headerCount}>{expenses.length} total</Text>
+      <View className="px-4 py-3 flex-row items-center justify-between" style={{ borderBottomWidth: 1, borderBottomColor: colors.divider }}>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Today's Transactions</Text>
+        <Text style={[styles.headerCount, { color: colors.textTertiary }]}>{expenses.length} total</Text>
       </View>
 
       {/* Items */}

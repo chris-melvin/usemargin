@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, LayoutChangeEvent, Animated } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/theme/theme-context";
 
 const TAB_CONFIG = [
   { name: "index", title: "Today", iconFocused: "today" as const, iconDefault: "today-outline" as const },
@@ -11,6 +12,7 @@ const TAB_CONFIG = [
 ];
 
 function AnimatedTabBar({ state, navigation }: any) {
+  const { colors } = useTheme();
   const pillX = useRef(new Animated.Value(0)).current;
   const [tabLayouts, setTabLayouts] = useState<{ x: number; width: number }[]>([]);
 
@@ -37,7 +39,7 @@ function AnimatedTabBar({ state, navigation }: any) {
   }, [state.index, tabLayouts]);
 
   return (
-    <View style={tabStyles.container}>
+    <View style={[tabStyles.container, { backgroundColor: colors.background + "F2", shadowColor: colors.textPrimary }]}>
       {/* Sliding pill indicator */}
       <Animated.View style={[tabStyles.pill, { transform: [{ translateX: pillX }] }]} />
 
@@ -46,7 +48,7 @@ function AnimatedTabBar({ state, navigation }: any) {
         if (!config) return null;
 
         const isFocused = state.index === index;
-        const color = isFocused ? "#1A9E9E" : "#A8A29E";
+        const color = isFocused ? colors.primary : colors.textTertiary;
 
         return (
           <TouchableOpacity
@@ -75,14 +77,12 @@ function AnimatedTabBar({ state, navigation }: any) {
 const tabStyles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    backgroundColor: "rgba(253, 251, 247, 0.95)",
     paddingBottom: 28,
     paddingTop: 8,
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    shadowColor: "#1C1917",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.04,
     shadowRadius: 8,

@@ -1,5 +1,6 @@
 import { forwardRef, useMemo } from "react";
 import { StyleSheet } from "react-native";
+import { useTheme } from "@/lib/theme/theme-context";
 import BottomSheet, {
   BottomSheetBackdrop,
   type BottomSheetProps,
@@ -19,6 +20,7 @@ interface AppBottomSheetProps extends Partial<BottomSheetProps> {
 
 export const AppBottomSheet = forwardRef<BottomSheet, AppBottomSheetProps>(
   ({ snapPoints: customSnapPoints, children, ...props }, ref) => {
+    const { colors } = useTheme();
     const snapPoints = useMemo(() => customSnapPoints ?? ["40%", "85%"], [customSnapPoints]);
 
     return (
@@ -26,8 +28,8 @@ export const AppBottomSheet = forwardRef<BottomSheet, AppBottomSheetProps>(
         ref={ref}
         snapPoints={snapPoints}
         enablePanDownToClose
-        backgroundStyle={styles.background}
-        handleIndicatorStyle={styles.handle}
+        backgroundStyle={[styles.background, { backgroundColor: colors.background, shadowColor: colors.textPrimary }]}
+        handleIndicatorStyle={[styles.handle, { backgroundColor: colors.textMuted }]}
         backdropComponent={(backdropProps) => (
           <BottomSheetBackdrop
             {...backdropProps}

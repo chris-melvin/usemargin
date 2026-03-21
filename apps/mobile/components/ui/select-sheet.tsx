@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { selection } from "@/lib/haptics";
+import { useTheme } from "@/lib/theme/theme-context";
 
 interface SelectOption<T> {
   label: string;
@@ -25,6 +26,7 @@ export function SelectSheet<T extends string | number>({
   onSelect,
   onClose,
 }: SelectSheetProps<T>) {
+  const { colors } = useTheme();
   const handleSelect = (optionValue: T) => {
     selection();
     onSelect(optionValue);
@@ -34,9 +36,9 @@ export function SelectSheet<T extends string | number>({
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <TouchableOpacity className="flex-1" activeOpacity={1} onPress={onClose} />
-      <View style={styles.container}>
-        <View style={styles.handle} />
-        <Text style={styles.title}>{title}</Text>
+      <View style={[styles.container, { backgroundColor: colors.background, shadowColor: colors.textPrimary }]}>
+        <View style={[styles.handle, { backgroundColor: colors.textMuted }]} />
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
 
         <ScrollView style={styles.list} bounces={false}>
           {options.map((option) => {
@@ -48,11 +50,11 @@ export function SelectSheet<T extends string | number>({
                 style={[styles.option, isSelected && styles.optionSelected]}
               >
                 <View className="flex-1">
-                  <Text style={[styles.optionLabel, isSelected && styles.optionLabelSelected]}>
+                  <Text style={[styles.optionLabel, { color: colors.textPrimary }, isSelected && styles.optionLabelSelected]}>
                     {option.label}
                   </Text>
                   {option.description && (
-                    <Text style={styles.optionDescription}>{option.description}</Text>
+                    <Text style={[styles.optionDescription, { color: colors.textTertiary }]}>{option.description}</Text>
                   )}
                 </View>
                 {isSelected && (
@@ -63,8 +65,8 @@ export function SelectSheet<T extends string | number>({
           })}
         </ScrollView>
 
-        <TouchableOpacity onPress={onClose} style={styles.doneButton}>
-          <Text style={styles.doneText}>Done</Text>
+        <TouchableOpacity onPress={onClose} style={[styles.doneButton, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.doneText, { color: colors.textSecondary }]}>Done</Text>
         </TouchableOpacity>
       </View>
     </Modal>

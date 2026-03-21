@@ -1,9 +1,11 @@
 import { useCallback } from "react";
 import { RefreshControl } from "react-native";
 import { useSyncStatus } from "@/hooks/use-sync";
+import { useTheme } from "@/lib/theme/theme-context";
 
 export function usePullToSync() {
   const { status, triggerSync } = useSyncStatus();
+  const { colors } = useTheme();
   const isRefreshing = status === "syncing";
 
   const onRefresh = useCallback(() => {
@@ -14,9 +16,9 @@ export function usePullToSync() {
     <RefreshControl
       refreshing={isRefreshing}
       onRefresh={onRefresh}
-      tintColor="#1A9E9E"
-      colors={["#1A9E9E"]}
-      progressBackgroundColor="#FDFBF7"
+      tintColor={colors.primary}
+      colors={[colors.primary]}
+      progressBackgroundColor={colors.background}
     />
   );
 

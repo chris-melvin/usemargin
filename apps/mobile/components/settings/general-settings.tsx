@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSettingsContext } from "@/components/providers/settings-provider";
 import { useTimezone } from "@/components/providers/timezone-provider";
+import { useTheme } from "@/lib/theme/theme-context";
 import { SettingsSection } from "./settings-section";
 import { SelectSheet } from "@/components/ui/select-sheet";
 import { ToggleRow } from "@/components/ui/toggle-row";
@@ -49,17 +50,18 @@ function SettingRow({
   value: string;
   onPress?: () => void;
 }) {
+  const { colors } = useTheme();
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={!onPress}
       style={styles.row}
     >
-      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>{label}</Text>
       <View className="flex-row items-center">
-        <Text style={styles.rowValue}>{value}</Text>
+        <Text style={[styles.rowValue, { color: colors.textPrimary }]}>{value}</Text>
         {onPress && (
-          <Ionicons name="chevron-forward" size={16} color="#A8A29E" style={{ marginLeft: 4 }} />
+          <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} style={{ marginLeft: 4 }} />
         )}
       </View>
     </TouchableOpacity>
@@ -67,12 +69,14 @@ function SettingRow({
 }
 
 function Divider() {
-  return <View style={styles.divider} />;
+  const { colors } = useTheme();
+  return <View style={[styles.divider, { backgroundColor: colors.divider }]} />;
 }
 
 export function GeneralSettings() {
   const { settings, updateSetting } = useSettingsContext();
   const timezone = useTimezone();
+  const { colors } = useTheme();
   const [showCurrency, setShowCurrency] = useState(false);
   const [showTimezone, setShowTimezone] = useState(false);
   const [showWeekStart, setShowWeekStart] = useState(false);
@@ -92,17 +96,18 @@ export function GeneralSettings() {
           }}
           style={[
             styles.radioCard,
+            { borderColor: colors.border },
             trackingMode === "tracking_only" && styles.radioCardActive,
           ]}
         >
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
-              <Text style={[styles.radioLabel, trackingMode === "tracking_only" && styles.radioLabelActive]}>
+              <Text style={[styles.radioLabel, { color: colors.textPrimary }, trackingMode === "tracking_only" && styles.radioLabelActive]}>
                 Simple Tracking
               </Text>
-              <Text style={styles.radioDescription}>Just log expenses without budget limits</Text>
+              <Text style={[styles.radioDescription, { color: colors.textTertiary }]}>Just log expenses without budget limits</Text>
             </View>
-            <View style={[styles.radioCircle, trackingMode === "tracking_only" && styles.radioCircleActive]}>
+            <View style={[styles.radioCircle, { borderColor: colors.textMuted }, trackingMode === "tracking_only" && styles.radioCircleActive]}>
               {trackingMode === "tracking_only" && <View style={styles.radioCircleFill} />}
             </View>
           </View>
@@ -115,18 +120,19 @@ export function GeneralSettings() {
           }}
           style={[
             styles.radioCard,
+            { borderColor: colors.border },
             trackingMode === "budget_enabled" && styles.radioCardActive,
             { marginTop: 8 },
           ]}
         >
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
-              <Text style={[styles.radioLabel, trackingMode === "budget_enabled" && styles.radioLabelActive]}>
+              <Text style={[styles.radioLabel, { color: colors.textPrimary }, trackingMode === "budget_enabled" && styles.radioLabelActive]}>
                 Budget Mode
               </Text>
-              <Text style={styles.radioDescription}>Track expenses against a daily spending limit</Text>
+              <Text style={[styles.radioDescription, { color: colors.textTertiary }]}>Track expenses against a daily spending limit</Text>
             </View>
-            <View style={[styles.radioCircle, trackingMode === "budget_enabled" && styles.radioCircleActive]}>
+            <View style={[styles.radioCircle, { borderColor: colors.textMuted }, trackingMode === "budget_enabled" && styles.radioCircleActive]}>
               {trackingMode === "budget_enabled" && <View style={styles.radioCircleFill} />}
             </View>
           </View>

@@ -3,30 +3,35 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useInsightsData } from "@/hooks/use-insights-data";
 import { useSettingsContext } from "@/components/providers/settings-provider";
+import { useTheme } from "@/lib/theme/theme-context";
+import type { ThemeColors } from "@/lib/theme/colors";
 import type { InsightsPeriod } from "@repo/shared/insights/types";
 
 function PeriodToggle({
   period,
   onChange,
+  colors,
 }: {
   period: InsightsPeriod;
   onChange: (p: InsightsPeriod) => void;
+  colors: ThemeColors;
 }) {
   return (
-    <View style={toggleStyles.container}>
+    <View style={[toggleStyles.container, { backgroundColor: colors.surface }]}>
       {(["week", "month"] as const).map((p) => (
         <TouchableOpacity
           key={p}
           onPress={() => onChange(p)}
           style={[
             toggleStyles.option,
-            period === p && toggleStyles.optionActive,
+            period === p && [toggleStyles.optionActive, { backgroundColor: colors.card, shadowColor: colors.textPrimary }],
           ]}
         >
           <Text
             style={[
               toggleStyles.optionText,
-              period === p && toggleStyles.optionTextActive,
+              { color: colors.textTertiary },
+              period === p && { color: colors.textPrimary },
             ]}
           >
             {p === "week" ? "Week" : "Month"}
@@ -40,7 +45,6 @@ function PeriodToggle({
 const toggleStyles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    backgroundColor: "#F5F5F4",
     borderRadius: 10,
     padding: 3,
     marginBottom: 16,
@@ -52,8 +56,6 @@ const toggleStyles = StyleSheet.create({
     alignItems: "center",
   },
   optionActive: {
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#1C1917",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -62,23 +64,21 @@ const toggleStyles = StyleSheet.create({
   optionText: {
     fontFamily: "Inter_500Medium",
     fontSize: 14,
-    color: "#A8A29E",
-  },
-  optionTextActive: {
-    color: "#292524",
   },
 });
 
 function InsightCard({
   title,
   children,
+  colors,
 }: {
   title: string;
   children: React.ReactNode;
+  colors: ThemeColors;
 }) {
   return (
-    <View style={cardStyles.container}>
-      <Text style={cardStyles.title}>{title}</Text>
+    <View style={[cardStyles.container, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.textPrimary }]}>
+      <Text style={[cardStyles.title, { color: colors.textTertiary }]}>{title}</Text>
       {children}
     </View>
   );
@@ -86,13 +86,10 @@ function InsightCard({
 
 const cardStyles = StyleSheet.create({
   container: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(231,229,228,0.6)",
     padding: 16,
     marginBottom: 12,
-    shadowColor: "#1C1917",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 12,
@@ -101,7 +98,6 @@ const cardStyles = StyleSheet.create({
   title: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 11,
-    color: "#A8A29E",
     letterSpacing: 1,
     textTransform: "uppercase",
     marginBottom: 12,
@@ -111,6 +107,7 @@ const cardStyles = StyleSheet.create({
 export default function InsightsScreen() {
   const [period, setPeriod] = useState<InsightsPeriod>("month");
   const { settings } = useSettingsContext();
+  const { colors } = useTheme();
   const currency = settings.currency === "PHP" ? "\u20B1" : settings.currency;
 
   const {
@@ -128,8 +125,8 @@ export default function InsightsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center" style={{ backgroundColor: "#FDFBF7" }}>
-        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 14, color: "#A8A29E" }}>
+      <SafeAreaView className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
+        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 14, color: colors.textTertiary }}>
           Loading insights...
         </Text>
       </SafeAreaView>
@@ -137,26 +134,26 @@ export default function InsightsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: "#FDFBF7" }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       <ScrollView className="px-4 pt-2" contentContainerStyle={{ paddingBottom: 100 }}>
-        <Text style={insightStyles.screenTitle}>Insights</Text>
+        <Text style={[insightStyles.screenTitle, { color: colors.textPrimary }]}>Insights</Text>
 
-        <PeriodToggle period={period} onChange={setPeriod} />
+        <PeriodToggle period={period} onChange={setPeriod} colors={colors} />
 
         {/* Period Totals */}
-        <InsightCard title={periodTotals.periodLabel}>
-          <Text style={insightStyles.bigAmount}>
+        <InsightCard title={periodTotals.periodLabel} colors={colors}>
+          <Text style={[insightStyles.bigAmount, { color: colors.textPrimary }]}>
             {currency}
             {periodTotals.total.toLocaleString()}
           </Text>
-          <Text style={insightStyles.subtitle}>
+          <Text style={[insightStyles.subtitle, { color: colors.textSecondary }]}>
             {currency}
             {periodTotals.avg.toLocaleString()} avg/day
           </Text>
         </InsightCard>
 
         {/* Spending Trend (bar chart) */}
-        <InsightCard title="Spending Trend">
+        <InsightCard title="Spending Trend" colors={colors}>
           <View className="flex-row items-end justify-between h-24">
             {dailySpending.slice(-14).map((day) => {
               const maxAmt = Math.max(
@@ -170,7 +167,7 @@ export default function InsightsScreen() {
                     className="w-full rounded-t"
                     style={{
                       height,
-                      backgroundColor: day.isToday ? "#1A9E9E" : "rgba(26,158,158,0.25)",
+                      backgroundColor: day.isToday ? colors.primary : "rgba(26,158,158,0.25)",
                     }}
                   />
                 </View>
@@ -181,17 +178,17 @@ export default function InsightsScreen() {
 
         {/* Category Breakdown */}
         {categoryBreakdown.length > 0 && (
-          <InsightCard title="Categories">
+          <InsightCard title="Categories" colors={colors}>
             {categoryBreakdown.map((cat) => (
               <View key={cat.category} className="mb-2.5">
                 <View className="flex-row justify-between mb-1">
-                  <Text style={insightStyles.categoryLabel}>{cat.category}</Text>
-                  <Text style={insightStyles.categoryAmount}>
+                  <Text style={[insightStyles.categoryLabel, { color: colors.textSecondary }]}>{cat.category}</Text>
+                  <Text style={[insightStyles.categoryAmount, { color: colors.textPrimary }]}>
                     {currency}
                     {cat.amount.toLocaleString()} ({cat.percentage}%)
                   </Text>
                 </View>
-                <View className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#F5F5F4" }}>
+                <View className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: colors.surface }}>
                   <View
                     className="h-full rounded-full"
                     style={{
@@ -206,45 +203,45 @@ export default function InsightsScreen() {
         )}
 
         {/* Streak */}
-        <InsightCard title="Streak">
+        <InsightCard title="Streak" colors={colors}>
           <View className="flex-row">
             <View className="flex-1 items-center">
-              <Text style={insightStyles.streakNumber}>
+              <Text style={[insightStyles.streakNumber, { color: colors.primary }]}>
                 {streaks.current}
               </Text>
-              <Text style={insightStyles.streakLabel}>Current</Text>
+              <Text style={[insightStyles.streakLabel, { color: colors.textTertiary }]}>Current</Text>
             </View>
-            <View style={{ width: 1, backgroundColor: "#F5F5F4" }} />
+            <View style={{ width: 1, backgroundColor: colors.divider }} />
             <View className="flex-1 items-center">
-              <Text style={[insightStyles.streakNumber, { color: "#D6D3D1" }]}>
+              <Text style={[insightStyles.streakNumber, { color: colors.textMuted }]}>
                 {streaks.longest}
               </Text>
-              <Text style={insightStyles.streakLabel}>Best</Text>
+              <Text style={[insightStyles.streakLabel, { color: colors.textTertiary }]}>Best</Text>
             </View>
           </View>
-          <Text style={insightStyles.streakSubtext}>
+          <Text style={[insightStyles.streakSubtext, { color: colors.textTertiary }]}>
             {streaks.type === "under_budget" ? "Days under budget" : "Days tracked"}
           </Text>
         </InsightCard>
 
         {/* Month Comparison */}
         {monthComparison && (
-          <InsightCard title="Month Comparison">
+          <InsightCard title="Month Comparison" colors={colors}>
             <View className="flex-row justify-between mb-2">
               <View>
-                <Text style={insightStyles.comparisonLabel}>
+                <Text style={[insightStyles.comparisonLabel, { color: colors.textTertiary }]}>
                   {monthComparison.currentMonthLabel}
                 </Text>
-                <Text style={insightStyles.comparisonAmount}>
+                <Text style={[insightStyles.comparisonAmount, { color: colors.textPrimary }]}>
                   {currency}
                   {monthComparison.currentTotal.toLocaleString()}
                 </Text>
               </View>
               <View className="items-end">
-                <Text style={insightStyles.comparisonLabel}>
+                <Text style={[insightStyles.comparisonLabel, { color: colors.textTertiary }]}>
                   {monthComparison.previousMonthLabel}
                 </Text>
-                <Text style={[insightStyles.comparisonAmount, { color: "#A8A29E" }]}>
+                <Text style={[insightStyles.comparisonAmount, { color: colors.textTertiary }]}>
                   {currency}
                   {monthComparison.previousTotal.toLocaleString()}
                 </Text>
@@ -253,7 +250,7 @@ export default function InsightsScreen() {
             <Text
               style={[
                 insightStyles.deltaText,
-                { color: monthComparison.delta > 0 ? "#E87356" : "#10B981" },
+                { color: monthComparison.delta > 0 ? colors.coral : colors.success },
               ]}
             >
               {monthComparison.delta > 0 ? "+" : ""}
@@ -263,55 +260,55 @@ export default function InsightsScreen() {
         )}
 
         {/* Weekday vs Weekend */}
-        <InsightCard title="Weekday vs Weekend">
+        <InsightCard title="Weekday vs Weekend" colors={colors}>
           <View className="flex-row">
             <View className="flex-1 items-center">
-              <Text style={insightStyles.comparisonAmount}>
+              <Text style={[insightStyles.comparisonAmount, { color: colors.textPrimary }]}>
                 {currency}
                 {weekdayWeekend.weekdayAvg.toLocaleString()}
               </Text>
-              <Text style={insightStyles.streakLabel}>Weekday avg</Text>
+              <Text style={[insightStyles.streakLabel, { color: colors.textTertiary }]}>Weekday avg</Text>
             </View>
-            <View style={{ width: 1, backgroundColor: "#F5F5F4" }} />
+            <View style={{ width: 1, backgroundColor: colors.divider }} />
             <View className="flex-1 items-center">
-              <Text style={insightStyles.comparisonAmount}>
+              <Text style={[insightStyles.comparisonAmount, { color: colors.textPrimary }]}>
                 {currency}
                 {weekdayWeekend.weekendAvg.toLocaleString()}
               </Text>
-              <Text style={insightStyles.streakLabel}>Weekend avg</Text>
+              <Text style={[insightStyles.streakLabel, { color: colors.textTertiary }]}>Weekend avg</Text>
             </View>
           </View>
           {weekdayWeekend.higherOn !== "equal" && (
-            <Text style={insightStyles.streakSubtext}>
+            <Text style={[insightStyles.streakSubtext, { color: colors.textTertiary }]}>
               {weekdayWeekend.percentDiff}% more on {weekdayWeekend.higherOn}s
             </Text>
           )}
         </InsightCard>
 
         {/* Tracking Completeness */}
-        <InsightCard title="Tracking Completeness">
+        <InsightCard title="Tracking Completeness" colors={colors}>
           <View className="items-center">
-            <Text style={insightStyles.completenessNumber}>
+            <Text style={[insightStyles.completenessNumber, { color: colors.primary }]}>
               {completeness.percentage}%
             </Text>
-            <Text style={insightStyles.subtitle}>
+            <Text style={[insightStyles.subtitle, { color: colors.textSecondary }]}>
               {completeness.trackedDays} of {completeness.totalDays} days tracked
             </Text>
           </View>
         </InsightCard>
 
         {/* Time of Day */}
-        <InsightCard title="Time of Day">
+        <InsightCard title="Time of Day" colors={colors}>
           {timeOfDay.map((bucket) => (
             <View key={bucket.label} className="flex-row items-center mb-2">
-              <Text style={insightStyles.timeLabel}>{bucket.label}</Text>
-              <View className="flex-1 h-5 rounded-full overflow-hidden mx-2" style={{ backgroundColor: "#F5F5F4" }}>
+              <Text style={[insightStyles.timeLabel, { color: colors.textSecondary }]}>{bucket.label}</Text>
+              <View className="flex-1 h-5 rounded-full overflow-hidden mx-2" style={{ backgroundColor: colors.surface }}>
                 <View
                   className="h-full rounded-full"
-                  style={{ width: `${bucket.percentage}%`, backgroundColor: "#1A9E9E" }}
+                  style={{ width: `${bucket.percentage}%`, backgroundColor: colors.primary }}
                 />
               </View>
-              <Text style={insightStyles.timePercentage}>
+              <Text style={[insightStyles.timePercentage, { color: colors.textSecondary }]}>
                 {bucket.percentage}%
               </Text>
             </View>
@@ -320,27 +317,27 @@ export default function InsightsScreen() {
 
         {/* Top Spending Days */}
         {topDays.length > 0 && (
-          <InsightCard title="Top Spending Days">
+          <InsightCard title="Top Spending Days" colors={colors}>
             {topDays.map((day, i) => (
               <View
                 key={day.date}
                 className="flex-row items-center justify-between py-2"
-                style={{ borderBottomWidth: 1, borderBottomColor: "#FAFAF9" }}
+                style={{ borderBottomWidth: 1, borderBottomColor: colors.divider }}
               >
                 <View className="flex-row items-center">
-                  <Text style={insightStyles.rankNumber}>
+                  <Text style={[insightStyles.rankNumber, { color: colors.textMuted }]}>
                     {i + 1}
                   </Text>
                   <View className="ml-2">
-                    <Text style={insightStyles.categoryLabel}>{day.dateLabel}</Text>
+                    <Text style={[insightStyles.categoryLabel, { color: colors.textSecondary }]}>{day.dateLabel}</Text>
                     {day.topExpense && (
-                      <Text style={insightStyles.streakLabel}>
+                      <Text style={[insightStyles.streakLabel, { color: colors.textTertiary }]}>
                         {day.topExpense.description}
                       </Text>
                     )}
                   </View>
                 </View>
-                <Text style={insightStyles.categoryAmount}>
+                <Text style={[insightStyles.categoryAmount, { color: colors.textPrimary }]}>
                   {currency}
                   {day.total.toLocaleString()}
                 </Text>
@@ -359,59 +356,49 @@ const insightStyles = StyleSheet.create({
   screenTitle: {
     fontFamily: "Lora_700Bold",
     fontSize: 28,
-    color: "#1C1917",
     marginBottom: 16,
   },
   bigAmount: {
     fontFamily: "Lora_700Bold",
     fontSize: 32,
-    color: "#1C1917",
     fontVariant: ["tabular-nums"],
     marginBottom: 2,
   },
   subtitle: {
     fontFamily: "Inter_400Regular",
     fontSize: 14,
-    color: "#78716C",
   },
   categoryLabel: {
     fontFamily: "Inter_400Regular",
     fontSize: 14,
-    color: "#44403C",
   },
   categoryAmount: {
     fontFamily: "Inter_500Medium",
     fontSize: 14,
-    color: "#292524",
     fontVariant: ["tabular-nums"],
   },
   streakNumber: {
     fontFamily: "Lora_700Bold",
     fontSize: 32,
-    color: "#1A9E9E",
   },
   streakLabel: {
     fontFamily: "Inter_400Regular",
     fontSize: 12,
-    color: "#A8A29E",
     marginTop: 4,
   },
   streakSubtext: {
     fontFamily: "Inter_400Regular",
     fontSize: 12,
-    color: "#A8A29E",
     textAlign: "center",
     marginTop: 8,
   },
   comparisonLabel: {
     fontFamily: "Inter_400Regular",
     fontSize: 12,
-    color: "#A8A29E",
   },
   comparisonAmount: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 18,
-    color: "#292524",
     fontVariant: ["tabular-nums"],
   },
   deltaText: {
@@ -421,18 +408,15 @@ const insightStyles = StyleSheet.create({
   completenessNumber: {
     fontFamily: "Lora_700Bold",
     fontSize: 40,
-    color: "#1A9E9E",
   },
   timeLabel: {
     fontFamily: "Inter_400Regular",
     fontSize: 12,
-    color: "#78716C",
     width: 72,
   },
   timePercentage: {
     fontFamily: "Inter_500Medium",
     fontSize: 12,
-    color: "#44403C",
     fontVariant: ["tabular-nums"],
     width: 40,
     textAlign: "right",
@@ -440,7 +424,6 @@ const insightStyles = StyleSheet.create({
   rankNumber: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 14,
-    color: "#D6D3D1",
     width: 20,
   },
 });

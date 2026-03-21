@@ -8,6 +8,7 @@ import {
   getTodayTimestamp,
 } from "@repo/shared/date";
 import { useSettingsContext } from "@/components/providers/settings-provider";
+import { useTheme } from "@/lib/theme/theme-context";
 import { selection as hapticSelection } from "@/lib/haptics";
 import type { LocalExpense } from "@/lib/db/expense-dao";
 
@@ -39,6 +40,7 @@ export function WeekStrip({
   onTodayPress,
 }: WeekStripProps) {
   const { settings } = useSettingsContext();
+  const { colors } = useTheme();
   const [weekOffset, setWeekOffset] = useState(0);
 
   const today = useMemo(() => getTodayTimestamp(timezone), [timezone]);
@@ -95,14 +97,14 @@ export function WeekStrip({
   }, [onTodayPress]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.textPrimary }]}>
       {/* Month header + nav */}
       <View className="flex-row items-center justify-between mb-3">
         <TouchableOpacity onPress={goToPrevWeek} className="p-1.5 rounded-lg">
-          <Text style={styles.navArrow}>{"\u2039"}</Text>
+          <Text style={[styles.navArrow, { color: colors.textTertiary }]}>{"\u2039"}</Text>
         </TouchableOpacity>
         <View className="flex-row items-center gap-2">
-          <Text style={styles.monthLabel}>{monthLabel}</Text>
+          <Text style={[styles.monthLabel, { color: colors.textSecondary }]}>{monthLabel}</Text>
           {weekOffset !== 0 && (
             <TouchableOpacity onPress={goToToday} style={styles.todayBadge}>
               <Text style={styles.todayBadgeText}>Today</Text>
@@ -110,7 +112,7 @@ export function WeekStrip({
           )}
         </View>
         <TouchableOpacity onPress={goToNextWeek} className="p-1.5 rounded-lg">
-          <Text style={styles.navArrow}>{"\u203A"}</Text>
+          <Text style={[styles.navArrow, { color: colors.textTertiary }]}>{"\u203A"}</Text>
         </TouchableOpacity>
       </View>
 
@@ -137,8 +139,9 @@ export function WeekStrip({
               <Text
                 style={[
                   styles.weekdayLetter,
+                  { color: colors.textTertiary },
                   isSelected && { color: "rgba(255,255,255,0.6)" },
-                  isTodayDate && !isSelected && { color: "#1A9E9E" },
+                  isTodayDate && !isSelected && { color: colors.primary },
                 ]}
               >
                 {WEEKDAY_LETTERS[i]}
@@ -146,8 +149,9 @@ export function WeekStrip({
               <Text
                 style={[
                   styles.dayNum,
+                  { color: colors.textSecondary },
                   isSelected && { color: "#FFFFFF" },
-                  isTodayDate && !isSelected && { color: "#0F6B6B" },
+                  isTodayDate && !isSelected && { color: colors.primaryDark },
                 ]}
               >
                 {dayNum}
