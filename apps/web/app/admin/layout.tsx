@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/admin";
 import { MessageSquare, Map, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -15,13 +17,13 @@ export default async function AdminLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Redirect to login if not authenticated
   if (!user) {
     redirect("/login");
   }
 
-  // TODO: Add proper admin role check here
-  // For now, all authenticated users can access admin
+  if (!isAdminEmail(user.email)) {
+    notFound();
+  }
 
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-stone-950">

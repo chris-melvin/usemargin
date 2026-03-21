@@ -21,6 +21,7 @@ import { SmartInput } from "@/components/expenses/smart-input";
 import { ExpenseEditModal } from "@/components/expenses/expense-edit-modal";
 import { tapMedium } from "@/lib/haptics";
 import { usePullToSync } from "@/components/ui/pull-to-sync";
+import { LedgrLogo } from "@/components/brand/logo";
 import type { LocalExpense } from "@/lib/db/expense-dao";
 
 export default function TodayScreen() {
@@ -65,9 +66,7 @@ export default function TodayScreen() {
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       {/* Header */}
       <View className="h-14 px-4 flex-row items-center justify-between" style={{ backgroundColor: colors.background }}>
-        <Text style={{ fontFamily: "Lora_700Bold", fontSize: 18, color: colors.textPrimary, letterSpacing: -0.5 }}>
-          ledgr
-        </Text>
+        <LedgrLogo size="sm" />
         <View className="flex-row items-center">
           {status === "syncing" && (
             <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.textTertiary }}>syncing...</Text>

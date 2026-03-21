@@ -8,7 +8,7 @@ import {
   convertFeedbackToRoadmapSchema,
 } from "@/lib/validations";
 import { feedbackRepository, roadmapRepository } from "@/lib/repositories";
-import { requireAuth } from "@/lib/action-utils";
+import { requireAuth, requireAdmin } from "@/lib/action-utils";
 import { createClient } from "@/lib/supabase/server";
 import { type ActionResult, error, success } from "@/lib/errors";
 import type { Feedback, FeedbackStatus, FeedbackType } from "@repo/database";
@@ -81,11 +81,8 @@ export async function getAllFeedback(query?: {
   limit?: number;
   offset?: number;
 }): Promise<ActionResult<{ feedback: Feedback[]; total: number }>> {
-  const authResult = await requireAuth();
+  const authResult = await requireAdmin();
   if (!authResult.success) return authResult;
-
-  // TODO: Add admin check here
-  // For now, we'll allow any authenticated user to access admin functions
 
   const supabase = await createClient();
 
@@ -129,7 +126,7 @@ export async function updateFeedbackStatus(data: {
   status: FeedbackStatus;
   roadmap_item_id?: string;
 }): Promise<ActionResult<Feedback>> {
-  const authResult = await requireAuth();
+  const authResult = await requireAdmin();
   if (!authResult.success) return authResult;
 
   const validation = updateFeedbackStatusSchema.safeParse(data);
@@ -169,7 +166,7 @@ export async function convertFeedbackToRoadmap(data: {
   status?: "under_consideration" | "planned" | "in_progress" | "completed";
   category?: string | null;
 }): Promise<ActionResult<{ feedback: Feedback; roadmapItem: Awaited<ReturnType<typeof roadmapRepository.create>> }>> {
-  const authResult = await requireAuth();
+  const authResult = await requireAdmin();
   if (!authResult.success) return authResult;
 
   const validation = convertFeedbackToRoadmapSchema.safeParse(data);
@@ -214,7 +211,7 @@ export async function convertFeedbackToRoadmap(data: {
  * Delete feedback (admin only)
  */
 export async function deleteFeedback(id: string): Promise<ActionResult<void>> {
-  const authResult = await requireAuth();
+  const authResult = await requireAdmin();
   if (!authResult.success) return authResult;
 
   const supabase = await createClient();
@@ -237,7 +234,7 @@ export async function deleteFeedback(id: string): Promise<ActionResult<void>> {
 export async function getFeedbackCounts(): Promise<
   ActionResult<Record<FeedbackStatus, number>>
 > {
-  const authResult = await requireAuth();
+  const authResult = await requireAdmin();
   if (!authResult.success) return authResult;
 
   const supabase = await createClient();

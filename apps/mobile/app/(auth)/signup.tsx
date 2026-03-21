@@ -11,10 +11,12 @@ import {
 } from "react-native";
 import { Link } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { useAuth } from "@/components/providers/auth-provider";
+import { LedgrLogoIcon } from "@/components/brand/logo";
 
 export default function SignUpScreen() {
-  const { signUp } = useAuth();
+  const { signUp, signInWithApple } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +50,9 @@ export default function SignUpScreen() {
       style={{ backgroundColor: "#FDFBF7" }}
     >
       <View className="flex-1 justify-center px-8">
+        <View style={{ alignItems: "center", marginBottom: 16 }}>
+          <LedgrLogoIcon size="lg" />
+        </View>
         <Text style={authStyles.title}>Create Account</Text>
         <Text style={authStyles.subtitle}>
           Start tracking your expenses
@@ -89,6 +94,29 @@ export default function SignUpScreen() {
             {isLoading ? "Creating account..." : "Sign Up"}
           </Text>
         </TouchableOpacity>
+
+        {Platform.OS === "ios" && (
+          <>
+            <View style={authStyles.dividerContainer}>
+              <View style={authStyles.dividerLine} />
+              <Text style={authStyles.dividerText}>Or</Text>
+              <View style={authStyles.dividerLine} />
+            </View>
+
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={14}
+              style={{ width: "100%", height: 52 }}
+              onPress={async () => {
+                const { error } = await signInWithApple();
+                if (error && (error as any).code !== "ERR_REQUEST_CANCELED") {
+                  Alert.alert("Error", error.message);
+                }
+              }}
+            />
+          </>
+        )}
 
         <View className="flex-row justify-center mt-6">
           <Text style={authStyles.linkText}>Already have an account? </Text>
@@ -153,5 +181,23 @@ const authStyles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 14,
     color: "#1A9E9E",
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E7E5E4",
+  },
+  dividerText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "#A8A29E",
+    paddingHorizontal: 12,
+    textTransform: "uppercase",
   },
 });

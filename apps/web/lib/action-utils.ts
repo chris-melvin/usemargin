@@ -17,6 +17,23 @@ export interface AuthData {
   supabase: SupabaseClient;
 }
 
+import { isAdminEmail } from "./admin";
+
+/**
+ * Require admin access for a server action
+ * Returns the authenticated admin user's data, or an error
+ */
+export async function requireAdmin(): Promise<ActionResult<AuthData>> {
+  const authResult = await requireAuth();
+  if (!authResult.success) return authResult;
+
+  if (!isAdminEmail(authResult.data.email)) {
+    return error("Admin access required", "FORBIDDEN");
+  }
+
+  return authResult;
+}
+
 /**
  * Require authentication for a server action
  * Returns the authenticated user's ID and a Supabase client, or an error

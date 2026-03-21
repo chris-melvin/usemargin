@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Toaster } from "@/components/ui/sonner";
 import { GeneralSettings } from "@/components/settings/general-settings";
 import { BudgetSettings } from "@/components/settings/budget-settings";
 import { AccountSettings } from "@/components/settings/account-settings";
@@ -78,7 +77,6 @@ export function SettingsClient({
         </Tabs>
       </main>
 
-      <Toaster position="bottom-center" />
     </div>
   );
 }

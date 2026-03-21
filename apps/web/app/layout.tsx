@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { PaddleProvider } from "@/components/paddle";
 import { PostHogProvider } from "@/components/posthog";
+import { Toaster } from "@/components/ui/sonner";
 
 // Primary serif font for headings - scholarly, warm
 const lora = Lora({
@@ -41,12 +42,21 @@ export const metadata: Metadata = {
     title: "ledgr — Your Daily Spending Companion",
     description:
       "Know exactly what you can spend today, every day. Calendar-first budgeting built for freedom, not restriction.",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "ledgr — Your Daily Spending Companion",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "ledgr — Your Daily Spending Companion",
     description:
       "Know exactly what you can spend today, every day. Calendar-first budgeting built for freedom, not restriction.",
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,
@@ -76,6 +86,7 @@ export default function RootLayout({
       >
         <PostHogProvider>
           <PaddleProvider>{children}</PaddleProvider>
+          <Toaster position="bottom-center" />
         </PostHogProvider>
       </body>
     </html>

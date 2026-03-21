@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { signInWithApple as appleSignIn } from "@/lib/auth/apple";
 import type { Session, User } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -8,6 +9,7 @@ interface AuthContextType {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithApple: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -44,13 +46,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error as Error | null };
   };
 
+  const signInWithApple = async () => {
+    try {
+      await appleSignIn();
+      return { error: null };
+    } catch (e) {
+      return { error: e as Error };
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
   return (
     <AuthContext.Provider
-      value={{ session, user: session?.user ?? null, isLoading, signIn, signUp, signOut }}
+      value={{ session, user: session?.user ?? null, isLoading, signIn, signUp, signInWithApple, signOut }}
     >
       {children}
     </AuthContext.Provider>

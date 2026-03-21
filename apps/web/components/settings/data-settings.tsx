@@ -1,40 +1,35 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Download, Upload, RefreshCw, Trash2, AlertTriangle } from "lucide-react";
+import { Download, RefreshCw, Trash2, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { resetOnboarding } from "@/actions/onboarding";
+import { exportExpensesCSV } from "@/actions/expenses";
 
 export function DataSettings() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
 
   const handleExportCSV = () => {
     startTransition(async () => {
-      // TODO: Implement CSV export
-      toast.info("CSV export coming soon!");
-    });
-  };
-
-  const handleExportJSON = () => {
-    startTransition(async () => {
-      // TODO: Implement JSON export
-      toast.info("JSON export coming soon!");
+      const result = await exportExpensesCSV();
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+      const blob = new Blob([result.data], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ledgr-expenses-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("Expenses exported successfully");
     });
   };
 
@@ -50,66 +45,25 @@ export function DataSettings() {
     });
   };
 
-  const handleClearExpenses = () => {
-    // TODO: Implement expense clearing
-    toast.info("Clear expenses coming soon!");
-    setIsClearDialogOpen(false);
-  };
-
   return (
     <div className="space-y-6">
-      {/* Export Section - Coming Soon */}
-      <Card className="opacity-60">
+      {/* Export Section */}
+      <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <CardTitle>Export Data</CardTitle>
-            <Badge variant="outline" className="text-xs font-normal">Coming Soon</Badge>
-          </div>
+          <CardTitle>Export Data</CardTitle>
           <CardDescription>
-            Download your expense data in various formats
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              className="justify-start gap-2"
-              disabled
-            >
-              <Download className="w-4 h-4" />
-              Export as CSV
-            </Button>
-            <Button
-              variant="outline"
-              className="justify-start gap-2"
-              disabled
-            >
-              <Download className="w-4 h-4" />
-              Export as JSON
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Import Section - Coming Soon */}
-      <Card className="opacity-60">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CardTitle>Import Data</CardTitle>
-            <Badge variant="outline" className="text-xs font-normal">Coming Soon</Badge>
-          </div>
-          <CardDescription>
-            Import expenses from a file
+            Download your expense data
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button
             variant="outline"
             className="justify-start gap-2"
-            disabled
+            onClick={handleExportCSV}
+            disabled={isPending}
           >
-            <Upload className="w-4 h-4" />
-            Import from CSV
+            <Download className="w-4 h-4" />
+            Export as CSV
           </Button>
         </CardContent>
       </Card>
@@ -145,7 +99,7 @@ export function DataSettings() {
 
           <Separator />
 
-          {/* Danger Zone - Coming Soon */}
+          {/* Danger Zone */}
           <div className="space-y-3 opacity-60">
             <div className="flex items-center gap-2 text-rose-600">
               <AlertTriangle className="w-4 h-4" />

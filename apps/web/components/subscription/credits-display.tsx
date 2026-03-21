@@ -1,24 +1,21 @@
 "use client";
 
-import { Sparkles, Clock } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreditsState } from "@/hooks/use-subscription";
 
 interface CreditsDisplayProps {
   className?: string;
   showLabel?: boolean;
-  showBuyButton?: boolean;
   size?: "sm" | "md";
 }
 
 /**
  * Display user's credit balance
- * Buy button shows "Coming Soon" since payment gateway is not yet set up
  */
 export function CreditsDisplay({
   className,
   showLabel = true,
-  showBuyButton = false,
   size = "md",
 }: CreditsDisplayProps) {
   const { balance, hasCredits, isLoading } = useCreditsState();
@@ -53,19 +50,7 @@ export function CreditsDisplay({
         )}
       </div>
 
-      {showBuyButton && (
-        <div
-          className={cn(
-            "flex items-center rounded-lg cursor-not-allowed",
-            sizeClasses[size],
-            "bg-stone-100 text-stone-400"
-          )}
-          title="Coming Soon"
-        >
-          <Clock className={iconSizes[size]} />
-          <span className="font-medium">Soon</span>
-        </div>
-      )}
+      {/* Buy button intentionally removed — credits purchased via subscription */}
     </div>
   );
 }

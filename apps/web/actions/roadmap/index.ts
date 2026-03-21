@@ -7,7 +7,7 @@ import {
   toggleVoteSchema,
 } from "@/lib/validations";
 import { roadmapRepository, roadmapVoteRepository } from "@/lib/repositories";
-import { requireAuth, getOptionalAuth } from "@/lib/action-utils";
+import { requireAuth, requireAdmin, getOptionalAuth } from "@/lib/action-utils";
 import { createClient } from "@/lib/supabase/server";
 import { type ActionResult, error, success } from "@/lib/errors";
 import type { RoadmapItem, RoadmapStatus } from "@repo/database";
@@ -122,7 +122,7 @@ export async function toggleVote(
 export async function getAllRoadmapItems(): Promise<
   ActionResult<RoadmapItem[]>
 > {
-  const authResult = await requireAuth();
+  const authResult = await requireAdmin();
   if (!authResult.success) return authResult;
 
   const supabase = await createClient();
@@ -149,7 +149,7 @@ export async function createRoadmapItem(data: {
   is_public?: boolean;
   sort_order?: number;
 }): Promise<ActionResult<RoadmapItem>> {
-  const authResult = await requireAuth();
+  const authResult = await requireAdmin();
   if (!authResult.success) return authResult;
 
   const validation = createRoadmapItemSchema.safeParse(data);
@@ -196,7 +196,7 @@ export async function updateRoadmapItem(
     sort_order?: number;
   }
 ): Promise<ActionResult<RoadmapItem>> {
-  const authResult = await requireAuth();
+  const authResult = await requireAdmin();
   if (!authResult.success) return authResult;
 
   const validation = updateRoadmapItemSchema.safeParse(data);
@@ -229,7 +229,7 @@ export async function updateRoadmapStatus(
   id: string,
   status: RoadmapStatus
 ): Promise<ActionResult<RoadmapItem>> {
-  const authResult = await requireAuth();
+  const authResult = await requireAdmin();
   if (!authResult.success) return authResult;
 
   const supabase = await createClient();
@@ -251,7 +251,7 @@ export async function updateRoadmapStatus(
  * Delete a roadmap item (admin only)
  */
 export async function deleteRoadmapItem(id: string): Promise<ActionResult<void>> {
-  const authResult = await requireAuth();
+  const authResult = await requireAdmin();
   if (!authResult.success) return authResult;
 
   const supabase = await createClient();
@@ -275,7 +275,7 @@ export async function deleteRoadmapItem(id: string): Promise<ActionResult<void>>
 export async function reorderRoadmapItems(
   items: { id: string; sort_order: number }[]
 ): Promise<ActionResult<void>> {
-  const authResult = await requireAuth();
+  const authResult = await requireAdmin();
   if (!authResult.success) return authResult;
 
   const supabase = await createClient();

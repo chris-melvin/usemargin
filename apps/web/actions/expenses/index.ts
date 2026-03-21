@@ -2,6 +2,7 @@
 export { createExpense, createExpenseFromData } from "./create";
 export { updateExpense, updateExpenseFromData } from "./update";
 export { deleteExpense, deleteExpenses } from "./delete";
+export { exportExpensesCSV } from "./export";
 
 // Queries
 export {

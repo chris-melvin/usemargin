@@ -11,10 +11,12 @@ import {
 } from "react-native";
 import { Link } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { useAuth } from "@/components/providers/auth-provider";
+import { LedgrLogo } from "@/components/brand/logo";
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithApple } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +43,9 @@ export default function LoginScreen() {
       style={{ backgroundColor: "#FDFBF7" }}
     >
       <View className="flex-1 justify-center px-8">
-        <Text style={authStyles.wordmark}>ledgr</Text>
+        <View style={{ alignItems: "center", marginBottom: 8 }}>
+          <LedgrLogo size="lg" />
+        </View>
         <Text style={authStyles.subtitle}>
           Track your daily expenses
         </Text>
@@ -83,6 +87,29 @@ export default function LoginScreen() {
           </Text>
         </TouchableOpacity>
 
+        {Platform.OS === "ios" && (
+          <>
+            <View style={authStyles.dividerContainer}>
+              <View style={authStyles.dividerLine} />
+              <Text style={authStyles.dividerText}>Or</Text>
+              <View style={authStyles.dividerLine} />
+            </View>
+
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={14}
+              style={{ width: "100%", height: 52 }}
+              onPress={async () => {
+                const { error } = await signInWithApple();
+                if (error && (error as any).code !== "ERR_REQUEST_CANCELED") {
+                  Alert.alert("Error", error.message);
+                }
+              }}
+            />
+          </>
+        )}
+
         <View className="flex-row justify-center mt-6">
           <Text style={authStyles.linkText}>Don't have an account? </Text>
           <Link href="/(auth)/signup">
@@ -95,13 +122,6 @@ export default function LoginScreen() {
 }
 
 const authStyles = StyleSheet.create({
-  wordmark: {
-    fontFamily: "Lora_700Bold",
-    fontSize: 36,
-    color: "#1C1917",
-    textAlign: "center",
-    marginBottom: 8,
-  },
   subtitle: {
     fontFamily: "Inter_400Regular",
     fontSize: 16,
@@ -146,5 +166,23 @@ const authStyles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 14,
     color: "#1A9E9E",
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E7E5E4",
+  },
+  dividerText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "#A8A29E",
+    paddingHorizontal: 12,
+    textTransform: "uppercase",
   },
 });
