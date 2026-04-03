@@ -10,7 +10,8 @@
     "./validations": "./src/validations/index.ts",
     "./insights": "./src/insights/calculations.ts",
     "./insights/types": "./src/insights/types.ts",
-    "./card-theme": "./src/card-theme.ts"
+    "./card-theme": "./src/card-theme.ts",
+    "./budget": "./src/budget.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

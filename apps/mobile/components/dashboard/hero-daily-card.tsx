@@ -219,24 +219,28 @@ export function HeroDailyCard({
               : "spent today"}
           </Text>
 
-          {/* Progress bar */}
-          <View
-            className="mt-4 h-2 rounded-full overflow-hidden"
-            style={{ backgroundColor: dark ? "rgba(255,255,255,0.2)" : "#F5F5F4" }}
-          >
-            <View
-              className="h-full rounded-full"
-              style={{ width: `${progress * 100}%`, backgroundColor: getProgressColor() }}
-            />
-          </View>
-          <View className="flex-row justify-between mt-2">
-            <Text style={[styles.limitLabel, { color: dark ? "rgba(255,255,255,0.4)" : "#A8A29E" }]}>
-              {currency}0
-            </Text>
-            <Text style={[styles.limitLabel, { color: dark ? "rgba(255,255,255,0.4)" : "#A8A29E" }]}>
-              {currency}{limit.toLocaleString()}
-            </Text>
-          </View>
+          {/* Progress bar — only in budget mode */}
+          {isBudgetMode && (
+            <>
+              <View
+                className="mt-4 h-2 rounded-full overflow-hidden"
+                style={{ backgroundColor: dark ? "rgba(255,255,255,0.2)" : "#F5F5F4" }}
+              >
+                <View
+                  className="h-full rounded-full"
+                  style={{ width: `${progress * 100}%`, backgroundColor: getProgressColor() }}
+                />
+              </View>
+              <View className="flex-row justify-between mt-2">
+                <Text style={[styles.limitLabel, { color: dark ? "rgba(255,255,255,0.4)" : "#A8A29E" }]}>
+                  {currency}0
+                </Text>
+                <Text style={[styles.limitLabel, { color: dark ? "rgba(255,255,255,0.4)" : "#A8A29E" }]}>
+                  {currency}{limit.toLocaleString()}
+                </Text>
+              </View>
+            </>
+          )}
 
           {/* Expense chips */}
           {expenses.length > 0 && (

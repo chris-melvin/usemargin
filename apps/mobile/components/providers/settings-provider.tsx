@@ -7,7 +7,7 @@ interface SettingsContextType {
   isPro: boolean;
   updateSetting: (
     key: keyof Omit<UserSettings, "id" | "user_id">,
-    value: string | number | boolean
+    value: string | number | boolean | null
   ) => Promise<void>;
   refresh: () => Promise<void>;
 }

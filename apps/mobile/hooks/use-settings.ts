@@ -4,6 +4,7 @@ import uuid from "react-native-uuid";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useSync } from "@/components/providers/sync-provider";
 import { storage } from "@/lib/storage/mmkv";
+import { calculateSimpleDailyLimit, getDaysInCurrentMonth } from "@repo/shared/budget";
 
 export interface UserSettings {
   id: string;
@@ -135,19 +136,45 @@ export function useSettings() {
   }, [db, user, refresh]);
 
   const updateSetting = useCallback(
-    async (key: keyof Omit<UserSettings, "id" | "user_id">, value: string | number | boolean) => {
+    async (key: keyof Omit<UserSettings, "id" | "user_id">, value: string | number | boolean | null) => {
       if (!user) return;
 
       const rowId = await ensureRow();
       if (!rowId) return;
 
-      const sqlValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
+      const sqlValue = value === null ? null : typeof value === "boolean" ? (value ? 1 : 0) : value;
       const now = new Date().toISOString();
 
       await db.runAsync(
         `UPDATE user_settings SET ${key} = ?, updated_at = ?, is_synced = 0 WHERE user_id = ?`,
         [sqlValue, now, user.id]
       );
+
+      // Recalculate daily limit when budget inputs change
+      if (key === "total_monthly_income" || key === "total_fixed_expenses") {
+        const current = await db.getFirstAsync<{
+          total_monthly_income: number | null;
+          total_fixed_expenses: number | null;
+        }>(
+          `SELECT total_monthly_income, total_fixed_expenses FROM user_settings WHERE user_id = ?`,
+          [user.id]
+        );
+        if (
+          current &&
+          current.total_monthly_income != null &&
+          current.total_fixed_expenses != null
+        ) {
+          const newLimit = calculateSimpleDailyLimit(
+            current.total_monthly_income,
+            current.total_fixed_expenses,
+            getDaysInCurrentMonth()
+          );
+          await db.runAsync(
+            `UPDATE user_settings SET calculated_daily_limit = ?, updated_at = ?, is_synced = 0 WHERE user_id = ?`,
+            [newLimit, now, user.id]
+          );
+        }
+      }
 
       // Enqueue sync
       const updated = await db.getFirstAsync<Record<string, unknown>>(
