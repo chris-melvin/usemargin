@@ -134,15 +134,68 @@ function extractCategory(input: string): {
 }
 
 /**
- * Parse simple patterns like "coffee 120", "grab 180 and lunch".
+ * Check if a string contains a pure-number token (standalone number).
+ */
+function hasPureNumber(text: string): boolean {
+  return text.split(/\s+/).some((token) => {
+    const cleaned = token.replace(/[₱$]/g, "");
+    return /^\d+(?:\.\d+)?$/.test(cleaned);
+  });
+}
+
+/**
+ * Normalize dash separators between label and amount.
+ * "iPhone 15 - 30000" → "iPhone 15 30000"
+ * "iPhone 15-30000" → "iPhone 15 30000"
+ * Preserves dashes within words: "7-eleven 200" stays as is.
+ */
+function normalizeDashSeparators(input: string): string {
+  // Match: text followed by dash(es) followed by a number (with optional spaces)
+  // But NOT dashes within words like "7-eleven"
+  return input
+    .replace(/\s+[-–—]+\s*(\d)/g, " $1")   // " - 30000" → " 30000"
+    .replace(/(\w)[-–—]+(\d{3,})/g, "$1 $2");   // "text-30000" → "text 30000" (only when left side is non-digit)
+}
+
+/**
+ * Smart split: only split on "and"/"&" when both sides have a number.
+ * Commas always split.
+ */
+function smartSplit(input: string): string[] {
+  // First split on commas (always split)
+  const commaParts = input.split(/,\s*/);
+  const result: string[] = [];
+
+  for (const commaPart of commaParts) {
+    // Then try splitting on "and" / "&"
+    const andParts = commaPart.split(/\s+(?:and|&)\s+/);
+    if (andParts.length <= 1) {
+      result.push(commaPart.trim());
+      continue;
+    }
+    // Only split if ALL parts have a number
+    const allHaveNumbers = andParts.every((p) => hasPureNumber(p.trim()));
+    if (allHaveNumbers) {
+      result.push(...andParts.map((p) => p.trim()));
+    } else {
+      // Keep as one piece
+      result.push(commaPart.trim());
+    }
+  }
+
+  return result.filter(Boolean);
+}
+
+/**
+ * Parse simple patterns like "coffee 120", "grab 180 and lunch 150".
  * Token-based: split by whitespace, find pure-number tokens,
  * take the LAST one as price. Everything else is the label.
  */
 export function parseSimplePatterns(input: string): ParsedExpense[] {
   const results: ParsedExpense[] = [];
 
-  // Split by "and", "&", ","
-  const parts = input.split(/\s+(?:and|&)\s+|,\s*/);
+  const normalized = normalizeDashSeparators(input);
+  const parts = smartSplit(normalized);
 
   for (const part of parts) {
     const trimmed = part.trim();
@@ -175,7 +228,7 @@ export function parseSimplePatterns(input: string): ParsedExpense[] {
       const amount = parseFloat(priceToken);
 
       const labelTokens = tokens.filter((_, i) => i !== priceIndex);
-      const labelPart = labelTokens.join(" ").trim();
+      const labelPart = labelTokens.join(" ").trim().replace(/[-–—\s]+$/, "");
 
       const template = TEMPLATE_MAP.get(labelPart.toLowerCase());
 
@@ -304,14 +357,39 @@ export function parseExpenseInput(
     }
   }
 
-  // Step 4: Try simple patterns
+  // Step 5: Check if entire input matches a shortcut trigger (no amount needed)
+  if (shortcutMap) {
+    const shortcut = shortcutMap.get(normalized);
+    if (shortcut && shortcut.default_amount) {
+      return [{
+        amount: shortcut.default_amount,
+        label: shortcut.label,
+        category: explicitCategory ?? shortcut.category ?? undefined,
+        fromShortcut: shortcut.trigger_word,
+        parsedTime,
+      }];
+    }
+  }
+
+  // Step 6: Try simple patterns
   const simpleResults = parseSimplePatterns(normalized);
   if (simpleResults.length > 0) {
-    return simpleResults.map((r) => ({
-      ...r,
-      category: explicitCategory ?? r.category,
-      parsedTime,
-    }));
+    // Post-process: if a label matches a shortcut trigger, use shortcut metadata
+    const enriched = simpleResults.map((r) => {
+      if (shortcutMap) {
+        const shortcut = shortcutMap.get(r.label.toLowerCase());
+        if (shortcut) {
+          return {
+            ...r,
+            label: shortcut.label,
+            category: explicitCategory ?? shortcut.category ?? r.category,
+            fromShortcut: shortcut.trigger_word,
+          };
+        }
+      }
+      return { ...r, category: explicitCategory ?? r.category, parsedTime };
+    });
+    return enriched;
   }
 
   return null;

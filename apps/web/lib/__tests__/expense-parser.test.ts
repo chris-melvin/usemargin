@@ -67,13 +67,53 @@ function parseShortcutPattern(
 }
 
 /**
- * Parse simple patterns like "coffee 120" or "grab 180 and lunch"
- * Uses token-based approach: split by whitespace, find pure-number tokens,
- * take the LAST one as price. Everything else is the label.
+ * Check if a string contains a pure-number token.
+ */
+function hasPureNumber(text: string): boolean {
+  return text.split(/\s+/).some((token) => {
+    const cleaned = token.replace(/[₱$]/g, "");
+    return /^\d+(?:\.\d+)?$/.test(cleaned);
+  });
+}
+
+/**
+ * Normalize dash separators between label and amount.
+ */
+function normalizeDashSeparators(input: string): string {
+  return input
+    .replace(/\s+[-–—]+\s*(\d)/g, " $1")
+    .replace(/(\w)[-–—]+(\d{3,})/g, "$1 $2");
+}
+
+/**
+ * Smart split: only split on "and"/"&" when both sides have a number.
+ */
+function smartSplit(input: string): string[] {
+  const commaParts = input.split(/,\s*/);
+  const result: string[] = [];
+  for (const commaPart of commaParts) {
+    const andParts = commaPart.split(/\s+(?:and|&)\s+/);
+    if (andParts.length <= 1) {
+      result.push(commaPart.trim());
+      continue;
+    }
+    const allHaveNumbers = andParts.every((p) => hasPureNumber(p.trim()));
+    if (allHaveNumbers) {
+      result.push(...andParts.map((p) => p.trim()));
+    } else {
+      result.push(commaPart.trim());
+    }
+  }
+  return result.filter(Boolean);
+}
+
+/**
+ * Parse simple patterns like "coffee 120" or "grab 180 and lunch 150"
  */
 function parseSimplePatterns(input: string): ParsedExpense[] {
   const results: ParsedExpense[] = [];
-  const parts = input.split(/\s+(?:and|&)\s+|,\s*/);
+  const normalized = normalizeDashSeparators(input);
+  const parts = smartSplit(normalized);
 
   for (const part of parts) {
     const trimmed = part.trim();
@@ -89,14 +129,10 @@ function parseSimplePatterns(input: string): ParsedExpense[] {
       continue;
     }
 
-    // Token-based parsing: split by whitespace, find pure-number tokens
-    // A pure-number token is one that is entirely a number (e.g., "120", "50.5")
-    // Tokens like "ps5", "7-eleven", "iphone15" are NOT pure numbers
     const tokens = trimmed.split(/\s+/);
     const numberTokenIndices: number[] = [];
 
     tokens.forEach((token, i) => {
-      // Strip currency symbols before checking
       const cleaned = token.replace(/[₱$]/g, "");
       if (/^\d+(?:\.\d+)?$/.test(cleaned)) {
         numberTokenIndices.push(i);
@@ -104,20 +140,17 @@ function parseSimplePatterns(input: string): ParsedExpense[] {
     });
 
     if (numberTokenIndices.length > 0) {
-      // Take the LAST pure-number token as the price
       const priceIndex = numberTokenIndices[numberTokenIndices.length - 1]!;
       const priceToken = tokens[priceIndex]!.replace(/[₱$]/g, "");
       const amount = parseFloat(priceToken);
 
-      // Everything else is the label
       const labelTokens = tokens.filter((_, i) => i !== priceIndex);
-      const labelPart = labelTokens.join(" ").trim();
+      const labelPart = labelTokens.join(" ").trim().replace(/[-–—\s]+$/, "");
 
-      // Check if label matches a template (use template label but user's amount)
       const template = TEMPLATE_MAP.get(labelPart.toLowerCase());
 
       results.push({
-        amount,  // Always use user-provided amount
+        amount,
         label: template ? template.label : labelPart || "Expense",
         category: template?.label,
       });
@@ -466,6 +499,72 @@ describe("Expense Parser", () => {
       expect(result).toHaveLength(1);
       expect(result[0]?.amount).toBe(500);
       expect(result[0]?.label).toBe("food");
+    });
+  });
+
+  describe("Smart 'and' splitting", () => {
+    it("should NOT split 'Harlan and Holden 200' — only right side has number", () => {
+      const result = parseSimplePatterns("harlan and holden 200");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(200);
+      expect(result[0]?.label).toBe("harlan and holden");
+    });
+
+    it("should split 'coffee 100 and lunch 150' — both sides have numbers", () => {
+      const result = parseSimplePatterns("coffee 100 and lunch 150");
+      expect(result).toHaveLength(2);
+      expect(result[0]?.label).toBe("Coffee");
+      expect(result[0]?.amount).toBe(100);
+      expect(result[1]?.label).toBe("Lunch");
+      expect(result[1]?.amount).toBe(150);
+    });
+
+    it("should NOT split 'coffee and lunch 150' — only right side has number", () => {
+      const result = parseSimplePatterns("coffee and lunch 150");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(150);
+    });
+
+    it("should NOT split 'Ben & Jerry's 350'", () => {
+      const result = parseSimplePatterns("ben & jerry's 350");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(350);
+      expect(result[0]?.label).toBe("ben & jerry's");
+    });
+
+    it("should still split on commas regardless of numbers", () => {
+      const result = parseSimplePatterns("coffee 100, lunch 150");
+      expect(result).toHaveLength(2);
+    });
+  });
+
+  describe("Dash separator handling", () => {
+    it("should parse 'iPhone 15 - 30000' with spaces around dash", () => {
+      const result = parseSimplePatterns("iphone 15 - 30000");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(30000);
+      expect(result[0]?.label).toBe("iphone 15");
+    });
+
+    it("should parse 'iPhone 15-30000' without spaces", () => {
+      const result = parseSimplePatterns("iphone 15-30000");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(30000);
+      expect(result[0]?.label).toBe("iphone 15");
+    });
+
+    it("should parse 'dinner – 500' with en-dash", () => {
+      const result = parseSimplePatterns("dinner – 500");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(500);
+      expect(result[0]?.label).toBe("Dinner");
+    });
+
+    it("should preserve dashes in names like '7-eleven 200'", () => {
+      const result = parseSimplePatterns("7-eleven 200");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.amount).toBe(200);
+      expect(result[0]?.label).toBe("7-eleven");
     });
   });
 });

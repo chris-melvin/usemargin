@@ -6,6 +6,7 @@ import { GeneralSettings } from "@/components/settings/general-settings";
 import { BudgetSettings } from "@/components/settings/budget-settings";
 import { AccountSettings } from "@/components/settings/account-settings";
 import { DataSettings } from "@/components/settings/data-settings";
+import { ShortcutsSettings } from "@/components/settings/shortcuts-settings";
 import { selection } from "@/lib/haptics";
 
 type SettingsTab = "general" | "budget" | "account" | "data";
@@ -82,7 +83,12 @@ export default function SettingsScreen() {
         <SegmentedControl activeTab={activeTab} onTabChange={setActiveTab} />
 
         {activeTab === "general" && <GeneralSettings />}
-        {activeTab === "budget" && <BudgetSettings />}
+        {activeTab === "budget" && (
+          <>
+            <BudgetSettings />
+            <ShortcutsSettings />
+          </>
+        )}
         {activeTab === "account" && <AccountSettings />}
         {activeTab === "data" && <DataSettings />}
       </ScrollView>

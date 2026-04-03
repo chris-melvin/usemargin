@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,21 +11,40 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { TEMPLATES, CURRENCY } from "@repo/shared/constants";
+import { CURRENCY } from "@repo/shared/constants";
 import { getCurrentTimestamp } from "@repo/shared/date";
 import {
   parseExpenseInput,
   type ParsedExpense,
   type ShortcutEntry,
 } from "@/lib/parser/expense-parser";
+import type { LocalShortcut } from "@/hooks/use-shortcuts";
 import { useTheme } from "@/lib/theme/theme-context";
 import { tapLight, notifySuccess } from "@/lib/haptics";
+import { storage } from "@/lib/storage/mmkv";
+import { ShortcutEditSheet } from "./shortcut-edit-sheet";
+
+const HELP_SEEN_KEY = "has_seen_smart_input_help";
 
 interface SmartInputProps {
   visible: boolean;
   timezone: string;
   categories: string[];
+  shortcuts: LocalShortcut[];
   shortcutMap?: Map<string, ShortcutEntry>;
+  onAddShortcut: (input: {
+    trigger_word: string;
+    label: string;
+    category?: string;
+    default_amount?: number;
+  }) => Promise<void>;
+  onUpdateShortcut: (id: string, input: {
+    trigger_word?: string;
+    label?: string;
+    category?: string | null;
+    default_amount?: number | null;
+  }) => Promise<void>;
+  onDeleteShortcut: (id: string) => Promise<void>;
   onClose: () => void;
   onSubmit: (expense: {
     amount: number;
@@ -39,15 +58,35 @@ export function SmartInput({
   visible,
   timezone,
   categories,
+  shortcuts,
   shortcutMap,
+  onAddShortcut,
+  onUpdateShortcut,
+  onDeleteShortcut,
   onClose,
   onSubmit,
 }: SmartInputProps) {
   const [nlpInput, setNlpInput] = useState("");
   const [preview, setPreview] = useState<ParsedExpense[]>([]);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [editingShortcut, setEditingShortcut] = useState<LocalShortcut | null>(null);
+  const [showEditSheet, setShowEditSheet] = useState(false);
   const { colors } = useTheme();
 
   const totalAmount = preview.reduce((sum, p) => sum + p.amount, 0);
+
+  // First-time tooltip
+  useEffect(() => {
+    if (visible && storage.getString(HELP_SEEN_KEY) !== "1") {
+      setShowTooltip(true);
+    }
+  }, [visible]);
+
+  const dismissTooltip = () => {
+    setShowTooltip(false);
+    storage.set(HELP_SEEN_KEY, "1");
+  };
 
   const handleNlpChange = useCallback(
     (text: string) => {
@@ -95,19 +134,34 @@ export function SmartInput({
     resetAndClose();
   };
 
-  const handleTemplatePress = (template: (typeof TEMPLATES)[number]) => {
+  const handleChipPress = (shortcut: LocalShortcut) => {
     tapLight();
-    onSubmit({
-      amount: template.amount,
-      label: template.label,
-      occurred_at: getCurrentTimestamp(timezone),
-    });
-    resetAndClose();
+    if (shortcut.default_amount) {
+      onSubmit({
+        amount: shortcut.default_amount,
+        label: shortcut.label,
+        occurred_at: getCurrentTimestamp(timezone),
+      });
+      resetAndClose();
+    }
+  };
+
+  const handleChipLongPress = (shortcut: LocalShortcut) => {
+    tapLight();
+    setEditingShortcut(shortcut);
+    setShowEditSheet(true);
+  };
+
+  const handleAddChipPress = () => {
+    tapLight();
+    setEditingShortcut(null);
+    setShowEditSheet(true);
   };
 
   const resetAndClose = () => {
     setNlpInput("");
     setPreview([]);
+    setShowHelp(false);
     onClose();
   };
 
@@ -135,7 +189,19 @@ export function SmartInput({
             style={[styles.handle, { backgroundColor: colors.textMuted }]}
           />
 
-          {/* Unified input row */}
+          {/* Tooltip */}
+          {showTooltip && (
+            <TouchableOpacity
+              onPress={dismissTooltip}
+              style={[styles.tooltip, { backgroundColor: colors.textPrimary }]}
+            >
+              <Text style={styles.tooltipText}>
+                Tap (i) to learn shortcuts and syntax
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Input row */}
           <View
             style={[
               styles.inputRow,
@@ -162,6 +228,17 @@ export function SmartInput({
               returnKeyType="done"
               onSubmitEditing={handleSubmit}
             />
+            {/* Help icon */}
+            <TouchableOpacity
+              onPress={() => { dismissTooltip(); setShowHelp((v) => !v); }}
+              style={{ paddingHorizontal: 6 }}
+            >
+              <Ionicons
+                name="information-circle-outline"
+                size={20}
+                color={showHelp ? colors.primary : colors.textTertiary}
+              />
+            </TouchableOpacity>
             {totalAmount > 0 && (
               <Text style={[styles.inlineAmount, { color: colors.primary }]}>
                 {CURRENCY}
@@ -188,6 +265,17 @@ export function SmartInput({
             </TouchableOpacity>
           </View>
 
+          {/* Help cheatsheet */}
+          {showHelp && (
+            <View style={[styles.helpSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <HelpRow icon="create-outline" text={`"coffee 120" or "120 coffee"`} colors={colors} />
+              <HelpRow icon="git-branch-outline" text={`"coffee 100 and lunch 150" for multiple`} colors={colors} />
+              <HelpRow icon="flash-outline" text={`"@starbucks 150" or just "starbucks"`} colors={colors} />
+              <HelpRow icon="pricetag-outline" text={`"coffee 120 #food" to tag a category`} colors={colors} />
+              <HelpRow icon="time-outline" text={`"at 2pm", "yesterday", "last friday"`} colors={colors} />
+            </View>
+          )}
+
           {/* Parsed preview */}
           {preview.length > 0 && (
             <View style={{ marginTop: 8, paddingHorizontal: 4 }}>
@@ -213,16 +301,17 @@ export function SmartInput({
             </View>
           )}
 
-          {/* Quick templates */}
+          {/* Quick entries from DB */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             style={{ marginTop: 16 }}
           >
-            {TEMPLATES.map((template) => (
+            {shortcuts.map((shortcut) => (
               <TouchableOpacity
-                key={template.id}
-                onPress={() => handleTemplatePress(template)}
+                key={shortcut.id}
+                onPress={() => handleChipPress(shortcut)}
+                onLongPress={() => handleChipLongPress(shortcut)}
                 style={[
                   styles.templateCard,
                   {
@@ -237,23 +326,79 @@ export function SmartInput({
                     { color: colors.textSecondary },
                   ]}
                 >
-                  {template.label}
+                  {shortcut.label}
                 </Text>
-                <Text
-                  style={[
-                    styles.templateAmount,
-                    { color: colors.textPrimary },
-                  ]}
-                >
-                  {CURRENCY}
-                  {template.amount}
-                </Text>
+                {shortcut.default_amount != null && (
+                  <Text
+                    style={[
+                      styles.templateAmount,
+                      { color: colors.textPrimary },
+                    ]}
+                  >
+                    {CURRENCY}
+                    {shortcut.default_amount}
+                  </Text>
+                )}
               </TouchableOpacity>
             ))}
+            {/* Add chip */}
+            <TouchableOpacity
+              onPress={handleAddChipPress}
+              style={[
+                styles.templateCard,
+                styles.addChip,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Ionicons name="add" size={20} color={colors.textTertiary} />
+            </TouchableOpacity>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Shortcut edit sheet */}
+      <ShortcutEditSheet
+        visible={showEditSheet}
+        shortcut={editingShortcut}
+        onSave={async (data) => {
+          if (editingShortcut) {
+            await onUpdateShortcut(editingShortcut.id, data);
+          } else {
+            await onAddShortcut({
+              trigger_word: data.trigger_word ?? "",
+              label: data.label ?? "",
+              category: data.category ?? undefined,
+              default_amount: data.default_amount ?? undefined,
+            });
+          }
+          setShowEditSheet(false);
+          setEditingShortcut(null);
+        }}
+        onDelete={async () => {
+          if (editingShortcut) {
+            await onDeleteShortcut(editingShortcut.id);
+          }
+          setShowEditSheet(false);
+          setEditingShortcut(null);
+        }}
+        onClose={() => {
+          setShowEditSheet(false);
+          setEditingShortcut(null);
+        }}
+      />
     </Modal>
+  );
+}
+
+function HelpRow({ icon, text, colors }: { icon: string; text: string; colors: Record<string, string> }) {
+  return (
+    <View className="flex-row items-center mb-2">
+      <Ionicons name={icon as any} size={14} color={colors.textTertiary} style={{ marginRight: 8, width: 16 }} />
+      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.textSecondary }}>{text}</Text>
+    </View>
   );
 }
 
@@ -275,6 +420,18 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     alignSelf: "center",
     marginBottom: 20,
+  },
+  tooltip: {
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginBottom: 10,
+    alignSelf: "center",
+  },
+  tooltipText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    color: "#FFFFFF",
   },
   inputRow: {
     flexDirection: "row",
@@ -304,6 +461,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  helpSection: {
+    marginTop: 10,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
   previewLabel: {
     fontFamily: "Inter_400Regular",
     fontSize: 14,
@@ -321,6 +484,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     minWidth: 76,
+  },
+  addChip: {
+    justifyContent: "center",
+    minWidth: 50,
+    paddingHorizontal: 12,
   },
   templateLabel: {
     fontFamily: "Inter_400Regular",

@@ -32,7 +32,7 @@ export default function TodayScreen() {
   const [editingExpense, setEditingExpense] = useState<LocalExpense | null>(null);
   const { status } = useSyncStatus();
   const { categories } = useCategories();
-  const { shortcutMap } = useShortcuts();
+  const { shortcuts, shortcutMap, addShortcut, updateShortcut, deleteShortcut } = useShortcuts();
   const { refreshControl } = usePullToSync();
   const { colors } = useTheme();
 
@@ -133,7 +133,11 @@ export default function TodayScreen() {
         visible={showInput}
         timezone={timezone}
         categories={categories}
+        shortcuts={shortcuts}
         shortcutMap={shortcutMap}
+        onAddShortcut={addShortcut}
+        onUpdateShortcut={updateShortcut}
+        onDeleteShortcut={deleteShortcut}
         onClose={() => setShowInput(false)}
         onSubmit={handleAddExpense}
       />

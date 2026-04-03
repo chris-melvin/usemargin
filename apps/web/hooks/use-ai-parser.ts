@@ -395,19 +395,43 @@ export function useAiParser({
       }
     }
 
-    // Step 6: Try simple patterns
+    // Step 6: Check if entire input matches a shortcut trigger (no amount needed)
+    const shortcut = shortcutMap.get(normalized);
+    if (shortcut) {
+      // Web shortcuts don't have defaultAmount yet — only match if we have a template fallback
+      const templateFallback = TEMPLATE_MAP.get(normalized);
+      if (templateFallback) {
+        return [{
+          amount: templateFallback.amount,
+          label: shortcut.label,
+          category: explicitCategory ?? shortcut.category,
+          bucketId,
+          bucketSlug,
+          fromShortcut: normalized,
+          parsedTime,
+        }];
+      }
+    }
+
+    // Step 7: Try simple patterns
     const simpleResults = parseSimplePatterns(normalized);
     if (process.env.NODE_ENV === "development") {
       console.log("[parseLocally] Simple patterns result:", simpleResults);
     }
     if (simpleResults.length > 0) {
-      const finalResults = simpleResults.map((r) => ({
-        ...r,
-        bucketId: bucketId ?? r.bucketId,
-        bucketSlug: bucketSlug ?? r.bucketSlug,
-        category: explicitCategory ?? r.category,
-        parsedTime,
-      }));
+      const finalResults = simpleResults.map((r) => {
+        // Enrich with shortcut metadata if label matches a trigger
+        const sc = shortcutMap.get(r.label.toLowerCase());
+        return {
+          ...r,
+          label: sc ? sc.label : r.label,
+          bucketId: bucketId ?? r.bucketId,
+          bucketSlug: bucketSlug ?? r.bucketSlug,
+          category: explicitCategory ?? (sc ? sc.category : r.category),
+          fromShortcut: sc ? sc.trigger : r.fromShortcut,
+          parsedTime,
+        };
+      });
       if (process.env.NODE_ENV === "development") {
         console.log("[parseLocally] Final results:", finalResults);
       }
@@ -420,14 +444,49 @@ export function useAiParser({
     return null;
   }, [parseShortcutPattern, onUnknownShortcut, extractBucket, extractCategory]);
 
-  // Parse simple patterns like "coffee 120" or "grab 180 and lunch"
+  // Check if a string contains a pure-number token
+  const hasPureNumber = (text: string): boolean => {
+    return text.split(/\s+/).some((token) => {
+      const cleaned = token.replace(/[₱$]/g, "");
+      return /^\d+(?:\.\d+)?$/.test(cleaned);
+    });
+  };
+
+  // Normalize dash separators between label and amount
+  const normalizeDashSeparators = (input: string): string => {
+    return input
+      .replace(/\s+[-–—]+\s*(\d)/g, " $1")
+      .replace(/(\w)[-–—]+(\d{3,})/g, "$1 $2");
+  };
+
+  // Smart split: only split on "and"/"&" when both sides have a number
+  const smartSplitInput = (input: string): string[] => {
+    const commaParts = input.split(/,\s*/);
+    const result: string[] = [];
+    for (const commaPart of commaParts) {
+      const andParts = commaPart.split(/\s+(?:and|&)\s+/);
+      if (andParts.length <= 1) {
+        result.push(commaPart.trim());
+        continue;
+      }
+      const allHaveNumbers = andParts.every((p) => hasPureNumber(p.trim()));
+      if (allHaveNumbers) {
+        result.push(...andParts.map((p) => p.trim()));
+      } else {
+        result.push(commaPart.trim());
+      }
+    }
+    return result.filter(Boolean);
+  };
+
+  // Parse simple patterns like "coffee 120" or "grab 180 and lunch 150"
   // Uses token-based approach: split by whitespace, find pure-number tokens,
   // take the LAST one as price. Everything else is the label.
   const parseSimplePatterns = (input: string): ParsedExpense[] => {
     const results: ParsedExpense[] = [];
 
-    // Split by "and", "&", ","
-    const parts = input.split(/\s+(?:and|&)\s+|,\s*/);
+    const normalized = normalizeDashSeparators(input);
+    const parts = smartSplitInput(normalized);
 
     for (const part of parts) {
       const trimmed = part.trim();
@@ -465,7 +524,7 @@ export function useAiParser({
 
         // Everything else is the label
         const labelTokens = tokens.filter((_, i) => i !== priceIndex);
-        const labelPart = labelTokens.join(" ").trim();
+        const labelPart = labelTokens.join(" ").trim().replace(/[-–—\s]+$/, "");
 
         // Check if label matches a template (use template label but user's amount)
         const template = TEMPLATE_MAP.get(labelPart.toLowerCase());
