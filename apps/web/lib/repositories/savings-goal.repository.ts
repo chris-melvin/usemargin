@@ -31,17 +31,21 @@ class SavingsGoalRepository extends BaseRepository<SavingsGoal, SavingsGoalInser
     userId: string,
     isCompleted: boolean
   ): Promise<SavingsGoal[]> {
-    const operator = isCompleted ? "gte" : "lt";
+    // First get all goals, then filter in memory
     const { data, error } = await supabase
       .from(this.tableName)
       .select("*")
       .eq("user_id", userId)
       .eq("is_hidden", false)
-      [operator]("current_balance", supabase.rpc("get_target_amount", { goal_id: "id" }))
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return (data ?? []) as SavingsGoal[];
+    
+    const goals = (data ?? []) as SavingsGoal[];
+    return goals.filter((g) => {
+      const isGoalCompleted = Number(g.current_balance) >= Number(g.target_amount);
+      return isCompleted ? isGoalCompleted : !isGoalCompleted;
+    });
   }
 
   /**

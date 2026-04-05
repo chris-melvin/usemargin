@@ -65,10 +65,7 @@ export interface DashboardSummary {
 export async function getDashboardSummary(): Promise<ActionResult<DashboardSummary>> {
   const authResult = await requireAuth();
   if (!authResult.success) return authResult;
-  const { userId, supabase, user } = authResult.data;
-
-  // Get user's timezone or default to UTC
-  const timezone = user?.user_metadata?.timezone ?? "UTC";
+  const { userId, supabase } = authResult.data;
 
   try {
     // Fetch all data in parallel
