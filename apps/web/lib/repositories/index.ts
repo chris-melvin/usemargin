@@ -31,5 +31,12 @@ export { feedbackRepository } from "./feedback.repository";
 export { roadmapRepository } from "./roadmap.repository";
 export { roadmapVoteRepository } from "./roadmap-vote.repository";
 
+// Savings goals
+export { savingsGoalRepository } from "./savings-goal.repository";
+export { savingsTransactionRepository } from "./savings-transaction.repository";
+
+// Assets (accounts)
+export { assetRepository } from "./asset.repository";
+
 // Base class for custom repositories
 export { BaseRepository } from "./base.repository";
