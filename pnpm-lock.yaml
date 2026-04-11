@@ -159,9 +159,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@paddle/paddle-js':
-        specifier: ^1.6.1
-        version: 1.6.2
       '@paper-design/shaders-react':
         specifier: ^0.0.71
         version: 0.0.71(@types/react@19.1.0)(react@19.1.0)
@@ -1519,9 +1516,6 @@ packages:
 
   '@oxc-project/types@0.120.0':
     resolution: {integrity: sha512-k1YNu55DuvAip/MGE1FTsIuU3FUCn6v/ujG9V7Nq5Df/kX2CWb13hhwD0lmJGMGqE+bE1MXvv9SZVnMzEXlWcg==}
-
-  '@paddle/paddle-js@1.6.2':
-    resolution: {integrity: sha512-nx1NXCzwWUWjf0iaRDiXZlfWgFjNZ6996RFcTDk0G0ggzrh514Zsc6jGTPOUGdLB1sYJXVQiKKoNLoKoXhH+sA==}
 
   '@paper-design/shaders-react@0.0.71':
     resolution: {integrity: sha512-kTqjIlyZcpkwqJie+3ldEDscTtx1oOi8eRBD5QgWKI21GaNn/SSg26092M5zzqr3e8dVANv0ktS2ICSjbMFKbw==}
@@ -7902,8 +7896,6 @@ snapshots:
   '@opentelemetry/semantic-conventions@1.40.0': {}
 
   '@oxc-project/types@0.120.0': {}
-
-  '@paddle/paddle-js@1.6.2': {}
 
   '@paper-design/shaders-react@0.0.71(@types/react@19.1.0)(react@19.1.0)':
     dependencies:

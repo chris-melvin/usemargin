@@ -55,13 +55,11 @@ export async function middleware(request: NextRequest) {
   // Define public marketing pages
   const isMarketingPage =
     pathname === "/" ||
-    pathname === "/pricing" ||
     pathname === "/about" ||
     pathname === "/features" ||
     pathname.startsWith("/blog") ||
     pathname === "/privacy" ||
     pathname === "/terms" ||
-    pathname === "/refund" ||
     pathname === "/roadmap";
 
   // Define public paths that don't require auth

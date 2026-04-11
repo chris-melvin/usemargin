@@ -8,7 +8,6 @@ import {
   CREATE_BUDGET_BUCKETS_TABLE,
   CREATE_SHORTCUTS_TABLE,
   CREATE_INCOMES_TABLE,
-  CREATE_SUBSCRIPTIONS_TABLE,
 } from "./schema";
 
 type Migration = {
@@ -52,7 +51,6 @@ const migrations: Migration[] = [
       await db.execAsync(CREATE_BUDGET_BUCKETS_TABLE);
       await db.execAsync(CREATE_SHORTCUTS_TABLE);
       await db.execAsync(CREATE_INCOMES_TABLE);
-      await db.execAsync(CREATE_SUBSCRIPTIONS_TABLE);
 
       // Indexes for new tables
       await db.execAsync(
@@ -67,6 +65,20 @@ const migrations: Migration[] = [
       await db.execAsync(
         `CREATE INDEX IF NOT EXISTS idx_incomes_user ON incomes(user_id)`
       );
+    },
+  },
+  {
+    version: 3,
+    up: async (db) => {
+      // Remove all payment/subscription remnants from existing installs.
+      await db.execAsync(`DROP TABLE IF EXISTS subscriptions`);
+      try {
+        await db.execAsync(
+          `ALTER TABLE user_settings DROP COLUMN subscription_tier`
+        );
+      } catch {
+        // Column may not exist on fresh installs created after this change.
+      }
     },
   },
 ];

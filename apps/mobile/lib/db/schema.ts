@@ -54,7 +54,6 @@ export const CREATE_USER_SETTINGS_TABLE = `
     timezone TEXT DEFAULT 'Asia/Manila',
     week_starts_on INTEGER DEFAULT 0,
     tracking_mode TEXT DEFAULT 'tracking_only',
-    subscription_tier TEXT DEFAULT 'free',
     card_preferences TEXT DEFAULT '{}',
     total_monthly_income REAL,
     total_fixed_expenses REAL,
@@ -146,21 +145,3 @@ export const CREATE_INCOMES_TABLE = `
   );
 `;
 
-export const CREATE_SUBSCRIPTIONS_TABLE = `
-  CREATE TABLE IF NOT EXISTS subscriptions (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL UNIQUE,
-    provider TEXT,
-    provider_subscription_id TEXT,
-    provider_customer_id TEXT,
-    status TEXT DEFAULT 'active',
-    billing_cycle TEXT,
-    current_period_start TEXT NOT NULL,
-    current_period_end TEXT NOT NULL,
-    cancel_at_period_end INTEGER DEFAULT 0,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
-    is_synced INTEGER DEFAULT 0,
-    last_synced_at TEXT
-  );
-`;

@@ -95,14 +95,6 @@ export default async function PublicLayout({
                     How It Works
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    href="/pricing"
-                    className="text-neutral-600 transition-colors hover:text-neutral-900"
-                  >
-                    Pricing
-                  </Link>
-                </li>
               </ul>
             </div>
 
@@ -159,14 +151,6 @@ export default async function PublicLayout({
                     className="text-neutral-600 transition-colors hover:text-neutral-900"
                   >
                     Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/refund"
-                    className="text-neutral-600 transition-colors hover:text-neutral-900"
-                  >
-                    Refund Policy
                   </Link>
                 </li>
               </ul>

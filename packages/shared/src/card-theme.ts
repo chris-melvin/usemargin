@@ -34,41 +34,19 @@ export interface ThemePreset {
   textMode?: "dark";
 }
 
-const FREE_THEME_PRESETS: Record<string, ThemePreset> = {
+export const THEME_PRESETS: Record<Exclude<CardTheme, "auto">, ThemePreset> = {
   emerald: { label: "Emerald", colors: ["#d1fae5", "#a7f3d0", "#6ee7b7", "#34d399"], swatch: "#34d399" },
   ocean: { label: "Ocean", colors: ["#dbeafe", "#bfdbfe", "#93c5fd", "#60a5fa"], swatch: "#60a5fa" },
   sunset: { label: "Sunset", colors: ["#fef3c7", "#fde68a", "#fcd34d", "#f59e0b"], swatch: "#f59e0b" },
   lavender: { label: "Lavender", colors: ["#ede9fe", "#ddd6fe", "#c4b5fd", "#a78bfa"], swatch: "#a78bfa" },
   slate: { label: "Slate", colors: ["#f1f5f9", "#e2e8f0", "#cbd5e1", "#94a3b8"], swatch: "#94a3b8" },
   rose: { label: "Rose", colors: ["#ffe4e6", "#fecdd3", "#fda4af", "#fb7185"], swatch: "#fb7185" },
-};
-
-const PRO_THEME_PRESETS: Record<string, ThemePreset> = {
   midnight: { label: "Midnight", colors: ["#1e1b4b", "#312e81", "#4338ca", "#6366f1"], swatch: "#6366f1", textMode: "dark" },
   aurora: { label: "Aurora", colors: ["#042f2e", "#065f46", "#059669", "#34d399"], swatch: "#34d399", textMode: "dark" },
   ember: { label: "Ember", colors: ["#451a03", "#7c2d12", "#c2410c", "#f59e0b"], swatch: "#f59e0b", textMode: "dark" },
   neon: { label: "Neon", colors: ["#0c0a1a", "#1e1b4b", "#06b6d4", "#e879f9"], swatch: "#e879f9", textMode: "dark" },
   obsidian: { label: "Obsidian", colors: ["#18181b", "#27272a", "#3f3f46", "#a1a1aa"], swatch: "#a1a1aa", textMode: "dark" },
 };
-
-export const THEME_PRESETS = {
-  ...FREE_THEME_PRESETS,
-  ...PRO_THEME_PRESETS,
-} as Record<Exclude<CardTheme, "auto">, ThemePreset>;
-
-export const PRO_THEMES: CardTheme[] = ["midnight", "aurora", "ember", "neon", "obsidian"];
-export const PRO_BACKGROUNDS: BackgroundStyle[] = ["neuro", "metaballs", "godrays", "swirl", "waves"];
-export const PRO_MATERIALS: CardMaterial[] = ["glass", "metallic", "holo"];
-
-export function isProFeature(key: keyof CardPreferences, value: unknown): boolean {
-  switch (key) {
-    case "theme": return PRO_THEMES.includes(value as CardTheme);
-    case "backgroundStyle": return PRO_BACKGROUNDS.includes(value as BackgroundStyle);
-    case "glareStyle": return value === "prismatic";
-    case "material": return PRO_MATERIALS.includes(value as CardMaterial);
-    default: return false;
-  }
-}
 
 export function isDarkTheme(theme: CardTheme): boolean {
   if (theme === "auto") return false;

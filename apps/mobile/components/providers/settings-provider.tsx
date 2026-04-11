@@ -4,7 +4,6 @@ import { useSettings, type UserSettings } from "@/hooks/use-settings";
 interface SettingsContextType {
   settings: UserSettings;
   isLoading: boolean;
-  isPro: boolean;
   updateSetting: (
     key: keyof Omit<UserSettings, "id" | "user_id">,
     value: string | number | boolean | null

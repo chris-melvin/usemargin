@@ -14,7 +14,6 @@ export interface UserSettings {
   timezone: string;
   week_starts_on: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   tracking_mode: "tracking_only" | "budget_enabled";
-  subscription_tier: "free" | "pro";
   card_preferences: string;
   total_monthly_income: number | null;
   total_fixed_expenses: number | null;
@@ -31,7 +30,6 @@ const DEFAULT_SETTINGS: Omit<UserSettings, "id" | "user_id"> = {
   timezone: "Asia/Manila",
   week_starts_on: 0,
   tracking_mode: "tracking_only",
-  subscription_tier: "free",
   card_preferences: "{}",
   total_monthly_income: null,
   total_fixed_expenses: null,
@@ -75,7 +73,6 @@ export function useSettings() {
       timezone: string;
       week_starts_on: number;
       tracking_mode: string;
-      subscription_tier: string;
       card_preferences: string;
       total_monthly_income: number | null;
       total_fixed_expenses: number | null;
@@ -96,7 +93,6 @@ export function useSettings() {
         timezone: row.timezone,
         week_starts_on: row.week_starts_on as UserSettings["week_starts_on"],
         tracking_mode: row.tracking_mode as UserSettings["tracking_mode"],
-        subscription_tier: row.subscription_tier as UserSettings["subscription_tier"],
         card_preferences: row.card_preferences,
         total_monthly_income: row.total_monthly_income,
         total_fixed_expenses: row.total_fixed_expenses,
@@ -127,8 +123,8 @@ export function useSettings() {
     const id = uuid.v4() as string;
     const now = new Date().toISOString();
     await db.runAsync(
-      `INSERT INTO user_settings (id, user_id, default_daily_limit, currency, timezone, week_starts_on, tracking_mode, subscription_tier, card_preferences, created_at, updated_at, is_synced)
-       VALUES (?, ?, 300, 'PHP', 'Asia/Manila', 0, 'tracking_only', 'free', '{}', ?, ?, 0)`,
+      `INSERT INTO user_settings (id, user_id, default_daily_limit, currency, timezone, week_starts_on, tracking_mode, card_preferences, created_at, updated_at, is_synced)
+       VALUES (?, ?, 300, 'PHP', 'Asia/Manila', 0, 'tracking_only', '{}', ?, ?, 0)`,
       [id, user.id, now, now]
     );
     await refresh();
@@ -209,6 +205,5 @@ export function useSettings() {
     isLoading,
     refresh,
     updateSetting,
-    isPro: true, // All features unlocked — no paywall
   };
 }

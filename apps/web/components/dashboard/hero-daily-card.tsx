@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { CURRENCY } from "@/lib/constants";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { useShaderConfig } from "@/components/shaders/use-shader-config";
-import { useIsPro } from "@/hooks/use-subscription";
 import { formatInTimezone } from "@/lib/utils/date";
 import { useCardTilt } from "./hero-card/use-card-tilt";
 import { CardGlareOverlay } from "./hero-card/card-glare-overlay";
@@ -21,12 +20,10 @@ import { ProShaderBackground } from "./hero-card/pro-shader-background";
 import {
   type CardPreferences,
   type BackgroundStyle,
-  CARD_PREFERENCE_DEFAULTS,
-  PRO_BACKGROUNDS,
+  ALL_SHADER_BACKGROUNDS,
   getThemeColors,
   getGreeting,
   isDarkTheme,
-  isProFeature,
 } from "./hero-card/card-theme";
 
 const MeshGradient = lazy(() =>
@@ -133,8 +130,8 @@ function ShaderBackground({
     return fallback;
   }
 
-  // Pro shader backgrounds
-  if (PRO_BACKGROUNDS.includes(bgStyle)) {
+  // Shader backgrounds
+  if (ALL_SHADER_BACKGROUNDS.includes(bgStyle)) {
     return (
       <ProShaderBackground
         bgStyle={bgStyle}
@@ -185,19 +182,7 @@ export function HeroDailyCard({
   cardPreferences,
 }: HeroDailyCardProps) {
   const { prefs: rawPrefs, update: updatePref } = useCardCustomization(cardPreferences);
-  const { isPro } = useIsPro();
-
-  // Gate Pro features at render time — fall back to defaults if not Pro
-  const prefs = useMemo(() => {
-    if (isPro) return rawPrefs;
-    const gated = { ...rawPrefs };
-    for (const key of Object.keys(gated) as (keyof CardPreferences)[]) {
-      if (isProFeature(key, gated[key])) {
-        (gated as Record<string, unknown>)[key] = CARD_PREFERENCE_DEFAULTS[key];
-      }
-    }
-    return gated;
-  }, [rawPrefs, isPro]);
+  const prefs = rawPrefs;
 
   const status = useMemo(() => getBudgetStatus(remaining, limit), [remaining, limit]);
   const config = STATUS_CONFIG[status];
@@ -494,7 +479,7 @@ export function HeroDailyCard({
         </div>
 
         {/* Customize button */}
-        <CardCustomizeSheet prefs={rawPrefs} onUpdate={updatePref} isPro={isPro} dark={dark} />
+        <CardCustomizeSheet prefs={rawPrefs} onUpdate={updatePref} dark={dark} />
       </div>
     </animated.div>
   );

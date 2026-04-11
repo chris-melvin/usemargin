@@ -18,14 +18,6 @@ export {
   expenseBucketRuleRepository,
 } from "./budget-bucket.repository";
 
-// Subscription & credits repositories
-export { subscriptionRepository } from "./subscription.repository";
-export {
-  creditsRepository,
-  creditTransactionRepository,
-  processedWebhookRepository,
-} from "./credits.repository";
-
 // Feedback & roadmap repositories
 export { feedbackRepository } from "./feedback.repository";
 export { roadmapRepository } from "./roadmap.repository";

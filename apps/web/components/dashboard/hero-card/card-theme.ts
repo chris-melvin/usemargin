@@ -35,7 +35,7 @@ interface ThemePreset {
   textMode?: "dark"; // dark backgrounds need light text
 }
 
-const FREE_THEME_PRESETS: Record<string, ThemePreset> = {
+export const THEME_PRESETS: Record<Exclude<CardTheme, "auto">, ThemePreset> = {
   emerald: {
     label: "Emerald",
     colors: ["#d1fae5", "#a7f3d0", "#6ee7b7", "#34d399"],
@@ -72,9 +72,6 @@ const FREE_THEME_PRESETS: Record<string, ThemePreset> = {
     cssGradient: "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 50%, #fecdd3 100%)",
     swatch: "#fb7185",
   },
-};
-
-const PRO_THEME_PRESETS: Record<string, ThemePreset> = {
   midnight: {
     label: "Midnight",
     colors: ["#1e1b4b", "#312e81", "#4338ca", "#6366f1"],
@@ -112,24 +109,12 @@ const PRO_THEME_PRESETS: Record<string, ThemePreset> = {
   },
 };
 
-export const THEME_PRESETS = {
-  ...FREE_THEME_PRESETS,
-  ...PRO_THEME_PRESETS,
-} as Record<Exclude<CardTheme, "auto">, ThemePreset>;
-
-export const PRO_THEMES: CardTheme[] = ["midnight", "aurora", "ember", "neon", "obsidian"];
-export const PRO_BACKGROUNDS: BackgroundStyle[] = ["neuro", "metaballs", "godrays", "swirl", "waves"];
-export const PRO_MATERIALS: CardMaterial[] = ["glass", "metallic", "holo"];
-
-export function isProFeature(key: keyof CardPreferences, value: unknown): boolean {
-  switch (key) {
-    case "theme": return PRO_THEMES.includes(value as CardTheme);
-    case "backgroundStyle": return PRO_BACKGROUNDS.includes(value as BackgroundStyle);
-    case "glareStyle": return value === "prismatic";
-    case "material": return PRO_MATERIALS.includes(value as CardMaterial);
-    default: return false;
-  }
-}
+export const ALL_THEMES: Exclude<CardTheme, "auto">[] = [
+  "emerald", "ocean", "sunset", "lavender", "slate", "rose",
+  "midnight", "aurora", "ember", "neon", "obsidian",
+];
+export const ALL_SHADER_BACKGROUNDS: BackgroundStyle[] = ["neuro", "metaballs", "godrays", "swirl", "waves"];
+export const ALL_MATERIALS: CardMaterial[] = ["glass", "metallic", "holo"];
 
 export function isDarkTheme(theme: CardTheme): boolean {
   if (theme === "auto") return false;

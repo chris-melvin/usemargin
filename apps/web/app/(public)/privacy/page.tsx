@@ -66,25 +66,6 @@ export default function PrivacyPage() {
             <li>IP address and general location (for security purposes)</li>
           </ul>
 
-          <h3>Payment Information</h3>
-          <ul>
-            <li>
-              Subscription status (Free or Pro tier)
-            </li>
-            <li>
-              Payment details are processed securely by{" "}
-              <a
-                href="https://www.paddle.com/legal/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Paddle
-              </a>
-              , our payment processor
-            </li>
-            <li>We do not store your credit card information</li>
-          </ul>
-
           <h2>How We Use Your Information</h2>
           <p>We use the information we collect for the following purposes:</p>
           <ol>
@@ -98,12 +79,8 @@ export default function PrivacyPage() {
               spending patterns and remaining balance
             </li>
             <li>
-              <strong>Process payments and manage subscriptions:</strong> Handle Pro tier upgrades,
-              renewals, and cancellations through Paddle
-            </li>
-            <li>
-              <strong>Send transactional emails:</strong> Login confirmations, subscription updates,
-              important account notifications
+              <strong>Send transactional emails:</strong> Login confirmations and important
+              account notifications
             </li>
             <li>
               <strong>Improve user experience:</strong> Analyze usage patterns to enhance features,
@@ -169,19 +146,6 @@ export default function PrivacyPage() {
             </thead>
             <tbody>
               <tr>
-                <td>Paddle</td>
-                <td>Payment processing for Pro subscriptions</td>
-                <td>
-                  <a
-                    href="https://www.paddle.com/legal/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Paddle Privacy Policy
-                  </a>
-                </td>
-              </tr>
-              <tr>
                 <td>Google OAuth</td>
                 <td>Secure authentication and account creation</td>
                 <td>
@@ -242,7 +206,7 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong>Right to data portability:</strong> Receive your data in a structured,
-              commonly used format (CSV export available for Pro users)
+              commonly used format
             </li>
             <li>
               <strong>Right to object:</strong> Object to the processing of your personal data for

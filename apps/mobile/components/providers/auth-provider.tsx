@@ -81,11 +81,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await db.execAsync("DELETE FROM budget_buckets");
         await db.execAsync("DELETE FROM shortcuts");
         await db.execAsync("DELETE FROM incomes");
-        await db.execAsync("DELETE FROM subscriptions");
       });
 
       // 3. Clear cached data
-      storage.delete("subscription_info");
       storage.delete("user_settings");
 
       return { error: null };

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
+import { useState, useMemo, useCallback, lazy, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
 import { Settings, MessageSquarePlus, Trash2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isSameDay } from "date-fns";
@@ -16,11 +15,8 @@ import { SuccessFlash } from "@/components/ui/success-flash";
 import { useServerExpenses } from "@/hooks/use-server-expenses";
 import { useAiParser } from "@/hooks/use-ai-parser";
 import { useShortcuts } from "@/hooks/use-shortcuts";
-import { useSubscription, useFeatureAccess } from "@/hooks/use-subscription";
-import { usePaddle } from "@/components/paddle/paddle-provider";
 import { HeroDailyCard } from "@/components/dashboard/hero-daily-card";
 import { ExpenseEditModal } from "@/components/expenses/expense-edit-modal";
-import { UpgradePrompt, ProSuccessModal } from "@/components/subscription";
 import { showExpenseDeletedToast } from "@/components/ui/undo-toast";
 import { restoreExpense } from "@/actions/expenses/restore";
 import { formatCurrency } from "@/lib/utils";
@@ -44,43 +40,14 @@ interface DashboardClientProps {
 
 export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "tracking_only", cardPreferences }: DashboardClientProps) {
   const { timezone } = useTimezone();
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [showSuccessFlash, setShowSuccessFlash] = useState(false);
   const [successMessage, setSuccessMessage] = useState("Added!");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
-  const [proModalOpen, setProModalOpen] = useState(false);
 
   const actualDailyLimit = dailyLimit ?? DEFAULT_DAILY_LIMIT;
   const isBudgetMode = trackingMode === "budget_enabled";
-
-  const { refreshStatus, subscription } = useSubscription();
-  const analyticsAccess = useFeatureAccess("analytics");
-  const { onCheckoutComplete } = usePaddle();
-
-  // Handle ?upgraded=true query param
-  useEffect(() => {
-    if (searchParams.get("upgraded") === "true") {
-      refreshStatus();
-      setProModalOpen(true);
-      router.replace("/dashboard");
-    }
-  }, [searchParams, refreshStatus, router]);
-
-  // Register Paddle checkout.completed callback
-  useEffect(() => {
-    onCheckoutComplete.current = () => {
-      setTimeout(() => {
-        refreshStatus();
-        setProModalOpen(true);
-      }, 2000);
-    };
-    return () => {
-      onCheckoutComplete.current = null;
-    };
-  }, [onCheckoutComplete, refreshStatus]);
 
   // Server-backed expenses with optimistic updates
   const { expenses, addExpenses, updateExpense, removeExpense } =
@@ -209,11 +176,6 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
       <header className="relative flex-shrink-0 h-14 sm:h-12 px-3 sm:px-4 flex items-center justify-between border-b border-neutral-200 bg-white/80 backdrop-blur-sm safe-area-top">
         <div className="flex items-center gap-2">
           <span className="text-base font-bold text-neutral-800 tracking-tight">ledgr</span>
-          {subscription.isPro && (
-            <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-gradient-to-r from-amber-400 to-orange-400 text-white leading-none">
-              pro
-            </span>
-          )}
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2">
@@ -344,39 +306,33 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
           </TabsContent>
 
           <TabsContent value="insights" className="outline-none">
-            {analyticsAccess.hasAccess ? (
-              <Suspense
-                fallback={
-                  <div className="max-w-lg mx-auto p-4 space-y-4">
-                    <div className="bg-white rounded-2xl border border-neutral-200 p-4 space-y-3">
-                      <div className="h-5 w-32 bg-neutral-200/60 animate-pulse rounded-md" />
-                      <div className="h-40 w-full bg-neutral-200/60 animate-pulse rounded-xl" />
-                    </div>
-                    <div className="bg-white rounded-2xl border border-neutral-200 p-4 space-y-3">
-                      <div className="h-5 w-40 bg-neutral-200/60 animate-pulse rounded-md" />
-                      <div className="space-y-2">
-                        {Array.from({ length: 3 }).map((_, i) => (
-                          <div key={i} className="flex items-center justify-between">
-                            <div className="h-4 w-24 bg-neutral-200/60 animate-pulse rounded-md" />
-                            <div className="h-4 w-16 bg-neutral-200/60 animate-pulse rounded-md" />
-                          </div>
-                        ))}
-                      </div>
+            <Suspense
+              fallback={
+                <div className="max-w-lg mx-auto p-4 space-y-4">
+                  <div className="bg-white rounded-2xl border border-neutral-200 p-4 space-y-3">
+                    <div className="h-5 w-32 bg-neutral-200/60 animate-pulse rounded-md" />
+                    <div className="h-40 w-full bg-neutral-200/60 animate-pulse rounded-xl" />
+                  </div>
+                  <div className="bg-white rounded-2xl border border-neutral-200 p-4 space-y-3">
+                    <div className="h-5 w-40 bg-neutral-200/60 animate-pulse rounded-md" />
+                    <div className="space-y-2">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <div className="h-4 w-24 bg-neutral-200/60 animate-pulse rounded-md" />
+                          <div className="h-4 w-16 bg-neutral-200/60 animate-pulse rounded-md" />
+                        </div>
+                      ))}
                     </div>
                   </div>
-                }
-              >
-                <InsightsTab
-                  expenses={expenses}
-                  dailyLimit={actualDailyLimit}
-                  isBudgetMode={isBudgetMode}
-                />
-              </Suspense>
-            ) : (
-              <div className="max-w-lg mx-auto p-4">
-                <UpgradePrompt accessResult={analyticsAccess} variant="card" />
-              </div>
-            )}
+                </div>
+              }
+            >
+              <InsightsTab
+                expenses={expenses}
+                dailyLimit={actualDailyLimit}
+                isBudgetMode={isBudgetMode}
+              />
+            </Suspense>
           </TabsContent>
         </main>
       </Tabs>
@@ -412,12 +368,6 @@ export function DashboardClient({ initialExpenses, dailyLimit, trackingMode = "t
         onDelete={handleDeleteExpense}
         existingCategories={existingCategories}
         timezone={timezone}
-      />
-
-      {/* Pro Success Modal */}
-      <ProSuccessModal
-        open={proModalOpen}
-        onClose={() => setProModalOpen(false)}
       />
     </div>
   );

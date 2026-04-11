@@ -87,8 +87,8 @@ export default function AboutPage() {
           </p>
           <ul>
             <li>
-              <strong>Simple pricing:</strong> $1.99/month for Pro — no hidden fees or surprise
-              charges
+              <strong>Completely free:</strong> All features are available at no cost, no hidden
+              fees or surprise charges
             </li>
             <li>
               <strong>Paycheck-to-paycheck friendly:</strong> Most budgeting advice assumes you have
@@ -142,10 +142,10 @@ export default function AboutPage() {
             proven debt snowball method.
           </p>
 
-          <h3>Analytics (Pro)</h3>
+          <h3>Analytics</h3>
           <p>
-            Pro users get advanced visualizations: cash flow diagrams, spending trends, category
-            breakdowns, and more. See exactly where your money goes.
+            Advanced visualizations: cash flow diagrams, spending trends, category breakdowns, and
+            more. See exactly where your money goes.
           </p>
 
           <h2>Who It's For</h2>
@@ -210,31 +210,11 @@ export default function AboutPage() {
             unnecessary vowels, no unnecessary features. Just clarity about your money, every day.
           </p>
 
-          <h2>Pricing</h2>
+          <h2>Free to Use</h2>
           <p>
-            ledgr has two tiers:
+            ledgr is free for everyone. We believe everyone deserves access to good budgeting
+            tools.
           </p>
-          <ul>
-            <li>
-              <strong>Free:</strong> All core features (expense tracking, budget setup, daily
-              allowance calculations, calendar view)
-            </li>
-            <li>
-              <strong>Pro ($1.99/month or $19.99/year):</strong> Advanced analytics, CSV/PDF
-              exports, priority support
-            </li>
-          </ul>
-          <p>
-            We believe everyone deserves access to good budgeting tools, which is why our Free tier
-            is genuinely useful—not a limited trial. Upgrade to Pro when you're ready for deeper
-            insights.
-          </p>
-
-          <div className="my-8 text-center">
-            <Button asChild size="lg" className="bg-teal-600 hover:bg-teal-700">
-              <Link href="/pricing">See Pricing Details</Link>
-            </Button>
-          </div>
 
           <h2>Get in Touch</h2>
           <p>

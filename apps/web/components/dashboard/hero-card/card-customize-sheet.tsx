@@ -1,10 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
-import { LockedOverlay } from "@/components/subscription/upgrade-prompt";
 import {
   Dialog,
   DialogContent,
@@ -19,35 +17,22 @@ import {
   type CardMaterial,
   type CardPreferences,
   THEME_PRESETS,
-  PRO_THEMES,
+  ALL_THEMES,
 } from "./card-theme";
 
-type ThemeKey = Exclude<CardTheme, "auto">;
-
-const FREE_THEMES: ThemeKey[] = ["emerald", "ocean", "sunset", "lavender", "slate", "rose"];
-
-const THEME_OPTIONS: { value: CardTheme; label: string; swatch?: string; pro?: boolean }[] = [
+const THEME_OPTIONS: { value: CardTheme; label: string; swatch?: string }[] = [
   { value: "auto", label: "Auto" },
-  ...FREE_THEMES.map((key) => ({
+  ...ALL_THEMES.map((key) => ({
     value: key as CardTheme,
     label: THEME_PRESETS[key].label,
     swatch: THEME_PRESETS[key].swatch,
-  })),
-  ...(PRO_THEMES as ThemeKey[]).map((key) => ({
-    value: key as CardTheme,
-    label: THEME_PRESETS[key].label,
-    swatch: THEME_PRESETS[key].swatch,
-    pro: true,
   })),
 ];
 
-const FREE_BG_OPTIONS: { value: BackgroundStyle; label: string; description: string }[] = [
+const BG_OPTIONS: { value: BackgroundStyle; label: string; description: string }[] = [
   { value: "mesh", label: "Mesh", description: "Fluid gradient" },
   { value: "grain", label: "Grain", description: "Film texture" },
   { value: "static", label: "Static", description: "No animation" },
-];
-
-const PRO_BG_OPTIONS: { value: BackgroundStyle; label: string; description: string }[] = [
   { value: "neuro", label: "Neural", description: "Organic web" },
   { value: "metaballs", label: "Liquid", description: "Gooey blobs" },
   { value: "godrays", label: "Radiance", description: "Light rays" },
@@ -55,24 +40,20 @@ const PRO_BG_OPTIONS: { value: BackgroundStyle; label: string; description: stri
   { value: "waves", label: "Waves", description: "Layered lines" },
 ];
 
-const MATERIAL_OPTIONS: { value: CardMaterial; label: string; description: string; pro?: boolean }[] = [
+const MATERIAL_OPTIONS: { value: CardMaterial; label: string; description: string }[] = [
   { value: "default", label: "Default", description: "Clean" },
-  { value: "glass", label: "Glass", description: "Frosted blur", pro: true },
-  { value: "metallic", label: "Metallic", description: "Chrome sheen", pro: true },
-  { value: "holo", label: "Holo", description: "Rainbow refraction", pro: true },
+  { value: "glass", label: "Glass", description: "Frosted blur" },
+  { value: "metallic", label: "Metallic", description: "Chrome sheen" },
+  { value: "holo", label: "Holo", description: "Rainbow refraction" },
 ];
 
 interface CardCustomizeSheetProps {
   prefs: Required<CardPreferences>;
   onUpdate: <K extends keyof CardPreferences>(key: K, value: CardPreferences[K]) => void;
-  isPro: boolean;
   dark?: boolean;
 }
 
-export function CardCustomizeSheet({ prefs, onUpdate, isPro, dark }: CardCustomizeSheetProps) {
-  const router = useRouter();
-  const goToPricing = () => router.push("/pricing");
-
+export function CardCustomizeSheet({ prefs, onUpdate, dark }: CardCustomizeSheetProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -104,35 +85,28 @@ export function CardCustomizeSheet({ prefs, onUpdate, isPro, dark }: CardCustomi
               Theme
             </h4>
             <div className="flex flex-wrap gap-2">
-              {THEME_OPTIONS.map((option) => {
-                const isLocked = option.pro && !isPro;
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => isLocked ? goToPricing() : onUpdate("theme", option.value)}
-                    className={cn(
-                      "relative flex items-center gap-2 px-3 py-2 rounded-xl border text-sm transition-all",
-                      prefs.theme === option.value
-                        ? "border-neutral-900 bg-neutral-50 font-medium"
-                        : "border-neutral-200 hover:border-neutral-300",
-                      isLocked && "opacity-60"
-                    )}
-                  >
-                    {option.swatch ? (
-                      <span
-                        className="w-3.5 h-3.5 rounded-full border border-black/10"
-                        style={{ backgroundColor: option.swatch }}
-                      />
-                    ) : (
-                      <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-emerald-300 via-amber-200 to-rose-300 border border-black/10" />
-                    )}
-                    {option.label}
-                    {isLocked && (
-                      <LockedOverlay className="rounded-xl" />
-                    )}
-                  </button>
-                );
-              })}
+              {THEME_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => onUpdate("theme", option.value)}
+                  className={cn(
+                    "relative flex items-center gap-2 px-3 py-2 rounded-xl border text-sm transition-all",
+                    prefs.theme === option.value
+                      ? "border-neutral-900 bg-neutral-50 font-medium"
+                      : "border-neutral-200 hover:border-neutral-300"
+                  )}
+                >
+                  {option.swatch ? (
+                    <span
+                      className="w-3.5 h-3.5 rounded-full border border-black/10"
+                      style={{ backgroundColor: option.swatch }}
+                    />
+                  ) : (
+                    <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-emerald-300 via-amber-200 to-rose-300 border border-black/10" />
+                  )}
+                  {option.label}
+                </button>
+              ))}
             </div>
             {prefs.theme === "auto" && (
               <p className="text-[11px] text-neutral-400 mt-2">Changes with your budget status</p>
@@ -145,7 +119,7 @@ export function CardCustomizeSheet({ prefs, onUpdate, isPro, dark }: CardCustomi
               Background
             </h4>
             <div className="grid grid-cols-3 gap-2">
-              {FREE_BG_OPTIONS.map((option) => (
+              {BG_OPTIONS.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => onUpdate("backgroundStyle", option.value)}
@@ -161,30 +135,6 @@ export function CardCustomizeSheet({ prefs, onUpdate, isPro, dark }: CardCustomi
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-3 gap-2 mt-2">
-              {PRO_BG_OPTIONS.map((option) => {
-                const isLocked = !isPro;
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => isLocked ? goToPricing() : onUpdate("backgroundStyle", option.value)}
-                    className={cn(
-                      "relative flex flex-col items-center gap-1 px-3 py-3 rounded-xl border text-sm transition-all",
-                      prefs.backgroundStyle === option.value
-                        ? "border-neutral-900 bg-neutral-50"
-                        : "border-neutral-200 hover:border-neutral-300",
-                      isLocked && "opacity-60"
-                    )}
-                  >
-                    <span className="font-medium text-xs">{option.label}</span>
-                    <span className="text-[10px] text-neutral-400">{option.description}</span>
-                    {isLocked && (
-                      <LockedOverlay className="rounded-xl" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
           </section>
 
           {/* Surface / Material */}
@@ -193,28 +143,21 @@ export function CardCustomizeSheet({ prefs, onUpdate, isPro, dark }: CardCustomi
               Surface
             </h4>
             <div className="grid grid-cols-4 gap-2">
-              {MATERIAL_OPTIONS.map((option) => {
-                const isLocked = option.pro && !isPro;
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => isLocked ? goToPricing() : onUpdate("material", option.value)}
-                    className={cn(
-                      "relative flex flex-col items-center gap-1 px-2 py-3 rounded-xl border text-sm transition-all",
-                      prefs.material === option.value
-                        ? "border-neutral-900 bg-neutral-50"
-                        : "border-neutral-200 hover:border-neutral-300",
-                      isLocked && "opacity-60"
-                    )}
-                  >
-                    <span className="font-medium text-xs">{option.label}</span>
-                    <span className="text-[10px] text-neutral-400">{option.description}</span>
-                    {isLocked && (
-                      <LockedOverlay className="rounded-xl" />
-                    )}
-                  </button>
-                );
-              })}
+              {MATERIAL_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => onUpdate("material", option.value)}
+                  className={cn(
+                    "relative flex flex-col items-center gap-1 px-2 py-3 rounded-xl border text-sm transition-all",
+                    prefs.material === option.value
+                      ? "border-neutral-900 bg-neutral-50"
+                      : "border-neutral-200 hover:border-neutral-300"
+                  )}
+                >
+                  <span className="font-medium text-xs">{option.label}</span>
+                  <span className="text-[10px] text-neutral-400">{option.description}</span>
+                </button>
+              ))}
             </div>
           </section>
 
@@ -260,27 +203,20 @@ export function CardCustomizeSheet({ prefs, onUpdate, isPro, dark }: CardCustomi
               </label>
               {prefs.enableGlare && (
                 <div className="flex gap-2 pl-1">
-                  {(["standard", "holographic", "prismatic"] as GlareStyle[]).map((style) => {
-                    const isLocked = style === "prismatic" && !isPro;
-                    return (
-                      <button
-                        key={style}
-                        onClick={() => isLocked ? goToPricing() : onUpdate("glareStyle", style)}
-                        className={cn(
-                          "relative px-3 py-1.5 rounded-lg border text-xs capitalize transition-all",
-                          prefs.glareStyle === style
-                            ? "border-neutral-900 bg-neutral-50 font-medium"
-                            : "border-neutral-200 hover:border-neutral-300",
-                          isLocked && "opacity-60"
-                        )}
-                      >
-                        {style}
-                        {isLocked && (
-                          <LockedOverlay className="rounded-lg" />
-                        )}
-                      </button>
-                    );
-                  })}
+                  {(["standard", "holographic", "prismatic"] as GlareStyle[]).map((style) => (
+                    <button
+                      key={style}
+                      onClick={() => onUpdate("glareStyle", style)}
+                      className={cn(
+                        "relative px-3 py-1.5 rounded-lg border text-xs capitalize transition-all",
+                        prefs.glareStyle === style
+                          ? "border-neutral-900 bg-neutral-50 font-medium"
+                          : "border-neutral-200 hover:border-neutral-300"
+                      )}
+                    >
+                      {style}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

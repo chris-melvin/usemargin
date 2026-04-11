@@ -9,12 +9,10 @@ import { BudgetSettings } from "@/components/settings/budget-settings";
 import { AccountSettings } from "@/components/settings/account-settings";
 import { DataSettings } from "@/components/settings/data-settings";
 import type { UserSettings, BudgetBucket } from "@repo/database";
-import type { SubscriptionInfo } from "@/actions/subscriptions/get-subscription";
 
 interface SettingsClientProps {
   userSettings: UserSettings;
   userEmail: string;
-  subscription: SubscriptionInfo | null;
   buckets?: BudgetBucket[];
   initialTab?: string;
 }
@@ -22,7 +20,6 @@ interface SettingsClientProps {
 export function SettingsClient({
   userSettings,
   userEmail,
-  subscription,
   buckets = [],
   initialTab = "general",
 }: SettingsClientProps) {
@@ -65,10 +62,7 @@ export function SettingsClient({
           </TabsContent>
 
           <TabsContent value="account" className="mt-0">
-            <AccountSettings
-              userEmail={userEmail}
-              subscription={subscription}
-            />
+            <AccountSettings userEmail={userEmail} />
           </TabsContent>
 
           <TabsContent value="data" className="mt-0">

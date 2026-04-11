@@ -36,7 +36,7 @@ export const ENTITY_REGISTRY: EntitySyncConfig[] = [
     userScoped: true,
     createFields: [
       "id", "user_id", "default_daily_limit", "currency", "timezone",
-      "week_starts_on", "tracking_mode", "subscription_tier", "card_preferences",
+      "week_starts_on", "tracking_mode", "card_preferences",
       "total_monthly_income", "total_fixed_expenses", "calculated_daily_limit",
       "budget_setup_completed", "show_savings_in_allocation",
       "created_at", "updated_at",
@@ -51,12 +51,12 @@ export const ENTITY_REGISTRY: EntitySyncConfig[] = [
     upsertFromRemote: async (db, r) => {
       const now = new Date().toISOString();
       await db.runAsync(
-        `INSERT INTO user_settings (id, user_id, default_daily_limit, currency, timezone, week_starts_on, tracking_mode, subscription_tier, card_preferences, total_monthly_income, total_fixed_expenses, calculated_daily_limit, budget_setup_completed, show_savings_in_allocation, created_at, updated_at, is_synced, last_synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+        `INSERT INTO user_settings (id, user_id, default_daily_limit, currency, timezone, week_starts_on, tracking_mode, card_preferences, total_monthly_income, total_fixed_expenses, calculated_daily_limit, budget_setup_completed, show_savings_in_allocation, created_at, updated_at, is_synced, last_synced_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
          ON CONFLICT(id) DO UPDATE SET
            default_daily_limit=excluded.default_daily_limit, currency=excluded.currency,
            timezone=excluded.timezone, week_starts_on=excluded.week_starts_on,
-           tracking_mode=excluded.tracking_mode, subscription_tier=excluded.subscription_tier,
+           tracking_mode=excluded.tracking_mode,
            card_preferences=excluded.card_preferences,
            total_monthly_income=excluded.total_monthly_income,
            total_fixed_expenses=excluded.total_fixed_expenses,
@@ -66,7 +66,7 @@ export const ENTITY_REGISTRY: EntitySyncConfig[] = [
            updated_at=excluded.updated_at, is_synced=1, last_synced_at=?`,
         [
           r.id, r.user_id, r.default_daily_limit, r.currency, r.timezone,
-          r.week_starts_on, r.tracking_mode, r.subscription_tier,
+          r.week_starts_on, r.tracking_mode,
           typeof r.card_preferences === "object" ? JSON.stringify(r.card_preferences) : r.card_preferences,
           r.total_monthly_income, r.total_fixed_expenses, r.calculated_daily_limit,
           r.budget_setup_completed ? 1 : 0, r.show_savings_in_allocation ? 1 : 0,

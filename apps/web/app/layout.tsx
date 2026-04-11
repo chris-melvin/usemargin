@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Lora, Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
-import { PaddleProvider } from "@/components/paddle";
 import { PostHogProvider } from "@/components/posthog";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -85,7 +84,7 @@ export default function RootLayout({
         className={`${lora.variable} ${inter.variable} ${geistMono.variable} antialiased`}
       >
         <PostHogProvider>
-          <PaddleProvider>{children}</PaddleProvider>
+          {children}
           <Toaster position="bottom-center" />
         </PostHogProvider>
       </body>

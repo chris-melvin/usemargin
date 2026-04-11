@@ -51,29 +51,11 @@ export default function TermsPage() {
             <li>Expense and income tracking with natural language input</li>
             <li>Calendar-based visualization of your spending patterns</li>
             <li>Bill and debt management features</li>
-            <li>Analytics and reporting (Pro tier only)</li>
+            <li>Analytics and reporting</li>
           </ul>
-
-          <h3>2.1 Free Tier</h3>
-          <p>The Free tier includes the following features at no cost:</p>
-          <ul>
-            <li>Expense tracking</li>
-            <li>Budget setup and management</li>
-            <li>Income and bill tracking</li>
-            <li>Basic dashboard and calendar view</li>
-          </ul>
-
-          <h3>2.2 Pro Tier</h3>
           <p>
-            The Pro tier is available for $1.99 per month or $19.99 per year (16% savings). Pro
-            subscribers receive all Free tier features plus:
+            ledgr is provided free of charge. All features are available to every user at no cost.
           </p>
-          <ul>
-            <li>Advanced analytics and visualizations (cash flow, trends, heatmaps)</li>
-            <li>Export your data to CSV and PDF formats</li>
-            <li>Priority customer support</li>
-            <li>Early access to new features</li>
-          </ul>
 
           <h2>3. User Accounts</h2>
           <p>
@@ -89,58 +71,6 @@ export default function TermsPage() {
           <p>
             You are responsible for all activities that occur under your account. We reserve the
             right to suspend or terminate accounts that violate these Terms.
-          </p>
-
-          <h2>4. Subscription Terms</h2>
-
-          <h3>4.1 Billing and Payments</h3>
-          <p>
-            Pro subscriptions are processed through{" "}
-            <a
-              href="https://www.paddle.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Paddle
-            </a>
-            , our payment processor. By subscribing to Pro, you authorize Paddle to charge your
-            payment method on a recurring basis.
-          </p>
-
-          <h3>4.2 Auto-Renewal</h3>
-          <p>
-            Pro subscriptions automatically renew at the end of each billing cycle (monthly or
-            yearly) unless you cancel before the renewal date. You will be charged the
-            then-current subscription price, which we will communicate to you in advance if it
-            changes.
-          </p>
-
-          <h3>4.3 Cancellation</h3>
-          <p>
-            You may cancel your Pro subscription at any time from your Account Settings. When you
-            cancel:
-          </p>
-          <ul>
-            <li>Your subscription will remain active until the end of your current billing period</li>
-            <li>You will not be charged for the next billing cycle</li>
-            <li>You will automatically revert to the Free tier when your subscription ends</li>
-            <li>Your data will be preserved, but Pro features will no longer be accessible</li>
-          </ul>
-
-          <h3>4.4 Price Changes</h3>
-          <p>
-            We may change our subscription prices from time to time. If we increase the price of
-            your subscription, we will notify you at least 30 days in advance. The new price will
-            apply to your next billing cycle after the notice period.
-          </p>
-
-          <h3>4.5 Refunds</h3>
-          <p>
-            For information about refunds, please see our{" "}
-            <Link href="/refund" className="text-teal-600 hover:text-teal-700">
-              Refund Policy
-            </Link>
-            .
           </p>
 
           <h2>5. User Responsibilities</h2>
@@ -281,12 +211,9 @@ export default function TermsPage() {
 
           <h3>10.1 Termination by You</h3>
           <p>
-            You may terminate your account at any time by:
+            You may terminate your account at any time by requesting account deletion via Account
+            Settings or by emailing us.
           </p>
-          <ul>
-            <li>Canceling your Pro subscription (if applicable)</li>
-            <li>Requesting account deletion via Account Settings or by emailing us</li>
-          </ul>
           <p>
             Upon termination, your data will be deleted or anonymized within 90 days in accordance
             with our{" "}
@@ -306,10 +233,6 @@ export default function TermsPage() {
             <li>We are required to do so by law</li>
             <li>We discontinue the Service (with reasonable notice)</li>
           </ul>
-          <p>
-            If we terminate your account for violations, you will not be entitled to a refund of any
-            subscription fees.
-          </p>
 
           <h2>11. Governing Law and Dispute Resolution</h2>
           <p>
